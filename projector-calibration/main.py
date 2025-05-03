@@ -8,29 +8,6 @@ from circleproj import circleproj
 from appcontroller import appcontroller
 
 
-def test1(data):
-    """テスト1."""
-    import time    
-    # data = cpshm.SharedMemData.from_buffer(value)
-    for i in range(30):        
-        print(f"P1: {i}, {data.board_pose[0]}, {data.board_pose[1]}")
-        time.sleep(1)
-
-
-def test2(data):
-    """テスト2."""
-    import time    
-    # data = cpshm.SharedMemData.from_buffer(value)
-    for i in range(30):        
-        data.board_pose[0] += 1
-        data.board_pose[1] += 1
-        # data_ptr = ctypes.cast(ctypes.addressof(data), ctypes.POINTER(ctypes.c_byte))
-        # value_ptr = ctypes.cast(ctypes.addressof(value), ctypes.POINTER(ctypes.c_byte))
-        # ctypes.memmove(value_ptr, data_ptr, ctypes.sizeof(cpshm.SharedMemData))
-        print(f"P2: {i}")
-        time.sleep(0.5)
-
-
 def main():
     """メイン関数."""
     # 共有データの確保

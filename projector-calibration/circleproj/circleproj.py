@@ -72,13 +72,18 @@ def main(shared_data: shm.SharedMemData) -> None:
     """メイン関数."""
     window = tk.Tk()
     window.title("circle_projector")
+    window.geometry("960x540")
     window.attributes("-fullscreen", True)
 
     def exitApplication(event):
         shared_data.app_sync = 0
         window.quit()
 
+    def zoomSwitch(event):
+        window.attributes("-fullscreen", not window.attributes("-fullscreen"))
+
     window.bind("<Escape>", exitApplication)
+    window.bind("z", zoomSwitch)
     app = MainApplication(parent=window, shared_data=shared_data)
     app.update()
 

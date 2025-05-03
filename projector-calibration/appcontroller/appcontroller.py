@@ -205,7 +205,6 @@ class MainApplication(tk.Frame):
     def update(self):
         """定期実行処理."""
         if self._shared_data is not None:
-            print(self._shared_data.app_sync)
             if self._shared_data.app_sync == 0:
                 self._parent.quit()
 

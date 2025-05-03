@@ -156,7 +156,7 @@ def main():
                 "exposure": exposure,
                 "gain": gain,
                 "contrast": contrast
-            })
+            }, indent=4)
             with open("camera_config.json", "w", encoding="utf-8") as f:
                 f.write(json_data)
             print("save camera config")

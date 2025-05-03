@@ -214,7 +214,7 @@ class MainApplication(tk.Frame):
         # キャプチャーボタン
         self._capture_btn = tk.Button(
             master=parent, text="□",
-            command=self._captureBtnClick
+            command=self.captureBtnClick
         )
         self._capture_btn.grid(row=7, column=0)
 

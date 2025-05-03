@@ -1,0 +1,22 @@
+{
+    "winsize": [
+        1920,
+        1200
+    ],
+    "grid_size": [
+        6,
+        4
+    ],
+    "grid_pitch": 110,
+    "board_pose": [
+        550,
+        430,
+        0
+    ],
+    "circle_color": [
+        60,
+        255,
+        255
+    ],
+    "circle_radius": 28
+}

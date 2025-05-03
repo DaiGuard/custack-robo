@@ -1,6 +1,8 @@
 """プロジェクタキャリブレーションプログラムの共有データ."""
 import dataclasses
 import ctypes
+import json
+import os
 
 @dataclasses.dataclass
 class SharedMemData(ctypes.Structure):
@@ -69,6 +71,51 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[4] = 50
         self._color_range2[5] = 255
         self._capture_trigger = False
+
+    def save(self):
+        """データ保存."""
+        data = {
+            "grid_size": (self._grid_size[0], self._grid_size[1]),
+            "grid_pitch": self._grid_pitch,
+            "board_pose": (
+                self._board_pose[0], self._board_pose[1], self._board_pose[2]),
+            "color_range1": (
+                self._color_range1[0], self._color_range1[1], self._color_range1[2],
+                self._color_range1[3], self._color_range1[4], self._color_range1[5]),
+            "color_range2": (
+                self._color_range2[0], self._color_range2[1], self._color_range2[2],
+                self._color_range2[3], self._color_range2[4], self._color_range2[5])
+        }
+        json_data = json.dumps(data, indent=4)
+        with open("pc_config.json", "w", encoding="utf-8") as f:
+            f.write(json_data)
+
+    def load(self) -> bool:
+        """データ読み込み."""
+        if os.path.isfile("pc_config.json"):
+            with open("pc_config.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self._grid_size[0] = data["grid_size"][0]
+                self._grid_size[1] = data["grid_size"][1]
+                self._grid_pitch = data["grid_pitch"]
+                self._board_pose[0] = data["board_pose"][0]
+                self._board_pose[1] = data["board_pose"][1]
+                self._board_pose[2] = data["board_pose"][2]
+                self._color_range1[0] = data["color_range1"][0]
+                self._color_range1[1] = data["color_range1"][1]
+                self._color_range1[2] = data["color_range1"][2]
+                self._color_range1[3] = data["color_range1"][3] 
+                self._color_range1[4] = data["color_range1"][4]
+                self._color_range1[5] = data["color_range1"][5]
+                self._color_range2[0] = data["color_range2"][0]
+                self._color_range2[1] = data["color_range2"][1]
+                self._color_range2[2] = data["color_range2"][2]
+                self._color_range2[3] = data["color_range2"][3]
+                self._color_range2[4] = data["color_range2"][4]
+                self._color_range2[5] = data["color_range2"][5]
+        else:
+            return False
+        return True
 
     @property
     def app_sync(self) -> int:

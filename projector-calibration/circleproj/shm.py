@@ -1,6 +1,8 @@
 """サークルグリッド投影プログラムの共有データ."""
 import dataclasses
 import ctypes
+import json
+import os
 
 
 @dataclasses.dataclass
@@ -56,6 +58,41 @@ class SharedMemData(ctypes.Structure):
         self._circle_color[1] = 255
         self._circle_color[2] = 255
         self._circle_radius = 50
+
+    def save(self):
+        """データ保存."""
+        data = {
+            "winsize": (self._winsize[0], self._winsize[1]),
+            "grid_size": (self._grid_size[0], self._grid_size[1]),
+            "grid_pitch": self._grid_pitch,
+            "board_pose": (self._board_pose[0], self._board_pose[1], self._board_pose[2]),
+            "circle_color": (self._circle_color[0], self._circle_color[1], self._circle_color[2]),
+            "circle_radius": self._circle_radius
+        }
+        json_data = json.dumps(data, indent=4)
+        with open("cp_config.json", "w", encoding="utf-8") as f:
+            f.write(json_data)
+    
+    def load(self) -> bool:
+        """データ読み込み."""
+        if os.path.isfile("cp_config.json"):
+            with open("cp_config.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self._winsize[0] = data["winsize"][0]
+                self._winsize[1] = data["winsize"][1]
+                self._grid_size[0] = data["grid_size"][0]
+                self._grid_size[1] = data["grid_size"][1]
+                self._grid_pitch = data["grid_pitch"]
+                self._board_pose[0] = data["board_pose"][0]
+                self._board_pose[1] = data["board_pose"][1]
+                self._board_pose[2] = data["board_pose"][2]
+                self._circle_color[0] = data["circle_color"][0]
+                self._circle_color[1] = data["circle_color"][1]
+                self._circle_color[2] = data["circle_color"][2]
+                self._circle_radius = data["circle_radius"]
+        else:
+            return False
+        return True
 
     @property
     def app_sync(self) -> int:

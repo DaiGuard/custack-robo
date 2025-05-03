@@ -12,8 +12,9 @@ from projectcalib import shm as pcshm
 from projectcalib import projectcalib
 
 
-def dataBridge(cp_data: cpshm.SharedMemData,
-               pc_data: pcshm.SharedMemData):
+def dataBridge(
+        cp_data: cpshm.SharedMemData,
+        pc_data: pcshm.SharedMemData):
     """共有データブリッジ."""
     while True:
         if cp_data.app_sync == 0 or pc_data.app_sync == 0:
@@ -29,10 +30,13 @@ def main():
     cp_value = RawArray(ctypes.c_byte, ctypes.sizeof(cpshm.SharedMemData))
     cp_data = cpshm.SharedMemData.from_buffer(cp_value)
     cp_data.reset()
+    cp_data.load()
+        
 
     pc_value = RawArray(ctypes.c_byte, ctypes.sizeof(pcshm.SharedMemData))
     pc_data = pcshm.SharedMemData.from_buffer(pc_value)
     pc_data.reset()
+    pc_data.load()
 
     # サークルグリッドプロセス起動
     cp_proc = Process(target=circleproj.main, args=(cp_data,))
@@ -50,14 +54,18 @@ def main():
     # 各プロセススタート
     cp_proc.start()
     app_proc.start()
-    # pc_proc.start()
+    pc_proc.start()
     bridge_th.start()
 
     # 各プロセス終了待ち
     cp_proc.join()
     app_proc.join()
-    # pc_proc.join()
+    pc_proc.join()
     bridge_th.join()
+
+    # 初期設定ファイルを保存
+    cp_data.save()
+    pc_data.save()
 
 
 if __name__ == "__main__":

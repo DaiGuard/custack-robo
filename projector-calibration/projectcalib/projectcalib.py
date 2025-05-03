@@ -26,7 +26,7 @@ def main(shared_data: shm.SharedMemData) -> None:
     # 画像保存フォルダの作成
     dt_now = datetime.datetime.now()
     save_path = os.path.join(".", "images", dt_now.strftime("%Y%m%d-%H%M%S"))
-    pathlib.Path(save_path).mkdir(exist_ok=True)
+    pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
     # カメラパラメータの設定
     with open("calib_config.json", "r", encoding="utf-8") as f:
@@ -41,7 +41,7 @@ def main(shared_data: shm.SharedMemData) -> None:
 
     cv2.namedWindow("projectcalib", cv2.WINDOW_AUTOSIZE)
 
-    while True:
+    while cv2.getWindowProperty("projectcalib", cv2.WND_PROP_AUTOSIZE) > 0:
         # 画像のキャプチャ
         ret, frame = cap.read()
         if not ret:
@@ -90,12 +90,23 @@ def main(shared_data: shm.SharedMemData) -> None:
         project_image = cv2.cvtColor(project_image, cv2.COLOR_GRAY2BGR)
 
         debug_image = cv2.hconcat([
-            frame,cv2.vconcat([board_image, project_image])])
-        debug_image = cv2.resize(debug_image, (960, 540))
+            frame,
+            cv2.resize(
+                cv2.vconcat([board_image, project_image]),
+                (960, 1080)
+            )
+            ])
+        debug_image = cv2.resize(debug_image, (1920, 1080))
         cv2.imshow("projectcalib", debug_image)
         key = cv2.waitKey(30)
         if key == ord("q"):
             break
+
+        # アプリケーション同期
+        shared_data.app_sync += 1
+
+    # アプリケーション終了処理
+    shared_data.app_sync = 0
 
     cap.release()
     cv2.destroyAllWindows()

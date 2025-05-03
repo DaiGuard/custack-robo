@@ -58,8 +58,8 @@ class SharedMemData(ctypes.Structure):
         self._board_pose[0] = 100
         self._board_pose[1] = 100
         self._board_pose[2] = 0
-        self._color_range1[0] = 80
-        self._color_range1[1] = 110
+        self._color_range1[0] = 50
+        self._color_range1[1] = 95
         self._color_range1[2] = 50
         self._color_range1[3] = 255
         self._color_range1[4] = 50
@@ -128,6 +128,11 @@ class SharedMemData(ctypes.Structure):
         return (self._grid_size[0], self._grid_size[1])
 
     @property
+    def grid_pitch(self) -> int:
+        """グリッドピッチ."""
+        return self._grid_pitch
+
+    @property
     def board_pose(self) -> tuple[int, int, int]:
         """ボード位置姿勢."""
         return (self._board_pose[0], self._board_pose[1], self._board_pose[2])
@@ -167,6 +172,11 @@ class SharedMemData(ctypes.Structure):
         """グリッドサイズ."""
         self._grid_size[0] = size[0]
         self._grid_size[1] = size[1]
+
+    @grid_pitch.setter
+    def grid_pitch(self, pitch: int):
+        """グリッドピッチ."""
+        self._grid_pitch = pitch
 
     @board_pose.setter
     def board_pose(self, pose: tuple[int, int, int]):

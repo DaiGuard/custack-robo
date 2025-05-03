@@ -8,9 +8,10 @@ from appcontroller.tkSliderWidget import Slider
 class MainApplication(tk.Frame):
     """メインアプリケーションクラス."""
 
-    def __init__(self, parent=None,
-                 cp_data: cpshm.SharedMemData = None,
-                 pc_data: pcshm.SharedMemData = None):
+    def __init__(
+            self, parent=None,
+            cp_data: cpshm.SharedMemData = None,
+            pc_data: pcshm.SharedMemData = None):
         """コンストラクタ."""
         super().__init__(parent)
         self._parent = parent
@@ -147,17 +148,26 @@ class MainApplication(tk.Frame):
         self._color_range1_h_rs = Slider(
             master=self._color_range1_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 80], show_value=1
+            init_lis=[
+                self._pc_data.color_range1[0],
+                self._pc_data.color_range1[1]],
+            show_value=1
         )
         self._color_range1_s_rs = Slider(
             master=self._color_range1_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 255], show_value=1
+            init_lis=[
+                self._pc_data.color_range1[2],
+                self._pc_data.color_range1[3]],
+                show_value=1
         )
         self._color_range1_v_rs = Slider(
             master=self._color_range1_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 255], show_value=1
+            init_lis=[
+                self._pc_data.color_range1[4],
+                self._pc_data.color_range1[5]],
+                show_value=1
         )
         self._color_range1_h_rs.pack(side=tk.TOP)
         self._color_range1_s_rs.pack(side=tk.TOP)
@@ -184,17 +194,26 @@ class MainApplication(tk.Frame):
         self._color_range2_h_rs = Slider(
             master=self._color_range2_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 80], show_value=1
+            init_lis=[
+                self._pc_data.color_range2[0],
+                self._pc_data.color_range2[1]],
+            show_value=1
         )
         self._color_range2_s_rs = Slider(
             master=self._color_range2_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 255], show_value=1
+            init_lis=[
+                self._pc_data.color_range2[2],
+                self._pc_data.color_range2[3]],
+            show_value=1
         )
         self._color_range2_v_rs = Slider(
             master=self._color_range2_fm,
             width=350, height=38, min_val=0, max_val=255,
-            init_lis=[50, 255], show_value=1
+            init_lis=[
+                self._pc_data.color_range2[4],
+                self._pc_data.color_range2[5]],
+            show_value=1
         )
         self._color_range2_h_rs.pack(side=tk.TOP)
         self._color_range2_s_rs.pack(side=tk.TOP)

@@ -174,4 +174,5 @@ cython_debug/
 .pypirc
 
 # User
-projector-calibration/images/
+projector-calibration/images/**
+!projector-calibration/images/.gitkeep

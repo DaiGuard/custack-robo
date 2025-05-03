@@ -22,6 +22,11 @@ def dataBridge(
             pc_data.app_sync = 0
             break
 
+        pc_data.winsize = cp_data.winsize
+        pc_data.grid_size = cp_data.grid_size
+        pc_data.grid_pitch = cp_data.grid_pitch
+        pc_data.board_pose = cp_data.board_pose
+
         time.sleep(0.1)
 
 def main():

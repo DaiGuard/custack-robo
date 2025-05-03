@@ -11,6 +11,8 @@ class SharedMemData(ctypes.Structure):
     _fields_ = [
         # アプリケーション同期
         ("_app_sync", ctypes.c_uint64),
+        # ウインドウサイズ
+        ("_winsize", ctypes.c_uint32 * 2),
         # グリッドサイズ (x[px], y[px])
         ("_grid_size", ctypes.c_uint32 * 2),
         # グリッドピッチ [px]
@@ -29,6 +31,8 @@ class SharedMemData(ctypes.Structure):
         """コンストラクタ."""
         super().__init__()
         self._app_sync = 1
+        self._winsize[0] = 1
+        self._winsize[1] = 1
         self._grid_size[0] = 6
         self._grid_size[1] = 4
         self._grid_pitch = 150
@@ -52,6 +56,8 @@ class SharedMemData(ctypes.Structure):
     def reset(self):
         """データリセット."""
         self._app_sync = 1
+        self._winsize[0] = 1
+        self._winsize[1] = 1
         self._grid_size[0] = 6
         self._grid_size[1] = 4
         self._grid_pitch = 150
@@ -123,6 +129,11 @@ class SharedMemData(ctypes.Structure):
         return self._app_sync
 
     @property
+    def winsize(self) -> tuple[int, int]:
+        """ウインドウサイズ."""
+        return (self._winsize[0], self._winsize[1])
+
+    @property
     def grid_size(self) -> tuple[int, int]:
         """グリッドサイズ."""
         return (self._grid_size[0], self._grid_size[1])
@@ -167,6 +178,12 @@ class SharedMemData(ctypes.Structure):
         """アプリケーション同期."""
         self._app_sync = sync
 
+    @winsize.setter
+    def winsize(self, size: tuple[int, int]):
+        """ウインドウサイズ."""
+        self._winsize[0] = size[0]
+        self._winsize[1] = size[1]
+    
     @grid_size.setter
     def grid_size(self, size: tuple[int, int]):
         """グリッドサイズ."""

@@ -7,16 +7,16 @@
         6,
         4
     ],
-    "grid_pitch": 110,
+    "grid_pitch": 90,
     "board_pose": [
-        550,
-        430,
-        0
+        663,
+        463,
+        8
     ],
     "circle_color": [
         60,
         255,
         255
     ],
-    "circle_radius": 28
+    "circle_radius": 23
 }

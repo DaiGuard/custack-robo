@@ -110,6 +110,9 @@ def main(shared_data: shm.SharedMemData) -> None:
                     ],
                 },
                 "project": {
+                    "winsize": [
+                        shared_data.winsize[0],
+                        shared_data.winsize[1]],
                     "grid_size": [
                         shared_data.grid_size[0],
                         shared_data.grid_size[1]],
@@ -152,6 +155,8 @@ def main(shared_data: shm.SharedMemData) -> None:
         cv2.imshow("projectcalib", debug_image)
         key = cv2.waitKey(30)
         if key == ord("q"):
+            break
+        if shared_data.app_sync == 0:
             break
 
         # アプリケーション同期

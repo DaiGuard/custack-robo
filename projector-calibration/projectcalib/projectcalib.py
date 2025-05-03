@@ -39,6 +39,7 @@ def main(shared_data: shm.SharedMemData) -> None:
         cap.set(cv2.CAP_PROP_GAIN, calib_config["gain"])
         cap.set(cv2.CAP_PROP_CONTRAST, calib_config["contrast"])
 
+    # ウインドウの作成
     cv2.namedWindow("projectcalib", cv2.WINDOW_AUTOSIZE)
 
     while cv2.getWindowProperty("projectcalib", cv2.WND_PROP_AUTOSIZE) > 0:
@@ -151,7 +152,9 @@ def main(shared_data: shm.SharedMemData) -> None:
                 cv2.vconcat([board_image, project_image]),
                 (960, 1080))
             ])
-        debug_image = cv2.resize(debug_image, (1280, 720))
+        
+        # debug_image = cv2.resize(debug_image, (1920, 720))
+        debug_image = cv2.resize(debug_image, (1440, 540))
         cv2.imshow("projectcalib", debug_image)
         key = cv2.waitKey(30)
         if key == ord("q"):

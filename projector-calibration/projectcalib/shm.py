@@ -19,6 +19,8 @@ class SharedMemData(ctypes.Structure):
         ("_color_range1", ctypes.c_uint32 * 6),
         # 画像2 色域HSV (lo_H, up_H, lo_S, up_S, lo_V, up_V)
         ("_color_range2", ctypes.c_uint32 * 6),
+        # 画像保存トリガ
+        ("_capture_trigger", ctypes.c_bool)
     ]
 
     def __init__(self):
@@ -43,6 +45,7 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[3] = 255
         self._color_range2[4] = 50
         self._color_range2[5] = 255
+        self._capture_trigger = False
 
     def reset(self):
         """データリセット."""
@@ -65,6 +68,7 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[3] = 255
         self._color_range2[4] = 50
         self._color_range2[5] = 255
+        self._capture_trigger = False
 
     @property
     def app_sync(self) -> int:
@@ -90,7 +94,6 @@ class SharedMemData(ctypes.Structure):
                 self._color_range1[3],
                 self._color_range1[4],
                 self._color_range1[5])
-    
 
     @property
     def color_range2(self) -> tuple[int, int, int, int, int, int]:
@@ -101,6 +104,11 @@ class SharedMemData(ctypes.Structure):
                 self._color_range2[3],
                 self._color_range2[4],
                 self._color_range2[5])
+
+    @property
+    def capture_trigger(self) -> bool:
+        """画像保存トリガ."""
+        return self._capture_trigger
 
     @app_sync.setter
     def app_sync(self, sync: int):
@@ -140,3 +148,7 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[4] = color_range[4]
         self._color_range2[5] = color_range[5]
 
+    @capture_trigger.setter
+    def capture_trigger(self, trigger: bool):
+        """画像保存トリガ."""
+        self._capture_trigger = trigger

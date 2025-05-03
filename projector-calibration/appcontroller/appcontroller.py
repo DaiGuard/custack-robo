@@ -232,11 +232,19 @@ class MainApplication(tk.Frame):
 
         # キャプチャーボタン
         self._capture_btn = tk.Button(
-            master=parent, text="□",
-            command=self.captureBtnClick
+            master=parent, text="□\nCAPTURE",
+            command=self.captureBtnClick,
+            anchor=tk.CENTER
         )
         self._capture_btn.grid(row=7, column=0)
 
+        # キャリブレーションボタン
+        self._calib_btn = tk.Button(
+            master=parent, text="△\nCALIBRATION",
+            command=self.calibBtnClick,
+            anchor=tk.CENTER
+        )
+        self._calib_btn.grid(row=8, column=0)
 
     def girdPitchChangeValue(self):
         """グリッドピッチ値変更コールバック."""
@@ -389,6 +397,10 @@ class MainApplication(tk.Frame):
     def captureBtnClick(self):
         """キャプチャーボタンクリックコールバック."""
         self._pc_data.capture_trigger = True
+
+    def calibBtnClick(self):
+        """キャリブレーションボタンクリックコールバック."""
+        self._pc_data.calib_trigger = True
 
     def update(self):
         """定期実行処理."""

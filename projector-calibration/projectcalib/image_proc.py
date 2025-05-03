@@ -3,9 +3,10 @@
 import cv2
 import numpy as np
 
-def getColorRangeImage(src: np.ndarray,
-                       lower: tuple[int, int, int],
-                       upper: tuple[int, int, int]) -> np.ndarray:
+def getColorRangeImage(
+        src: np.ndarray,
+        lower: tuple[int, int, int],
+        upper: tuple[int, int, int]) -> np.ndarray:
     """特定の色域領域を抽出する
 
     Args:

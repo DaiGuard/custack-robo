@@ -154,7 +154,7 @@ def main(shared_data: shm.SharedMemData) -> None:
             ])
         
         # debug_image = cv2.resize(debug_image, (1920, 720))
-        debug_image = cv2.resize(debug_image, (1440, 540))
+        debug_image = cv2.resize(debug_image, (1728, 648))
         cv2.imshow("projectcalib", debug_image)
         key = cv2.waitKey(30)
         if key == ord("q"):

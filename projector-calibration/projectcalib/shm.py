@@ -24,7 +24,9 @@ class SharedMemData(ctypes.Structure):
         # 画像2 色域HSV (lo_H, up_H, lo_S, up_S, lo_V, up_V)
         ("_color_range2", ctypes.c_uint32 * 6),
         # 画像保存トリガ
-        ("_capture_trigger", ctypes.c_bool)
+        ("_capture_trigger", ctypes.c_bool),
+        # キャリブレーショントリガ
+        ("_calib_trigger", ctypes.c_bool),
     ]
 
     def __init__(self):
@@ -52,6 +54,7 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[4] = 50
         self._color_range2[5] = 255
         self._capture_trigger = False
+        self._calib_trigger = False
 
     def reset(self):
         """データリセット."""
@@ -77,6 +80,7 @@ class SharedMemData(ctypes.Structure):
         self._color_range2[4] = 50
         self._color_range2[5] = 255
         self._capture_trigger = False
+        self._calib_trigger = False
 
     def save(self):
         """データ保存."""
@@ -172,6 +176,11 @@ class SharedMemData(ctypes.Structure):
     def capture_trigger(self) -> bool:
         """画像保存トリガ."""
         return self._capture_trigger
+    
+    @property
+    def calib_trigger(self) -> bool:
+        """キャリブレーショントリガ."""
+        return self._calib_trigger
 
     @app_sync.setter
     def app_sync(self, sync: int):
@@ -226,3 +235,8 @@ class SharedMemData(ctypes.Structure):
     def capture_trigger(self, trigger: bool):
         """画像保存トリガ."""
         self._capture_trigger = trigger
+
+    @calib_trigger.setter
+    def calib_trigger(self, trigger: bool):
+        """キャリブレーショントリガ."""
+        self._calib_trigger = trigger

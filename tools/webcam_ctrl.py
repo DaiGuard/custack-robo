@@ -8,10 +8,11 @@ import json
 zoom_on = False
 zoom_move_on = True
 mouse_pos = (0, 0)
+zoom_mouse_pos = (0, 0)
 
 
 def main():
-    global zoom_on, zoom_move_on, mouse_pos
+    global zoom_on, zoom_move_on, mouse_pos, zoom_mouse_pos
 
     device_id = 0
     launch = "v4l2src device=/dev/video0 \
@@ -80,18 +81,20 @@ def main():
     zoom_on = False
 
     def zoom_in_out(event, x, y, flags, param):
-        global mouse_pos, zoom_on, zoom_move_on
+        global zoom_mouse_pos, zoom_on, zoom_move_on, mouse_pos
 
         if event == cv2.EVENT_MOUSEMOVE:
             if zoom_move_on:
-                mouse_pos = (x, y)
+                zoom_mouse_pos = (x, y)
+            mouse_pos = (x, y)
         if event == cv2.EVENT_LBUTTONDOWN:
             if zoom_on:
                 zoom_move_on = not zoom_move_on
 
     cv2.setMouseCallback("camera", zoom_in_out)
 
-    while True:
+    while cv2.getWindowProperty("camera", 0) is not None:
+        # カメラパラメータ変更
         autofocus = cap.get(cv2.CAP_PROP_AUTOFOCUS)
         autoexposure = cap.get(cv2.CAP_PROP_AUTO_EXPOSURE)
         brightness = cap.get(cv2.CAP_PROP_BRIGHTNESS)
@@ -107,12 +110,13 @@ def main():
             print("cannot capture image")
             break
 
+        # ズーム画像作成
         scaled_size = (960, 540)
         crop_base_size = 200
         h, w, _ = frame.shape
         scale = (scaled_size[0] / w, scaled_size[1] / h)
         crop_size = (int(crop_base_size * w / h), int(crop_base_size))
-        origin_mouse_pos = (int(mouse_pos[0] / scale[0]), int(mouse_pos[1] / scale[1]))
+        origin_mouse_pos = (int(zoom_mouse_pos[0] / scale[0]), int(zoom_mouse_pos[1] / scale[1]))
         anchor = [0, 0]
         if origin_mouse_pos[0] > crop_size[0]:
             llx = origin_mouse_pos[0] - crop_size[0]
@@ -144,7 +148,10 @@ def main():
             dst = cv2.resize(frame, scaled_size)
         else:
             dst = cv2.resize(zoom_image, scaled_size)
+        dst_hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
+        pick_hsv = dst_hsv[mouse_pos[1], mouse_pos[0]]
         cv2.putText(dst, "s: save, z: zoom, q: quit", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(dst, f"{pick_hsv}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
         cv2.imshow("camera", dst)
         key = cv2.waitKey(30)
         if key == ord("s"):

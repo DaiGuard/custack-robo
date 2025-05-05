@@ -79,6 +79,7 @@ def main():
 
     zoom_move_on = True
     zoom_on = False
+    saving = 0
 
     def zoom_in_out(event, x, y, flags, param):
         global zoom_mouse_pos, zoom_on, zoom_move_on, mouse_pos
@@ -150,11 +151,23 @@ def main():
             dst = cv2.resize(zoom_image, scaled_size)
         dst_hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
         pick_hsv = dst_hsv[mouse_pos[1], mouse_pos[0]]
-        cv2.putText(dst, "s: save, z: zoom, q: quit", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        cv2.putText(dst, f"{pick_hsv}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(
+            dst, "s: save, z: zoom, q: quit", (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(
+            dst, f"{pick_hsv}", (10, 60),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        if saving > 0:
+            cv2.putText(
+                dst, "saving...", (10, 120),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            saving += 1
+            if saving > 100:
+                saving = 0
         cv2.imshow("camera", dst)
         key = cv2.waitKey(30)
         if key == ord("s"):
+            saving = 1
             json_data = json.dumps({
                 "autofocus": autofocus,
                 "autoexposure": autoexposure,

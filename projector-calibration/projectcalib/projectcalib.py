@@ -26,6 +26,7 @@ def main(shared_data: shm.SharedMemData) -> None:
     # 画像保存フォルダの作成
     dt_now = datetime.datetime.now()
     save_path = os.path.join(".", "images", dt_now.strftime("%Y%m%d-%H%M%S"))
+    savefile_count = 0
     pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
     # カメラパラメータの設定
@@ -93,48 +94,52 @@ def main(shared_data: shm.SharedMemData) -> None:
 
         # 画像保存
         if shared_data.capture_trigger:
-            shared_data.capture_trigger = False
-            save_file = os.path.join(save_path, str(uuid.uuid4()))
-            cv2.imwrite(save_file + ".bmp", frame)
+            if board_ret and project_ret:
+                shared_data.capture_trigger = False
 
-            json_data = json.dumps({
-                "board": {
-                    "grid_size": [board_grid[0], board_grid[1]],
-                    "grid_pitch": board_pitch,
-                    "color_range": [
-                        shared_data.color_range1[0],
-                        shared_data.color_range1[1],
-                        shared_data.color_range1[2],
-                        shared_data.color_range1[3],
-                        shared_data.color_range1[4],
-                        shared_data.color_range1[5],
-                    ],
-                },
-                "project": {
-                    "winsize": [
-                        shared_data.winsize[0],
-                        shared_data.winsize[1]],
-                    "grid_size": [
-                        shared_data.grid_size[0],
-                        shared_data.grid_size[1]],
-                    "grid_pitch": shared_data.grid_pitch,
-                    "board_pose": [
-                        shared_data.board_pose[0],
-                        shared_data.board_pose[1],
-                        shared_data.board_pose[2]],
-                    "color_range": [
-                        shared_data.color_range2[0],
-                        shared_data.color_range2[1],
-                        shared_data.color_range2[2],
-                        shared_data.color_range2[3],
-                        shared_data.color_range2[4],
-                        shared_data.color_range2[5],
-                    ],
-                },
-            }, indent=4)
-            
-            with open(save_file + ".json", "w", encoding="utf-8") as f:
-                f.write(json_data)
+                savefile_count += 1
+                save_file = os.path.join(save_path, f"{savefile_count:04}")
+                # save_file = os.path.join(save_path, str(uuid.uuid4()))
+                cv2.imwrite(save_file + ".bmp", frame)
+
+                json_data = json.dumps({
+                    "board": {
+                        "grid_size": [board_grid[0], board_grid[1]],
+                        "grid_pitch": board_pitch,
+                        "color_range": [
+                            shared_data.color_range1[0],
+                            shared_data.color_range1[1],
+                            shared_data.color_range1[2],
+                            shared_data.color_range1[3],
+                            shared_data.color_range1[4],
+                            shared_data.color_range1[5],
+                        ],
+                    },
+                    "project": {
+                        "winsize": [
+                            shared_data.winsize[0],
+                            shared_data.winsize[1]],
+                        "grid_size": [
+                            shared_data.grid_size[0],
+                            shared_data.grid_size[1]],
+                        "grid_pitch": shared_data.grid_pitch,
+                        "board_pose": [
+                            shared_data.board_pose[0],
+                            shared_data.board_pose[1],
+                            shared_data.board_pose[2]],
+                        "color_range": [
+                            shared_data.color_range2[0],
+                            shared_data.color_range2[1],
+                            shared_data.color_range2[2],
+                            shared_data.color_range2[3],
+                            shared_data.color_range2[4],
+                            shared_data.color_range2[5],
+                        ],
+                    },
+                }, indent=4)
+                
+                with open(save_file + ".json", "w", encoding="utf-8") as f:
+                    f.write(json_data)
 
         # 結果表示
         board_image = cv2.cvtColor(board_image, cv2.COLOR_GRAY2BGR)
@@ -152,7 +157,13 @@ def main(shared_data: shm.SharedMemData) -> None:
                 cv2.vconcat([board_image, project_image]),
                 (960, 1080))
             ])
-        
+        debug_image = cv2.putText(
+            debug_image, f"{savefile_count:04}", (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        if shared_data.capture_trigger:
+            debug_image = cv2.putText(
+                debug_image, "Capturing...", (100, 100),
+                cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
         # debug_image = cv2.resize(debug_image, (1920, 720))
         debug_image = cv2.resize(debug_image, (1728, 648))
         cv2.imshow("projectcalib", debug_image)

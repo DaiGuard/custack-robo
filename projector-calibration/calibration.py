@@ -287,14 +287,14 @@ def main(args):
             project_image_points.append(grid_points)
             project_perspective_points.append(project_centers)
 
-        # # デバック出力
-        # tmp = cv2.hconcat([board_tmp, project_tmp])
-        # tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
-        # cv2.putText(tmp, data.name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        # cv2.imshow("image", tmp)
-        # gird_tmp = cv2.resize(grid_image, (0, 0), fx=0.5, fy=0.5)
-        # cv2.imshow("debug", gird_tmp)
-        # cv2.waitKey(0)
+        # デバック出力
+        tmp = cv2.hconcat([board_tmp, project_tmp])
+        tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
+        cv2.putText(tmp, data.name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.imshow("image", tmp)
+        gird_tmp = cv2.resize(grid_image, (0, 0), fx=0.5, fy=0.5)
+        cv2.imshow("debug", gird_tmp)
+        cv2.waitKey(0)
 
     # エラー処理
     if len(board_image_points) < 5:
@@ -307,10 +307,13 @@ def main(args):
     if not ret:
         print(f"[E]: キャリブレーションに失敗しました.")
         return
+    
+    # キャリブレーション結果出力
+    print(f"mtx: {mtx}")
+    print(f"dist: {dist}")
 
     # プロジェクタ側オブジェクト点推定
     for rvec, tvec, points, image in zip(rvecs, tvecs, project_perspective_points, used_image):
-        # print(rvec.shape, tvec.shape, points.shape)
 
         # 投影平面の計算
         rvec = rvec.reshape(-1)
@@ -338,35 +341,35 @@ def main(args):
         object_points = np.array(objp).reshape(-1, 3).astype(np.float32)
         project_object_points.append(object_points)
 
-        # # デバック出力
-        # tmp = image.copy()
-        # coordinates = np.array([
-        #     tvec, 
-        #     tvec + rmat[0] * grid_pitch * 2.0,
-        #     tvec + rmat[1] * grid_pitch * 2.0,
-        #     tvec + rmat[2] * grid_pitch * 2.0])        
-        # coordinate_proj, _ = cv2.projectPoints(
-        #     coordinates,
-        #     np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-        #     mtx, dist)
-        # coordinate_proj = coordinate_proj.reshape(-1, 2).astype(np.int32)
-        # projboard, _ = cv2.projectPoints(
-        #     object_points,
-        #     np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-        #     mtx, dist)
-        # projboard = projboard.reshape(-1, 2).astype(np.int32)
-        # cv2.circle(tmp, coordinate_proj[0], 5, (0, 255, 255), -1)
-        # cv2.circle(tmp, coordinate_proj[1], 5, (0, 0, 255), -1)
-        # cv2.circle(tmp, coordinate_proj[2], 5, (0, 255, 0), -1)
-        # cv2.circle(tmp, coordinate_proj[3], 5, (255, 0, 0), -1)
-        # cv2.line(tmp, coordinate_proj[0], coordinate_proj[1], (0, 0, 255), 2)
-        # cv2.line(tmp, coordinate_proj[0], coordinate_proj[2], (0, 255, 0), 2)
-        # cv2.line(tmp, coordinate_proj[0], coordinate_proj[3], (255, 0, 0), 2)
-        # for p in projboard:
-        #     cv2.circle(tmp, p, 5, (0, 255, 0), -1)
-        # tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
-        # cv2.imshow("debug", tmp)
-        # cv2.waitKey(0)
+        # デバック出力
+        tmp = image.copy()
+        coordinates = np.array([
+            tvec, 
+            tvec + rmat[0] * grid_pitch * 2.0,
+            tvec + rmat[1] * grid_pitch * 2.0,
+            tvec + rmat[2] * grid_pitch * 2.0])        
+        coordinate_proj, _ = cv2.projectPoints(
+            coordinates,
+            np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
+            mtx, dist)
+        coordinate_proj = coordinate_proj.reshape(-1, 2).astype(np.int32)
+        projboard, _ = cv2.projectPoints(
+            object_points,
+            np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
+            mtx, dist)
+        projboard = projboard.reshape(-1, 2).astype(np.int32)
+        cv2.circle(tmp, coordinate_proj[0], 5, (0, 255, 255), -1)
+        cv2.circle(tmp, coordinate_proj[1], 5, (0, 0, 255), -1)
+        cv2.circle(tmp, coordinate_proj[2], 5, (0, 255, 0), -1)
+        cv2.circle(tmp, coordinate_proj[3], 5, (255, 0, 0), -1)
+        cv2.line(tmp, coordinate_proj[0], coordinate_proj[1], (0, 0, 255), 2)
+        cv2.line(tmp, coordinate_proj[0], coordinate_proj[2], (0, 255, 0), 2)
+        cv2.line(tmp, coordinate_proj[0], coordinate_proj[3], (255, 0, 0), 2)
+        for p in projboard:
+            cv2.circle(tmp, p, 5, (0, 255, 0), -1)
+        tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
+        cv2.imshow("debug", tmp)
+        cv2.waitKey(0)
 
     # プロジェクタキャリブレーション実施
     project_mtx = np.zeros((3, 3), np.float32)

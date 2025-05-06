@@ -25,7 +25,8 @@ def main(shared_data: shm.SharedMemData) -> None:
     
     # 画像保存フォルダの作成
     dt_now = datetime.datetime.now()
-    save_path = os.path.join(".", "images", dt_now.strftime("%Y%m%d-%H%M%S"))
+    save_prefix = dt_now.strftime("%Y%m%d-%H%M%S")
+    save_path = os.path.join(".", "images", save_prefix)
     savefile_count = 0
     pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
@@ -98,7 +99,7 @@ def main(shared_data: shm.SharedMemData) -> None:
                 shared_data.capture_trigger = False
 
                 savefile_count += 1
-                save_file = os.path.join(save_path, f"{savefile_count:04}")
+                save_file = os.path.join(save_path, f"{save_prefix}-{savefile_count:04}")
                 # save_file = os.path.join(save_path, str(uuid.uuid4()))
                 cv2.imwrite(save_file + ".bmp", frame)
 

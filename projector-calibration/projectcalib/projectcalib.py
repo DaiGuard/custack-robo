@@ -84,7 +84,7 @@ def main(shared_data: shm.SharedMemData) -> None:
 
         # ボードグリッドの検出
         board_grid = (6, 4)
-        board_pitch = 0.056
+        board_pitch = 0.059
         board_ret, board_centers = cv2.findCirclesGrid(
             board_image, board_grid, flags=cv2.CALIB_CB_SYMMETRIC_GRID)
 

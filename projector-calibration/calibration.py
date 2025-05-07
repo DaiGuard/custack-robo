@@ -17,8 +17,6 @@ class CalibDataset:
 
     board_upper_color: np.typing.NDArray
     board_lower_color: np.typing.NDArray
-    # board_image_points: list[np.typing.NDArray]
-    # board_object_points: list[np.typing.NDArray]
 
     project_win_size: tuple[int, int]
     project_grid_size: tuple[int, int]
@@ -26,8 +24,6 @@ class CalibDataset:
     project_board_pose: tuple[int, int, int]
     project_upper_color: np.typing.NDArray
     project_lower_color: np.typing.NDArray
-    # project_image_points: list[np.typing.NDArray]
-    # project_object_points: list[np.typing.NDArray]
 
     def __init__(self):
         self.name = ""
@@ -35,8 +31,6 @@ class CalibDataset:
 
         self.board_upper_color = None
         self.board_lower_color = None
-        # self.board_image_points = []
-        # self.board_object_points = []
 
         self.project_win_size = (0, 0)
         self.project_grid_size = (0, 0)
@@ -44,13 +38,9 @@ class CalibDataset:
         self.project_board_pose = (0, 0, 0)
         self.project_upper_color = None
         self.project_lower_color = None
-        # self.project_image_points = []
-        # self.project_object_points = []
 
 
-def load_dataset(
-        folder_path: str, 
-        grid_pitch: float, grid_size: tuple[int, int]) -> list[CalibDataset]:
+def load_dataset(folder_path: str) -> list[CalibDataset]:
 
     dataset = []
 
@@ -108,46 +98,6 @@ def load_dataset(
                                 json_data["project"]["board_pose"][1],
                                 json_data["project"]["board_pose"][2]
                             )
-                            # bw = grid_size[0]
-                            # bh = grid_size[1]
-                            # data.board_object_points = np.zeros(
-                            #     (bw * bh, 3), np.float32)
-                            # data.board_object_points[:, :2] = np.mgrid[
-                            #     0:bw, 0:bh].T.reshape(-1, 2)
-                            # data.board_object_points *= grid_pitch
-
-                            # # ボード側イメージ点
-                            # data.board_image_points = np.zeros(
-                            #     (bw * bh, 2), np.float32)
-
-                            # # プロジェクタ側オブジェクト点
-                            # pcx = json_data["project"]["board_pose"][0]
-                            # pcy = json_data["project"]["board_pose"][1]
-                            # pcr = json_data["project"]["board_pose"][2]
-                            # pp = json_data["project"]["grid_pitch"]
-                            # pw = json_data["project"]["grid_size"][0]
-                            # ph = json_data["project"]["grid_size"][1]
-                            # data.project_object_points = np.zeros(
-                            #     (pw * ph, 3), np.float32)
-                            
-                            # # プロジェクトグリッドサイズ
-                            # data.project_grid_size = (pw, ph)
-                            
-                            # # プロジェクタ側イメージ点
-                            # data.project_image_points = np.zeros(
-                            #     (pw * ph, 2), np.float32)
-                            # for j in range(ph):
-                            #     for i in range(pw):
-                            #         dx = i * pp
-                            #         dy = j * pp
-
-                            #         dbx = dx * math.cos(math.radians(pcr))
-                            #         - dy * math.sin(math.radians(pcr))
-                            #         dby = dx * math.sin(math.radians(pcr))
-                            #         + dy * math.cos(math.radians(pcr))
-
-                            #         data.project_image_points[i + j * pw][0] = pcx + dbx
-                            #         data.project_image_points[i + j * pw][1] = pcy + dby
 
                             dataset.append(data)
 
@@ -182,7 +132,7 @@ def get_color_range_image(
     # ビット反転
     dst = cv2.bitwise_not(dst)
 
-    return dst
+    return dst.copy()
 
 def get_cricle_grid(
         src: cv2.typing.MatLike,
@@ -198,7 +148,7 @@ def get_cricle_grid(
         image, grid_size, flags=cv2.CALIB_CB_SYMMETRIC_GRID)
     
     tmp = src.copy()
-    cv2.drawChessboardCorners(tmp, grid_size, centers, ret)
+    tmp = cv2.drawChessboardCorners(tmp, grid_size, centers, ret)
 
     return ret, centers, tmp
         
@@ -255,7 +205,7 @@ def main(args):
     project_object_points = []  # プロジェクトグリッド物体上点
 
     # データセットの読み込み
-    dataset = load_dataset(folder_path, grid_pitch, grid_size)
+    dataset = load_dataset(folder_path)
 
     # ボードオブジェクト点の作成
     objp = np.zeros((grid_size[0] * grid_size[1], 3), np.float32)
@@ -264,7 +214,7 @@ def main(args):
 
     for data in dataset:
         # ボードイメージ点の取得
-        board_image_size = data.image.shape[:-1]
+        board_image_size = (data.image.shape[1], data.image.shape[0])
         board_ret, board_centers, board_tmp = get_cricle_grid(
             data.image, data.board_lower_color, data.board_upper_color,
             grid_size)
@@ -274,7 +224,7 @@ def main(args):
             data.image, data.project_lower_color, data.project_upper_color,
             data.project_grid_size)
         
-        project_image_size = (data.project_win_size[1], data.project_win_size[0])
+        project_image_size = (data.project_win_size[0], data.project_win_size[1])
         grid_points, grid_image = create_project_grid(
             data.project_win_size, data.project_grid_size, data.project_grid_pitch,
             data.project_board_pose)
@@ -297,7 +247,7 @@ def main(args):
         cv2.waitKey(0)
 
     # エラー処理
-    if len(board_image_points) < 5:
+    if len(board_image_points) < 10:
         print(f"[E]: 十分なデータ数がありません {len(board_image_points)}.")
         return
 
@@ -309,8 +259,9 @@ def main(args):
         return
     
     # キャリブレーション結果出力
-    print(f"mtx: {mtx}")
-    print(f"dist: {dist}")
+    print(f"camera calib")
+    print(f"mtx:=\n{mtx}")
+    print(f"dist:=\m {dist}")
 
     # プロジェクタ側オブジェクト点推定
     for rvec, tvec, points, image in zip(rvecs, tvecs, project_perspective_points, used_image):
@@ -373,14 +324,19 @@ def main(args):
 
     # プロジェクタキャリブレーション実施
     project_mtx = np.zeros((3, 3), np.float32)
-    project_mtx[0, 0] = project_image_size[0] / 2
-    project_mtx[1, 1] = project_image_size[1] / 2
+    project_mtx[0, 0] = project_image_size[0]
+    project_mtx[1, 1] = project_image_size[1]
     project_mtx[0, 2] = project_image_size[0] / 2
     project_mtx[1, 2] = project_image_size[1] / 2
     project_mtx[2, 2] = 1.0
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         project_object_points, project_image_points, project_image_size,
         project_mtx, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
+
+    # キャリブレーション結果出力
+    print(f"projector calib")
+    print(f"mtx:=\n{mtx}")
+    print(f"dist:=\m {dist}")
 
     # 終了処理
     cv2.destroyAllWindows()

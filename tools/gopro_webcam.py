@@ -11,7 +11,7 @@ curl -s 172.24.169.51/gp/gpWebcam/START?res=1080
 curl -s 172.24.169.51/gp/gpWebcam/SETTINGS?fov=4
 
 # ffmpegを使用して仮想カメラデバイスにビデオストリームを出力する
-ffmpeg -threads 1 \
+ffmpeg -nostdin -threads 1 \
     -i 'udp://@0.0.0.0:8554?overrun_nonfatal=1&fifo_size=5000000'\
     -f:v mpegts -fflags nobuffer -flags low_delay -vf setpts=0 \
     -vf format="yuv420p" -f v4l2 /dev/video42
@@ -28,43 +28,78 @@ sudo modprobe -rf v4l2loopback
 """
 
 import requests
+import os
+import subprocess
 
 GOPRO_IP = "172.24.169.51"
 GOPRO_PATH = "/gp/gpWebcam/"
+GOPRO_VIDEO_ID=42
 GOPRO_CMDS = {
     "start": "START",
     "stop": "STOP",
     "setting": "SETTING"
 }
 
-def webcam_start(resolution: str) -> tuple[bool, int, int]:
+def webcam_start(resolution: str) -> tuple[bool, subprocess.Popen]:
+    if not os.path.exists(f"/dev/video{GOPRO_VIDEO_ID}"):
+        # res = subprocess.run([
+        #     "modprobe", "v4l2loopback",
+        #     "exclusive_caps=1",  "card_label='GoPro'",
+        #     f"video_nr={GOPRO_VIDEO_ID}"])
+        # print(res)
+        print("[E]: Invalid video device")
+        return False, None
+
     if resolution in ["1080", "720", "480"]:
         res = requests.get(
             f"http://{GOPRO_IP}{GOPRO_PATH}START?" \
                 + f"res={resolution}"
         )
-
-        if res.status_code == 200:
-            json_data = res.json()
-            return True, json_data["status"], json_data["error"]
-        else:
+        if res.status_code != 200:
             print(f"[E]: Failed to start webcam ({res.status_code})")
-            return False, -1, 0
+            return False, None
+
+        json_data = res.json()
+        if json_data["status"] != 2:
+            print(f"[E]: Failed to start webcam ({json_data['status']}")
+            return False, None
+        
+        process = subprocess.Popen([
+            "ffmpeg", "-nostdin", "-threads", "1",
+            "-i", "udp://@0.0.0.0:8554?overrun_nonfatal=1&fifo_size=5000000",
+            "-f:v", "mpegts", "-fflags", "nobuffer",
+            "-flags", "low_delay", "-vf", "setpts=0",
+
+            "-vf", "format=rgb24", "-f",  "v4l2", f"/dev/video{GOPRO_VIDEO_ID}"
+            # "-vf", "format=yuv420p", "-f",  "v4l2", f"/dev/video{GOPRO_VIDEO_ID}"
+            ])
+        print(f"[I]: Start webcam PID[{process.pid}]")
+        return True, process
     else:
         print("[E]: Invalid resolution")
-        return False, -1, 0
+        return False, None
 
-def webcam_stop() -> tuple[bool, int, int]:
+def webcam_stop(process: subprocess.Popen=None) -> bool:
+
+    if process:
+        process.terminate()
+        process.wait()
+        print(f"[I]: Stop webcam PID[{process.pid}]")
+
     res = requests.get(f"http://{GOPRO_IP}{GOPRO_PATH}STOP")
-
     if res.status_code == 200:
         json_data = res.json()
-        return True, json_data["status"], json_data["error"]
+        if json_data["status"] != 1:
+            print(f"[E]: Failed to stop webcam ({json_data['status']})")
+            return False
+        
+        print("[I]: Stop webcam")
+        return True
     else:
         print(f"[E]: Failed to stop webcam ({res.status_code})")
-        return False, -1, 0
+        return False
 
-def webcam_setting(fov: str) -> tuple[bool, int, int]:
+def webcam_setting(fov: str) -> bool:
     if fov in ["wide", "superwide", "linear", "narrow"]:
 
         fov_id = 0
@@ -84,36 +119,53 @@ def webcam_setting(fov: str) -> tuple[bool, int, int]:
 
         if res.status_code == 200:
             json_data = res.json()
-            return True, json_data["status"], json_data["error"]
+            return True
         else:
             print(f"[E]: Failed to set webcam ({res.status_code})")
-            return False, -1, 0
+            return False
     else:
         print("[E]: Invalid fov")
-        return False, -1, 0
+        return False
 
 
 if __name__ == "__main__":
     import time
     import cv2
 
-    # webcam_start("1080")
-    # time.sleep(5)
-    # webcam_setting("wide")
-    # time.sleep(5)
-    # webcam_setting("linear")
-    # time.sleep(5)
-    # webcam_setting("narrow")
-    # time.sleep(5)
+    # WEBカメラモード強制停止
+    webcam_stop()
+    # WEBカメラモード開始
+    ret, proc = webcam_start("1080")
+    if not ret:
+        exit()
+    time.sleep(5)
 
-    cap = cv2.VideoCapture("/dev/video42")
-    while True:
-        ret, frame = cap.read()
-        cv2.imshow("frame", frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+    # カメラレンズモード設定
+    # ret = webcam_setting("wide")
+    ret = webcam_setting("linear")
+    # ret = webcam_setting("narrow")
+    if not ret:
+        exit()
+    time.sleep(5)
 
-    cap.release()
+    cap = None
+    try:
+        cap = cv2.VideoCapture(f"/dev/video{GOPRO_VIDEO_ID}")
+        if not cap.isOpened():
+            raise RuntimeError("[E]: cannnot open device")
+
+        while True:
+            ret, frame = cap.read()
+            cv2.imshow("frame", frame)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(e)
+
+    if cap is not None:
+        cap.release()
     cv2.destroyAllWindows()
 
-    # webcam_stop()
+    webcam_stop(proc)

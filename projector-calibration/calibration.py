@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 import json
 import math
+import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d.art3d as art3d
 
 
 @dataclasses.dataclass
@@ -194,6 +196,7 @@ def main(args):
     grid_size = (args.grid_width, args.grid_height)
 
     # ローカル変数
+    used_name = []
     used_image = []
     board_image_size = None
     board_image_points = []     # キャリブボード画像上点
@@ -231,6 +234,7 @@ def main(args):
         
         # データの保存
         if board_ret and project_ret:
+            used_name.append(data.name)
             used_image.append(data.image)
             board_image_points.append(board_centers)
             board_object_points.append(objp)
@@ -252,7 +256,7 @@ def main(args):
         return
 
     # カメラキャリブレーション実施
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    ret, cam_mtx, cam_dist, cam_rvecs, cam_tvecs = cv2.calibrateCamera(
         board_object_points, board_image_points, board_image_size, None, None)
     if not ret:
         print(f"[E]: キャリブレーションに失敗しました.")
@@ -260,11 +264,13 @@ def main(args):
     
     # キャリブレーション結果出力
     print(f"camera calib")
-    print(f"mtx:=\n{mtx}")
-    print(f"dist:=\m {dist}")
+    print(f"mtx:=\n{cam_mtx}")
+    print(f"dist:=\n {cam_dist}")
 
     # プロジェクタ側オブジェクト点推定
-    for rvec, tvec, points, image in zip(rvecs, tvecs, project_perspective_points, used_image):
+    for i, (rvec, tvec, points, image, name) in enumerate(zip(
+        cam_rvecs, cam_tvecs, project_perspective_points,
+        used_image, used_name)):
 
         # 投影平面の計算
         rvec = rvec.reshape(-1)
@@ -276,18 +282,20 @@ def main(args):
         for point in points.reshape(-1, 2):
             # 視線作成
             eye = np.array([
-                (point[0] - mtx[0, 2]) / mtx[0, 0],
-                (point[1] - mtx[1, 2]) / mtx[1, 1],
+                (point[0] - cam_mtx[0, 2]) / cam_mtx[0, 0],
+                (point[1] - cam_mtx[1, 2]) / cam_mtx[1, 1],
                 1.0
             ])
 
             # 視線と平面の交点を計算
             M = np.array([
                 [rmat[0, x], rmat[1, x], -eye[x]] for x in range(3)])
+        
+
             M_inv = np.linalg.inv(M)
             A = -1.0 * M_inv @ tvec
-
             p = eye * A[2]
+
             objp.append(p)
         object_points = np.array(objp).reshape(-1, 3).astype(np.float32)
         project_object_points.append(object_points)
@@ -302,12 +310,12 @@ def main(args):
         coordinate_proj, _ = cv2.projectPoints(
             coordinates,
             np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-            mtx, dist)
+            cam_mtx, cam_dist)
         coordinate_proj = coordinate_proj.reshape(-1, 2).astype(np.int32)
         projboard, _ = cv2.projectPoints(
             object_points,
             np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-            mtx, dist)
+            cam_mtx, cam_dist)
         projboard = projboard.reshape(-1, 2).astype(np.int32)
         cv2.circle(tmp, coordinate_proj[0], 5, (0, 255, 255), -1)
         cv2.circle(tmp, coordinate_proj[1], 5, (0, 0, 255), -1)
@@ -322,6 +330,46 @@ def main(args):
         cv2.imshow("debug", tmp)
         cv2.waitKey(0)
 
+    # 3D描画デバック
+    fig = plt.figure(figsize=(10, 10), dpi=120)
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_box_aspect((1, 1, 1))
+    ax.view_init(elev=-45, azim=-22, roll=-75)
+    
+    for i, (name, rvec, tvec, bp, pp) in enumerate(zip(
+        used_name, cam_rvecs, cam_tvecs,
+        board_object_points, project_object_points)):
+
+        px = [float(x[0]) for x in pp]
+        py = [float(x[1]) for x in pp]
+        pz = [float(x[2]) for x in pp]
+        pline = art3d.Line3D(px, py, pz, color='c', linewidth=0.5)
+
+        rvec = rvec.reshape(-1)
+        rmat, _ = cv2.Rodrigues(rvec)
+        tvec = tvec.reshape(-1)
+        bx = []
+        by = []
+        bz = []
+        for point in bp:
+            p = rmat @ point.T + tvec
+            bx.append(p[0])
+            by.append(p[1])
+            bz.append(p[2])
+        bline = art3d.Line3D(bx, by, bz, color='m', linewidth=0.5)
+
+        ax.text(bx[0], by[0], bz[0], name, fontsize=5)
+        ax.add_line(pline)
+        ax.add_line(bline)
+        ax.set_xlim(-1.5, 1.5)
+        ax.set_ylim(-1.5, 1.5)
+        ax.set_zlim(0, 3)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+
+    plt.show()
+
     # プロジェクタキャリブレーション実施
     project_mtx = np.zeros((3, 3), np.float32)
     project_mtx[0, 0] = project_image_size[0]
@@ -329,14 +377,33 @@ def main(args):
     project_mtx[0, 2] = project_image_size[0] / 2
     project_mtx[1, 2] = project_image_size[1] / 2
     project_mtx[2, 2] = 1.0
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    ret, proj_mtx, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
         project_object_points, project_image_points, project_image_size,
         project_mtx, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
 
-    # キャリブレーション結果出力
+    # プロジェクタキャリブレーション結果出力    
     print(f"projector calib")
-    print(f"mtx:=\n{mtx}")
-    print(f"dist:=\m {dist}")
+    print(f"mtx:=\n{proj_mtx}")
+    print(f"dist:=\n {proj_dist}")
+
+    # ステレオキャリブレーション実施
+    ret, cam_mtx, cam_dist, proj_mtx, proj_dist, R, T, E, F = cv2.stereoCalibrate(
+        project_object_points,
+        project_perspective_points, project_image_points,
+        cam_mtx, cam_dist, proj_mtx, proj_dist,
+        project_image_size,
+        cv2.CALIB_FIX_INTRINSIC
+    )
+
+    # ステレオカメラキャリブレーション結果出力
+    print(f"camera calib")
+    print(f"mtx:=\n{cam_mtx}")
+    print(f"dist:=\n {cam_dist}")
+    print(f"projector calib")
+    print(f"mtx:=\n{proj_mtx}")
+    print(f"dist:=\n {proj_dist}")
+    print(f"R:=\n{R}")
+    print(f"T:=\n{T}")
 
     # 終了処理
     cv2.destroyAllWindows()

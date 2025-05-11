@@ -14,32 +14,18 @@ import mpl_toolkits.mplot3d.art3d as art3d
 @dataclasses.dataclass
 class CalibDataset:
 
-    name: str
-    image: cv2.typing.MatLike
+    name: str = ""
+    image: cv2.typing.MatLike = None
 
-    board_upper_color: np.typing.NDArray
-    board_lower_color: np.typing.NDArray
+    board_upper_color: np.typing.NDArray = None
+    board_lower_color: np.typing.NDArray = None
 
-    project_win_size: tuple[int, int]
-    project_grid_size: tuple[int, int]
-    project_grid_pitch: int
-    project_board_pose: tuple[int, int, int]
-    project_upper_color: np.typing.NDArray
-    project_lower_color: np.typing.NDArray
-
-    def __init__(self):
-        self.name = ""
-        self.image = None
-
-        self.board_upper_color = None
-        self.board_lower_color = None
-
-        self.project_win_size = (0, 0)
-        self.project_grid_size = (0, 0)
-        self.project_grid_pitch = 0
-        self.project_board_pose = (0, 0, 0)
-        self.project_upper_color = None
-        self.project_lower_color = None
+    project_win_size: tuple[int, int] = (0, 0)
+    project_grid_size: tuple[int, int] = (0, 0)
+    project_grid_pitch: int = 0
+    project_board_pose: tuple[int, int, int] = (0, 0, 0)
+    project_upper_color: np.typing.NDArray = None
+    project_lower_color: np.typing.NDArray = None
 
 
 def load_dataset(folder_path: str) -> list[CalibDataset]:
@@ -67,39 +53,34 @@ def load_dataset(folder_path: str) -> list[CalibDataset]:
                         with open(item.with_suffix(".json"), "r", encoding="utf-8") as f:
                             json_data = json.load(f)
 
+                            board_data = json_data["board"]
+                            project_data = json_data["project"]
+
                             # ボード側色域
                             data.board_lower_color = np.array((
-                                json_data["board"]["color_range"][0],
-                                json_data["board"]["color_range"][2],
-                                json_data["board"]["color_range"][4]))
+                                board_data["color_range"][0],
+                                board_data["color_range"][2],
+                                board_data["color_range"][4]))
                             data.board_upper_color = np.array((
-                                json_data["board"]["color_range"][1],
-                                json_data["board"]["color_range"][3],
-                                json_data["board"]["color_range"][5]))
+                                board_data["color_range"][1],
+                                board_data["color_range"][3],
+                                board_data["color_range"][5]))
                             
                             # プロジェクタ側色域
                             data.project_lower_color = np.array((
-                                json_data["project"]["color_range"][0],
-                                json_data["project"]["color_range"][2],
-                                json_data["project"]["color_range"][4]))
+                                project_data["color_range"][0],
+                                project_data["color_range"][2],
+                                project_data["color_range"][4]))
                             data.project_upper_color = np.array((
-                                json_data["project"]["color_range"][1],
-                                json_data["project"]["color_range"][3],
-                                json_data["project"]["color_range"][5]))
+                                project_data["color_range"][1],
+                                project_data["color_range"][3],
+                                project_data["color_range"][5]))
                             
                             # ボード情報入手
-                            data.project_win_size = (
-                                json_data["project"]["winsize"][0],
-                                json_data["project"]["winsize"][1])
-                            data.project_grid_size = (
-                                json_data["project"]["grid_size"][0],
-                                json_data["project"]["grid_size"][1])
-                            data.project_grid_pitch = json_data["project"]["grid_pitch"]
-                            data.project_board_pose = (
-                                json_data["project"]["board_pose"][0],
-                                json_data["project"]["board_pose"][1],
-                                json_data["project"]["board_pose"][2]
-                            )
+                            data.project_win_size = tuple(project_data["winsize"])
+                            data.project_grid_size = tuple(project_data["grid_size"])
+                            data.project_grid_pitch = project_data["grid_pitch"]
+                            data.project_board_pose = tuple(project_data["board_pose"])
 
                             dataset.append(data)
 
@@ -136,7 +117,7 @@ def get_color_range_image(
 
     return dst.copy()
 
-def get_cricle_grid(
+def get_circle_grid(
         src: cv2.typing.MatLike,
         lower_color: np.typing.NDArray, upper_color: np.typing.NDArray,
         grid_size: tuple[int, int]
@@ -181,13 +162,38 @@ def create_project_grid(
 
             cv2.circle(
                 tmp, (int(dbx), int(dby)),
-                5, (0, 0, 255), -1)
+                5, (0, 255, 0), -1)
 
     # 点群の次数を合わせる
     num = grid_size[0] * grid_size[1]
     grid_points = grid_points.reshape([num, 1, -1])
 
     return grid_points, tmp
+
+def rotationMatrixToEulerAnglesZYX(R):
+    """回転行列をZYXオイラー角 (度) に変換します。
+    Args:
+        R (numpy.ndarray): 3x3 の回転行列。
+    Returns:
+        tuple: ZYXオイラー角 (degrees)。(yaw, pitch, roll)
+    """
+    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+
+    singular = sy < 1e-6
+
+    if not singular:
+        x = math.atan2(R[2, 1], R[2, 2])
+        y = math.atan2(-R[2, 0], sy)
+        z = math.atan2(R[1, 0], R[0, 0])
+    else:
+        x = math.atan2(-R[1, 2], R[1, 1])
+        y = math.atan2(-R[2, 0], sy)
+        z = 0
+
+    return np.array([
+        math.degrees(z),
+        math.degrees(y),
+        math.degrees(x)]) # yaw (Z), pitch (Y), roll (X)
 
 def main(args):
     # 引数の取得
@@ -206,6 +212,7 @@ def main(args):
     project_image_points = []   # プロジェクトグリッド投影点
     project_perspective_points = [] # プロジェクトグリット画像上点
     project_object_points = []  # プロジェクトグリッド物体上点
+    virtual_object_points = []  # 仮想物体上点
 
     # データセットの読み込み
     dataset = load_dataset(folder_path)
@@ -218,12 +225,12 @@ def main(args):
     for data in dataset:
         # ボードイメージ点の取得
         board_image_size = (data.image.shape[1], data.image.shape[0])
-        board_ret, board_centers, board_tmp = get_cricle_grid(
+        board_ret, board_centers, board_tmp = get_circle_grid(
             data.image, data.board_lower_color, data.board_upper_color,
             grid_size)
         
         # プロジェクタイメージ点の取得
-        project_ret, project_centers, project_tmp = get_cricle_grid(
+        project_ret, project_centers, project_tmp = get_circle_grid(
             data.image, data.project_lower_color, data.project_upper_color,
             data.project_grid_size)
         
@@ -245,10 +252,11 @@ def main(args):
         tmp = cv2.hconcat([board_tmp, project_tmp])
         tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
         cv2.putText(tmp, data.name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.imshow("image", tmp)
         gird_tmp = cv2.resize(grid_image, (0, 0), fx=0.5, fy=0.5)
-        cv2.imshow("debug", gird_tmp)
-        cv2.waitKey(0)
+        if args.debug:
+            cv2.imshow("image", tmp)
+            cv2.imshow("debug", gird_tmp)
+            cv2.waitKey(0)
 
     # エラー処理
     if len(board_image_points) < 10:
@@ -268,118 +276,157 @@ def main(args):
     print(f"dist:=\n {cam_dist}")
 
     # プロジェクタ側オブジェクト点推定
-    for i, (rvec, tvec, points, image, name) in enumerate(zip(
+    for i, (cam_rvec, cam_tvec, proj_img_pts_on_cam, image, name) in enumerate(zip(
         cam_rvecs, cam_tvecs, project_perspective_points,
         used_image, used_name)):
 
         # 投影平面の計算
-        rvec = rvec.reshape(-1)
-        rmat, _ = cv2.Rodrigues(rvec)
-        tvec = tvec.reshape(-1)
+        # rvec = rvec.reshape(-1) # Rodrigues accepts (3,1) or (1,3)
+        rmat, _ = cv2.Rodrigues(cam_rvec) # R_world_to_camera
+        # tvec = tvec.reshape(-1) # tvec is t_world_to_camera
 
         # 復元プロジェクタグリッド3次元点
         objp = []
-        for point in points.reshape(-1, 2):
-            # 視線作成
+        vobjp = []
+        R_inv = rmat.T
+        tvec_flat = cam_tvec.flatten()
+        for point in proj_img_pts_on_cam.reshape(-1, 2):
+            # 視線作成 (カメラ座標系正規化画像座標 [x', y', 1])
             eye = np.array([
                 (point[0] - cam_mtx[0, 2]) / cam_mtx[0, 0],
                 (point[1] - cam_mtx[1, 2]) / cam_mtx[1, 1],
                 1.0
             ])
 
-            # 視線と平面の交点を計算
-            M = np.array([
-                [rmat[0, x], rmat[1, x], -eye[x]] for x in range(3)])
-        
+            # X_world = R_inv @ (s * eye - tvec_flat)
+            # X_world_z = R_inv[2,:] @ (s * eye - tvec_flat) = 0
+            # s * (R_inv[2,:] @ eye) - (R_inv[2,:] @ tvec_flat) = 0
+            # s = (R_inv[2,:] @ tvec_flat) / (R_inv[2,:] @ eye)
+            
+            den_s = R_inv[2,:] @ eye
+            if abs(den_s) < 1e-9: # 視線がワールドXY平面に平行
+                objp.append(np.array([np.nan, np.nan, np.nan]))
+                vobjp.append(np.array([np.nan, np.nan, np.nan]))
+                continue
 
-            M_inv = np.linalg.inv(M)
-            A = -1.0 * M_inv @ tvec
-            p = eye * A[2]
+            num_s = R_inv[2,:] @ tvec_flat
+            s_val = num_s / den_s
 
-            objp.append(p)
+            if s_val < 0: # 交点がカメラの背後にある
+                objp.append(np.array([np.nan, np.nan, np.nan]))
+                vobjp.append(np.array([np.nan, np.nan, np.nan]))
+                continue
+
+            Xc = s_val * eye # カメラ座標系での3D点
+            Xw = R_inv @ (Xc - tvec_flat)
+            
+            # Xw[2] は理論上0に近い。数値安定性のために明示的に0に設定。
+            Xw_stable = Xw.copy()
+            Xw_stable[2] = 0.0
+
+            objp.append(Xc) # カメラ座標系での3D点 (プロット用)
+            vobjp.append(Xw_stable) # ワールド座標系での3D点 (Z=0, キャリブレーション用)
+
         object_points = np.array(objp).reshape(-1, 3).astype(np.float32)
-        project_object_points.append(object_points)
+        virtual_points = np.array(vobjp).reshape(-1, 3).astype(np.float32)
+        project_object_points.append(object_points) # カメラ座標系での3D点 (プロット用)
+        virtual_object_points.append(virtual_points)
 
         # デバック出力
         tmp = image.copy()
-        coordinates = np.array([
-            tvec, 
-            tvec + rmat[0] * grid_pitch * 2.0,
-            tvec + rmat[1] * grid_pitch * 2.0,
-            tvec + rmat[2] * grid_pitch * 2.0])        
-        coordinate_proj, _ = cv2.projectPoints(
-            coordinates,
-            np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-            cam_mtx, cam_dist)
-        coordinate_proj = coordinate_proj.reshape(-1, 2).astype(np.int32)
-        projboard, _ = cv2.projectPoints(
-            object_points,
-            np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]),
-            cam_mtx, cam_dist)
-        projboard = projboard.reshape(-1, 2).astype(np.int32)
-        cv2.circle(tmp, coordinate_proj[0], 5, (0, 255, 255), -1)
-        cv2.circle(tmp, coordinate_proj[1], 5, (0, 0, 255), -1)
-        cv2.circle(tmp, coordinate_proj[2], 5, (0, 255, 0), -1)
-        cv2.circle(tmp, coordinate_proj[3], 5, (255, 0, 0), -1)
-        cv2.line(tmp, coordinate_proj[0], coordinate_proj[1], (0, 0, 255), 2)
-        cv2.line(tmp, coordinate_proj[0], coordinate_proj[2], (0, 255, 0), 2)
-        cv2.line(tmp, coordinate_proj[0], coordinate_proj[3], (255, 0, 0), 2)
-        for p in projboard:
-            cv2.circle(tmp, p, 5, (0, 255, 0), -1)
+        length = grid_pitch * 2.0
+        axis_points_world = np.float32([
+            [0.0, 0.0, 0.0], [length, 0.0, 0.0], [0.0, length, 0.0], [0.0, 0.0, length] 
+        ])
+        imgpts, _ = cv2.projectPoints(axis_points_world, cam_rvec, cam_tvec, cam_mtx, cam_dist)
+        imgpts = np.int32(imgpts.reshape(-1, 2))
+        for p in proj_img_pts_on_cam.reshape(-1, 2): # project_perspective_points
+            cv2.circle(tmp, tuple(np.int32(p)), 5, (255, 127, 0), -1)
+        valid_project_points, _ = cv2.projectPoints(virtual_points, cam_rvec, cam_tvec, cam_mtx, cam_dist)
+        for p in valid_project_points.reshape(-1, 2):
+            cv2.circle(tmp, tuple(np.int32(p)), 7, (0, 0, 255), 2)
+        cv2.line(tmp, tuple(imgpts[0]), tuple(imgpts[1]), (0,0,255), 2) # X軸 (赤)
+        cv2.line(tmp, tuple(imgpts[0]), tuple(imgpts[2]), (0,255,0), 2) # Y軸 (緑)
+        cv2.line(tmp, tuple(imgpts[0]), tuple(imgpts[3]), (255,0,0), 2) # Z軸 (青)
+
         tmp = cv2.resize(tmp, (0, 0), fx=0.5, fy=0.5)
-        cv2.imshow("debug", tmp)
-        cv2.waitKey(0)
+
+        if args.debug:
+            cv2.imshow("debug", tmp)
+            cv2.waitKey(0)
 
     # 3D描画デバック
     fig = plt.figure(figsize=(10, 10), dpi=120)
     ax = fig.add_subplot(111, projection="3d")
     ax.set_box_aspect((1, 1, 1))
-    ax.view_init(elev=-45, azim=-22, roll=-75)
+    ax.view_init(elev=-45, azim=-22, roll=-75) # 視点設定
     
-    for i, (name, rvec, tvec, bp, pp) in enumerate(zip(
+    for i, (name, cam_rvec_i, cam_tvec_i, board_obj_pts_i, proj_obj_pts_cam_coords_i) in enumerate(zip(
         used_name, cam_rvecs, cam_tvecs,
-        board_object_points, project_object_points)):
+        board_object_points, project_object_points)): # project_object_points はカメラ座標系
 
-        px = [float(x[0]) for x in pp]
-        py = [float(x[1]) for x in pp]
-        pz = [float(x[2]) for x in pp]
-        pline = art3d.Line3D(px, py, pz, color='c', linewidth=0.5)
+        # プロジェクタ投影点の3Dプロット (カメラ座標系)
+        px = [float(p[0]) for p in proj_obj_pts_cam_coords_i if not np.isnan(p).any()]
+        py = [float(p[1]) for p in proj_obj_pts_cam_coords_i if not np.isnan(p).any()]
+        pz = [float(p[2]) for p in proj_obj_pts_cam_coords_i if not np.isnan(p).any()]
+        pline_label = "projector (cam coords)" if i == 0 else None
+        pline = art3d.Line3D(
+            px, py, pz, color='c', linewidth=0.5,
+            label=pline_label)
 
-        rvec = rvec.reshape(-1)
-        rmat, _ = cv2.Rodrigues(rvec)
-        tvec = tvec.reshape(-1)
+        # ボードオブジェクト点の3Dプロット (カメラ座標系に変換)
+        rmat_i, _ = cv2.Rodrigues(cam_rvec_i)
+        tvec_i_flat = cam_tvec_i.flatten()
         bx = []
         by = []
         bz = []
-        for point in bp:
-            p = rmat @ point.T + tvec
-            bx.append(p[0])
-            by.append(p[1])
-            bz.append(p[2])
-        bline = art3d.Line3D(bx, by, bz, color='m', linewidth=0.5)
+        for point_world in board_obj_pts_i: # board_object_points はワールド座標 (Z=0)
+            p_cam = rmat_i @ point_world.T + tvec_i_flat
+            bx.append(p_cam[0])
+            by.append(p_cam[1])
+            bz.append(p_cam[2])
+        bline_label = "board (cam coords)" if i == 0 else None
+        bline = art3d.Line3D(
+            bx, by, bz, color='m', linewidth=0.5,
+            label=bline_label)
 
         ax.text(bx[0], by[0], bz[0], name, fontsize=5)
         ax.add_line(pline)
         ax.add_line(bline)
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.5, 1.5)
-        ax.set_zlim(0, 3)
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-        ax.set_zlabel("z")
 
-    plt.show()
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-1.5, 1.5)
+    ax.set_zlim(0, 3.0)
+    ax.set_xlabel("X (camera coord)")
+    ax.set_ylabel("Y (camera coord)")
+    ax.set_zlabel("Z (camera coord)")
+    ax.legend()
+    # plt.show()
 
     # プロジェクタキャリブレーション実施
+    # project_mtx = np.zeros((3, 3), np.float32)
+    # project_mtx[0, 0] = project_image_size[0]
+    # project_mtx[1, 1] = project_image_size[1]
+    # project_mtx[0, 2] = project_image_size[0] / 2
+    # project_mtx[1, 2] = project_image_size[1] / 2
+    # project_mtx[2, 2] = 1.0
     project_mtx = np.zeros((3, 3), np.float32)
-    project_mtx[0, 0] = project_image_size[0]
-    project_mtx[1, 1] = project_image_size[1]
+    project_mtx[0, 0] = 980.0
+    project_mtx[1, 1] = 1400
     project_mtx[0, 2] = project_image_size[0] / 2
     project_mtx[1, 2] = project_image_size[1] / 2
     project_mtx[2, 2] = 1.0
+    project_dist = np.zeros((5), np.float32)
+    project_dist[0] = 0.0
+    project_dist[1] = 0.0
+    project_dist[2] = 0.04
+    project_dist[3] = 0.0
+    project_dist[4] = 0.0
+    project_dist = project_dist.reshape(1, -1)
+
     ret, proj_mtx, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
-        project_object_points, project_image_points, project_image_size,
-        project_mtx, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
+        virtual_object_points, project_image_points, project_image_size,
+        project_mtx, project_dist, flags=cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_RATIONAL_MODEL)
 
     # プロジェクタキャリブレーション結果出力    
     print(f"projector calib")
@@ -388,14 +435,16 @@ def main(args):
 
     # ステレオキャリブレーション実施
     ret, cam_mtx, cam_dist, proj_mtx, proj_dist, R, T, E, F = cv2.stereoCalibrate(
-        project_object_points,
+        virtual_object_points,
         project_perspective_points, project_image_points,
         cam_mtx, cam_dist, proj_mtx, proj_dist,
         project_image_size,
         cv2.CALIB_FIX_INTRINSIC
     )
+    print(f"rms = {ret}")
 
     # ステレオカメラキャリブレーション結果出力
+    euler_angles = rotationMatrixToEulerAnglesZYX(R)
     print(f"camera calib")
     print(f"mtx:=\n{cam_mtx}")
     print(f"dist:=\n {cam_dist}")
@@ -403,7 +452,76 @@ def main(args):
     print(f"mtx:=\n{proj_mtx}")
     print(f"dist:=\n {proj_dist}")
     print(f"R:=\n{R}")
-    print(f"T:=\n{T}")
+    print(f"T:=\n{-R.T @ T.flatten()}")
+
+    # ファイル保存
+    with open("proj_calib_config.json", "w", encoding="utf-8") as f:
+        json_data = json.dump({
+            "camera_mtx": cam_mtx.tolist(),
+            "camera_dist": cam_dist.tolist(),
+            "projector_mtx": proj_mtx.tolist(),
+            "projector_dist": proj_dist.tolist(),
+            "cam2proj_euler_angles": euler_angles.tolist(),
+            "cam2proj_trans": (-R.T @ T.flatten()).tolist()
+        }, f, indent=4)
+
+    # ステレオキャリブレーション結果 (R, T) を使ったデバッグ表示 (matplotlib)
+    fig_stereo_pose = plt.figure(figsize=(8, 8))
+    ax_stereo_pose = fig_stereo_pose.add_subplot(111, projection='3d')
+
+    axis_length = 0.3  # 軸の長さを設定 (grid_pitchを基準に)
+
+    # カメラ座標系の描画 (原点に配置)
+    cam_origin = np.array([0, 0, 0])
+    cam_x_axis_end = np.array([axis_length, 0, 0])
+    cam_y_axis_end = np.array([0, axis_length, 0])
+    cam_z_axis_end = np.array([0, 0, axis_length])
+
+    ax_stereo_pose.plot([cam_origin[0], cam_x_axis_end[0]], [cam_origin[1], cam_x_axis_end[1]], [cam_origin[2], cam_x_axis_end[2]], color='r', label='Camera X')
+    ax_stereo_pose.plot([cam_origin[0], cam_y_axis_end[0]], [cam_origin[1], cam_y_axis_end[1]], [cam_origin[2], cam_y_axis_end[2]], color='g', label='Camera Y')
+    ax_stereo_pose.plot([cam_origin[0], cam_z_axis_end[0]], [cam_origin[1], cam_z_axis_end[1]], [cam_origin[2], cam_z_axis_end[2]], color='b', label='Camera Z')
+    ax_stereo_pose.text(cam_x_axis_end[0], cam_x_axis_end[1], cam_x_axis_end[2], "Cam X")
+    ax_stereo_pose.text(cam_y_axis_end[0], cam_y_axis_end[1], cam_y_axis_end[2], "Cam Y")
+    ax_stereo_pose.text(cam_z_axis_end[0], cam_z_axis_end[1], cam_z_axis_end[2], "Cam Z")
+
+    # OpenCV stereoCalibrate の R, T は、第1カメラ座標系から第2カメラ座標系への変換
+    # x_cam2 = R @ x_cam1 + T
+    # プロジェクタ (第2カメラ) の原点 O_proj = [0,0,0]_proj をカメラ座標系 (第1カメラ) で表すと:
+    # O_proj_in_cam1_coords = -R.T @ T
+    # プロジェクタのX軸ベクトル [L,0,0]_proj をカメラ座標系で表すと: R.T @ [L,0,0]_proj
+    T_flat = T.flatten()
+    proj_origin_in_cam = -R.T @ T_flat # プロジェクタ原点のカメラ座標系での位置
+
+    proj_x_axis_end_in_cam = proj_origin_in_cam + R.T @ np.array([axis_length, 0, 0])
+    proj_y_axis_end_in_cam = proj_origin_in_cam + R.T @ np.array([0, axis_length, 0])
+    proj_z_axis_end_in_cam = proj_origin_in_cam + R.T @ np.array([0, 0, axis_length])
+
+    ax_stereo_pose.plot([proj_origin_in_cam[0], proj_x_axis_end_in_cam[0]], [proj_origin_in_cam[1], proj_x_axis_end_in_cam[1]], [proj_origin_in_cam[2], proj_x_axis_end_in_cam[2]], color='#FF00FF', linestyle='--', label='Projector X') # マゼンタ
+    ax_stereo_pose.plot([proj_origin_in_cam[0], proj_y_axis_end_in_cam[0]], [proj_origin_in_cam[1], proj_y_axis_end_in_cam[1]], [proj_origin_in_cam[2], proj_y_axis_end_in_cam[2]], color='#00FFFF', linestyle='--', label='Projector Y') # シアン
+    ax_stereo_pose.plot([proj_origin_in_cam[0], proj_z_axis_end_in_cam[0]], [proj_origin_in_cam[1], proj_z_axis_end_in_cam[1]], [proj_origin_in_cam[2], proj_z_axis_end_in_cam[2]], color='#FFFF00', linestyle='--', label='Projector Z') # 黄色
+    ax_stereo_pose.text(proj_x_axis_end_in_cam[0], proj_x_axis_end_in_cam[1], proj_x_axis_end_in_cam[2], "Proj X")
+    ax_stereo_pose.text(proj_y_axis_end_in_cam[0], proj_y_axis_end_in_cam[1], proj_y_axis_end_in_cam[2], "Proj Y")
+    ax_stereo_pose.text(proj_z_axis_end_in_cam[0], proj_z_axis_end_in_cam[1], proj_z_axis_end_in_cam[2], "Proj Z")
+
+    # プロット範囲とアスペクト比の設定
+    all_plot_points = np.vstack([
+        cam_origin, cam_x_axis_end, cam_y_axis_end, cam_z_axis_end,
+        proj_origin_in_cam, proj_x_axis_end_in_cam, proj_y_axis_end_in_cam, proj_z_axis_end_in_cam
+    ])
+    ax_stereo_pose.set_box_aspect([1,1,1]) # アスペクト比を等しくする
+    ax_stereo_pose.set_xlim(-1.0, 1.0)
+    ax_stereo_pose.set_ylim(-1.0, 1.0)
+    ax_stereo_pose.set_zlim(-1.0, 1.0)
+    ax_stereo_pose.set_xlabel('X (Camera Coord)')
+    ax_stereo_pose.set_ylabel('Y (Camera Coord)')
+    ax_stereo_pose.set_zlabel('Z (Camera Coord)')
+    ax_stereo_pose.view_init(elev=-45, azim=-22, roll=-75) # 視点設定
+
+    ax_stereo_pose.set_title('Camera to Projector Relative Pose (R, T)')
+    ax_stereo_pose.legend()
+    if args.debug:
+        plt.show()
+
 
     # 終了処理
     cv2.destroyAllWindows()
@@ -420,6 +538,9 @@ if __name__ == "__main__":
         "grid_width", type=int, help="グリッド幅数")
     parser.add_argument(
         "grid_height", type=int, help="グリッド高さ数")
+    parser.add_argument(
+        "--debug", "-d", action="store_true", help="デバッグモード"
+    )
     args = parser.parse_args()
 
     try:

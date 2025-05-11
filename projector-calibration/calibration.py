@@ -27,7 +27,6 @@ class CalibDataset:
     project_upper_color: np.typing.NDArray = None
     project_lower_color: np.typing.NDArray = None
 
-
 def load_dataset(folder_path: str) -> list[CalibDataset]:
 
     dataset = []
@@ -258,6 +257,8 @@ def main(args):
             cv2.imshow("debug", gird_tmp)
             cv2.waitKey(0)
 
+    cv2.destroyAllWindows()
+
     # エラー処理
     if len(board_image_points) < 10:
         print(f"[E]: 十分なデータ数がありません {len(board_image_points)}.")
@@ -281,9 +282,7 @@ def main(args):
         used_image, used_name)):
 
         # 投影平面の計算
-        # rvec = rvec.reshape(-1) # Rodrigues accepts (3,1) or (1,3)
         rmat, _ = cv2.Rodrigues(cam_rvec) # R_world_to_camera
-        # tvec = tvec.reshape(-1) # tvec is t_world_to_camera
 
         # 復元プロジェクタグリッド3次元点
         objp = []
@@ -297,11 +296,6 @@ def main(args):
                 (point[1] - cam_mtx[1, 2]) / cam_mtx[1, 1],
                 1.0
             ])
-
-            # X_world = R_inv @ (s * eye - tvec_flat)
-            # X_world_z = R_inv[2,:] @ (s * eye - tvec_flat) = 0
-            # s * (R_inv[2,:] @ eye) - (R_inv[2,:] @ tvec_flat) = 0
-            # s = (R_inv[2,:] @ tvec_flat) / (R_inv[2,:] @ eye)
             
             den_s = R_inv[2,:] @ eye
             if abs(den_s) < 1e-9: # 視線がワールドXY平面に平行
@@ -354,6 +348,9 @@ def main(args):
         if args.debug:
             cv2.imshow("debug", tmp)
             cv2.waitKey(0)
+            
+    cv2.destroyAllWindows()
+
 
     # 3D描画デバック
     fig = plt.figure(figsize=(10, 10), dpi=120)
@@ -401,7 +398,8 @@ def main(args):
     ax.set_ylabel("Y (camera coord)")
     ax.set_zlabel("Z (camera coord)")
     ax.legend()
-    # plt.show()
+    if args.debug:
+        plt.show()
 
     # プロジェクタキャリブレーション実施
     # project_mtx = np.zeros((3, 3), np.float32)
@@ -410,23 +408,20 @@ def main(args):
     # project_mtx[0, 2] = project_image_size[0] / 2
     # project_mtx[1, 2] = project_image_size[1] / 2
     # project_mtx[2, 2] = 1.0
-    project_mtx = np.zeros((3, 3), np.float32)
-    project_mtx[0, 0] = 980.0
-    project_mtx[1, 1] = 1400
+    fov_x = math.radians(87.6)
+    fov_y = math.radians(46.2)
+
+    project_mtx = np.zeros((3, 3), np.float32)        
+    project_mtx[0, 0] = project_image_size[0] / 2.0 / math.tan(fov_x / 2)
+    project_mtx[1, 1] = project_image_size[1] / 2.0 / math.tan(fov_y / 2)
     project_mtx[0, 2] = project_image_size[0] / 2
     project_mtx[1, 2] = project_image_size[1] / 2
     project_mtx[2, 2] = 1.0
-    project_dist = np.zeros((5), np.float32)
-    project_dist[0] = 0.0
-    project_dist[1] = 0.0
-    project_dist[2] = 0.04
-    project_dist[3] = 0.0
-    project_dist[4] = 0.0
-    project_dist = project_dist.reshape(1, -1)
+    project_dist = np.zeros((1,8), np.float32)
 
     ret, proj_mtx, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
         virtual_object_points, project_image_points, project_image_size,
-        project_mtx, project_dist, flags=cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_RATIONAL_MODEL)
+        project_mtx, project_dist, flags=cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_THIN_PRISM_MODEL)
 
     # プロジェクタキャリブレーション結果出力    
     print(f"projector calib")
@@ -434,13 +429,18 @@ def main(args):
     print(f"dist:=\n {proj_dist}")
 
     # ステレオキャリブレーション実施
+    # ret, cam_mtx, cam_dist, proj_mtx, proj_dist, R, T, E, F = cv2.stereoCalibrate(
+    #     virtual_object_points,
+    #     project_perspective_points, project_image_points,
+    #     cam_mtx, cam_dist, proj_mtx, proj_dist,
+    #     project_image_size,
+    #     cv2.CALIB_FIX_INTRINSIC)
     ret, cam_mtx, cam_dist, proj_mtx, proj_dist, R, T, E, F = cv2.stereoCalibrate(
         virtual_object_points,
         project_perspective_points, project_image_points,
-        cam_mtx, cam_dist, proj_mtx, proj_dist,
+        cam_mtx, cam_dist, project_mtx, project_dist,
         project_image_size,
-        cv2.CALIB_FIX_INTRINSIC
-    )
+        flags=cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_THIN_PRISM_MODEL)
     print(f"rms = {ret}")
 
     # ステレオカメラキャリブレーション結果出力
@@ -521,10 +521,6 @@ def main(args):
     ax_stereo_pose.legend()
     if args.debug:
         plt.show()
-
-
-    # 終了処理
-    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     # 引数取得

@@ -1,3 +1,3 @@
-[submodule "custack-robo-unity/Assets/Libs/ros2-for-unity"]
-	path = custack-robo-unity/Assets/Libs/ros2-for-unity
+[submodule "3rdparty/ros2-for-unity"]
+	path = 3rdparty/ros2-for-unity
 	url = https://github.com/RobotecAI/ros2-for-unity

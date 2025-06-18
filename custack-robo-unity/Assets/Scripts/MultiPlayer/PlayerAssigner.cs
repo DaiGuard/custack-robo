@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,6 +7,9 @@ using UnityEngine.InputSystem;
 public class PlayerAssigner : MonoBehaviour
 {
     private PlayerInputManager _playerInputManager;
+
+    [SerializeField]
+    GameObject _playerPrefab;
 
     [System.Serializable]
     private struct SerialPlayerPair
@@ -17,7 +21,9 @@ public class PlayerAssigner : MonoBehaviour
     [SerializeField]
     private List<SerialPlayerPair> _devicePlayerMapping;
 
-    private Dictionary<string, int> _devicePlayerDictionary = new();
+    private Dictionary<string, int> _playerIdPairs = new();    
+    private List<PlayerInput> _connectedPlayer = new();
+
 
     void Start()
     {
@@ -27,80 +33,70 @@ public class PlayerAssigner : MonoBehaviour
             Debug.LogError("not found PlayerInputManager");
             return;
         }
+        _playerInputManager.playerPrefab = _playerPrefab;
 
         foreach (var item in _devicePlayerMapping)
         {
-            _devicePlayerDictionary.Add(item.serialNumber, item.playerId);
+            _playerIdPairs.Add(item.serialNumber, item.playerId);
         }
-
     }
 
     void Update()
     {
         if (_playerInputManager != null)
         {
-            if (_playerInputManager.playerCount >= _playerInputManager.maxPlayerCount
-            && _playerInputManager.maxPlayerCount > 0)
-            {
-                return;
-            }
+            // // プレイヤー最大数を超えていないか確認
+            // if (_playerInputManager.playerCount >= _playerInputManager.maxPlayerCount
+            // && _playerInputManager.maxPlayerCount > 0)
+            // {
+            //     return;
+            // }
 
+            // 接続されているGamepadを確認
             foreach (var gamepad in Gamepad.all)
             {
+                // SELECTボタンを押しているか確認
                 if (gamepad.selectButton.wasPressedThisFrame)
                 {
                     var serial = gamepad.description.serial;
-                    Debug.Log($"{serial} pressed!!");
+
+                    // 許可シリアル番号を持つデバイスを追加
+                    if (_playerIdPairs.ContainsKey(serial))
+                    {
+                        var playerId = _playerIdPairs[serial];
+
+                        var playerInput = _playerInputManager.JoinPlayer(
+                            playerId, -1, null, gamepad);
+
+                        // 接続済みプレイヤーを確認する
+                        if (playerInput != null)
+                        {
+                            _connectedPlayer.Add(playerInput);
+                        }
+                    }
                 }
-            }    
+            }
+
+            // 切断されたGamepadを確認
+            for(var i=_connectedPlayer.Count; i>0; i--)
+            {
+                var playerInput = _connectedPlayer[i-1];
+                if (!playerInput.devices.Any())
+                {
+                    Destroy(playerInput.gameObject);
+                    _connectedPlayer.RemoveAt(i-1);
+                }
+            }
         }
     }
 
     public void OnPlayerJoined(PlayerInput playerInput)
     {
-        var device = playerInput.devices.Count > 0 ? playerInput.devices[0] : null;
-        if (device == null)
-        {
-            Debug.LogError("not found device");
-            return;
-        }
-
-        if (device is Gamepad)
-        {
-            var serial = device.description.serial;
-            if (_devicePlayerDictionary.ContainsKey(serial))
-            {
-                var playerId = _devicePlayerDictionary[serial];
-                Debug.Log($"{serial}: {playerId} add!!");
-
-                return;
-            }
-        }
-
-        Destroy(playerInput.gameObject);
-
-        return;
+        Debug.Log($"player joined: {playerInput.user.id}");
     }
 
     public void OnPlayerLeft(PlayerInput playerInput)
     {
-        var device = playerInput.devices.Count > 0 ? playerInput.devices[0] : null;
-        if (device == null)
-        {
-            Debug.LogError("not found device");
-            return;
-        }
-
-        if (device is Gamepad)
-        {
-            var serial = device.description.serial;
-            if (_devicePlayerDictionary.ContainsKey(serial))
-            {
-                var playerId = _devicePlayerDictionary[serial];
-                Debug.Log($"{serial}: {playerId} add!!");
-
-                return;
-            }
-        }
+        Debug.Log($"player left: {playerInput.user.id}");
     }
 }

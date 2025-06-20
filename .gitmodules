@@ -1,0 +1,3 @@
+[submodule "3rdparty/ros2-for-unity"]
+	path = 3rdparty/ros2-for-unity
+	url = https://github.com/RobotecAI/ros2-for-unity

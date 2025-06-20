@@ -497,8 +497,8 @@ MonoBehaviour:
   m_PlayOnAwake: 1
   m_LoopMode: 1
   m_Method: 1
-  m_Duration: 1.7854122
-  m_MaxSpeed: 2
+  m_Duration: 3.5708244
+  m_MaxSpeed: 1
   m_EasingMode: 0
   m_AlignmentMode: 2
   m_ObjectForwardAxis: 1
@@ -790,6 +790,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   missilePrefab: {fileID: 586079425912746491, guid: 78a579e976ab14249aeb92d18fd47989, type: 3}
   targetObject: {fileID: 678219538}
+  fireCooldown: 1
 --- !u!4 &1346900359
 Transform:
   m_ObjectHideFlags: 0

@@ -496,6 +496,10 @@ MonoBehaviour:
     playerId: 0
   - serialNumber: 24:a6:fa:ed:a7:d4
     playerId: 1
+  - serialNumber: 88034c534af6
+    playerId: 0
+  - serialNumber: 24a6faeda7d4
+    playerId: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

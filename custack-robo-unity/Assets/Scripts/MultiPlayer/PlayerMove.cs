@@ -5,10 +5,13 @@ using UnityEngine.InputSystem;
 public class PlayerMove : MonoBehaviour
 {
     [SerializeField]
-    private GameObject _attackEffectPrefab;
-    
-    private PlayerInput _playerInput;
-    private Vector2 _moveInput;
+    private ParticleSystem _attackParticle = null;
+    [SerializeField]
+    private WeaponSystem _subAttackSystem = null;
+
+    private PlayerInput _playerInput = null;
+    private Vector2 _moveInput = Vector2.zero;
+    private Vector2 _rotateInput = Vector2.zero;
 
     void Awake()
     {
@@ -32,8 +35,11 @@ public class PlayerMove : MonoBehaviour
             return;
         }
 
-        Vector3 movement = new Vector3(_moveInput.x, _moveInput.y, 0f);
+        Vector3 movement = new Vector3(_moveInput.x, 0.0f, _moveInput.y);
         transform.Translate(movement * 2.0f * Time.deltaTime);
+
+        Vector3 rotation = new Vector3(0.0f, _rotateInput.x, 0.0f);
+        transform.Rotate(rotation * 50.0f * Time.deltaTime);
     }
 
     public void MoveEvent(InputAction.CallbackContext context)
@@ -48,11 +54,48 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    public void RotateEvent(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            _rotateInput = context.ReadValue<Vector2>();
+        }
+        else if (context.canceled)
+        {
+            _rotateInput = Vector2.zero;
+        }
+    }
+
     public void AttackEvent(InputAction.CallbackContext context)
     {
         if (context.started)
         {
+            if (_attackParticle != null)
+            {
+                if (!_attackParticle.isPlaying)
+                {
+                    _attackParticle.Play();
+                }
+            }
+        }
+        else if (context.performed)
+        {
 
+        }
+        else if (context.canceled)
+        {
+
+        }
+    }
+
+    public void SubAttackEvent(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            if (_subAttackSystem != null)
+            {
+                _subAttackSystem.Play();
+            }
         }
         else if (context.performed)
         {

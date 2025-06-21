@@ -1,4 +1,4 @@
-# custack-robo-unity
+# ｶｽﾀｯｸﾛﾎﾞ(Custack-robo)
 
 custack-roboのゲーム演出をするためのプログラムです
 Unityで構成されていて、Unityゲーム画面をプロジェクタで投影して、ロボットのバトル描画を行う
@@ -8,3 +8,20 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 ## システム構成
 
 <img src="Documents/systemdiagram.drawio.png" width="80%" />
+
+## フォルダ構成
+
+```tree
+.
+├── projector-calibration # プロジェクタキャリブレーションソフト
+├── custack-robo-unity # Unityプログラム
+├── tools # ツール
+└── README.md
+```
+
+## ToDoリスト
+
+- [ ] 武器切替機能の実装
+- [ ] ロボット投影モデルの試作
+- [ ] ZeroMQサーバ、クライアントの試作
+- [ ] GoProカメラキャプチャの試作

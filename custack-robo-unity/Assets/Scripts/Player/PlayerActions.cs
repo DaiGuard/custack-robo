@@ -1,12 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
 using ZeroMQ;
 
 [RequireComponent(typeof(PoseStampedSubscriber))]
 [RequireComponent(typeof(TwistStampedPublisher))]
+[RequireComponent(typeof(ItemListService))]
 public class PlayerActions : MonoBehaviour
 {
     private PoseStampedSubscriber _posestampedSubscriber = null;
     private TwistStampedPublisher _twistStampedPublisher = null;
+    private ItemListService _itemListService = null;
 
     private uint _lastSeq = 0u;
 
@@ -27,6 +30,14 @@ public class PlayerActions : MonoBehaviour
             Debug.LogError("TwistPublisher not found.");
             return;
         }
+
+        _itemListService = GetComponent<ItemListService>();
+        if (_itemListService == null)
+        {
+            Debug.LogError("ItemListService not found.");
+            return;
+        }
+        _itemListService.ProcessData = SpawnItems;
     }
 
     // Update is called once per frame
@@ -71,5 +82,12 @@ public class PlayerActions : MonoBehaviour
 
             _twistStampedPublisher.Twist = twist;
         }
+    }
+
+    public bool SpawnItems(List<string> items)
+    {
+        Debug.Log($"{items}");
+
+        return true;
     }
 }

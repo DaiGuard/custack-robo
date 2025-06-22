@@ -1,8 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+
 
 namespace ZeroMQ
 {
+    using System;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using Messages;
@@ -12,6 +16,8 @@ namespace ZeroMQ
         public Header Header { get; private set; } = new();
         [SerializeField, ReadOnly]
         public List<string> Items { get; private set; } = new();
+
+        public Func<List<string>, bool> ProcessData { private get; set; } = null;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         protected override void Start()
@@ -36,6 +42,11 @@ namespace ZeroMQ
             res.message = "OK";
 
             var res_json = JsonSerializer.Serialize(res);
+
+            if (ProcessData != null)
+            {
+                var success = ProcessData.Invoke(Items);
+            }
 
             return res_json;
         }

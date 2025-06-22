@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,15 +12,14 @@ public class PlayerAssigner : MonoBehaviour
     [SerializeField]
     GameObject _playerPrefab;
 
-    [System.Serializable]
-    private struct SerialPlayerPair
-    {
-        public string serialNumber;
-        public int playerId;
-    }
-
     [SerializeField]
     private List<SerialPlayerPair> _devicePlayerMapping;
+
+    [SerializeField]
+    private PlayerTransform _player1Transform;
+    [SerializeField]
+    private PlayerTransform _player2Transform;
+
 
     private Dictionary<string, int> _playerIdPairs = new();    
     private List<PlayerInput> _connectedPlayer = new();

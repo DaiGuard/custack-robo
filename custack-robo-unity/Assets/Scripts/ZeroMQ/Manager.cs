@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Dependencies.NCalc;
+using Unity.VisualScripting;
 
 
 namespace ZeroMQ
@@ -19,17 +21,21 @@ namespace ZeroMQ
         [SerializeField]
         private int _subscriberPort = 5556;
 
+        [SerializeField]
+        private int _responsePort = 5557;
+
         private PublisherSocket _publisherSocket = null;
         private SubscriberSocket _subscriberSocket = null;
+        private ResponseSocket _responseSocket = null;
 
-        private Dictionary<string, string> _publishedTopics = new Dictionary<string, string>();
-        private Dictionary<string, string> _subscribedTopics = new Dictionary<string, string>();
+        private Dictionary<string, string> _publishedTopics = new ();
+        private Dictionary<string, string> _subscribedTopics = new ();
+        private Dictionary<string, Func<string, string>> _responseTopics = new ();
 
         // バックグランドタスク
         private CancellationTokenSource _cancellationTokenSource = null;
         private Task _backgroundLoopTask = null;
         private int loopIntervalMs = 5;
-
 
         void Awake()
         {
@@ -61,19 +67,37 @@ namespace ZeroMQ
 
         public void PubMessageForTopic(string topic, string message)
         {
-            _publishedTopics[topic] = message;
+            lock (_publishedTopics)
+            {
+                _publishedTopics[topic] = message;
+            }
         }
 
         public string SubMessageForTopic(string topic)
         {
-            if (_subscribedTopics.ContainsKey(topic))
+            string message = "";
+
+            lock (_subscribedTopics)
             {
-                return _subscribedTopics[topic];
+                if (_subscribedTopics.ContainsKey(topic))
+                {
+                    message = _subscribedTopics[topic];
+                }
             }
 
-            return null;
+            return message;
         }
 
+        public void RegisterResponseForTopic(string topic, Func<string, string> callback)
+        {
+            lock (_responseTopics)
+            {
+                _responseTopics[topic] = (message) =>
+                {
+                    return callback.Invoke(message);
+                };
+            }
+        }
 
         private void StartBackgroundLoop()
         {
@@ -90,19 +114,22 @@ namespace ZeroMQ
                 {
                     try
                     {
-                        // Debug.Log($"stop watch = {stopwatch.ElapsedMilliseconds}");
+                        Debug.Log($"stop watch = {stopwatch.ElapsedMilliseconds}");
 
                         // Publish
-                        foreach (KeyValuePair<string, string> kv in _publishedTopics)
+                        lock (_publishedTopics)
                         {
-                            string topic = kv.Key;
-                            string message = kv.Value;
+                            foreach (KeyValuePair<string, string> kv in _publishedTopics)
+                            {
+                                string topic = kv.Key;
+                                string message = kv.Value;
 
-                            _publisherSocket
-                                .SendMoreFrame(topic)
-                                .SendFrame(message);
+                                _publisherSocket
+                                    .SendMoreFrame(topic)
+                                    .SendFrame(message);
 
-                            Debug.Log($"PUB {topic}: {message}");
+                                Debug.Log($"PUB {topic}: {message}");
+                            }
                         }
 
                         // Subscribe
@@ -118,8 +145,35 @@ namespace ZeroMQ
 
                                 Debug.Log($"SUB {topic}: {message}");
 
-                                _subscribedTopics[topic] = message;
+                                lock (_subscribedTopics)
+                                {
+                                    _subscribedTopics[topic] = message;
+                                }
                             }
+                        }
+
+                        // Response
+                        if (_responseSocket.TryReceiveMultipartStrings(
+                            TimeSpan.FromMilliseconds(loopIntervalMs),
+                            ref messages))
+                        {
+                            string topic = "";
+                            string request = "";
+                            string response = "";
+                            if (messages.Count > 1)
+                            {
+                                topic = messages[0];
+                                request = messages[1];
+
+                                lock (_responseTopics)
+                                {
+                                    response = _responseTopics[topic].Invoke(request);
+                                }
+                            }
+
+                            _responseSocket
+                                .SendMoreFrame(topic)
+                                .SendFrame(response);
                         }
 
                         await Task.Delay(loopIntervalMs, token);
@@ -179,6 +233,10 @@ namespace ZeroMQ
             _subscriberSocket.Bind($"tcp://*:{_subscriberPort}");
             _subscriberSocket.Subscribe("");
             _subscriberSocket.Options.ReceiveHighWatermark = 100;
+
+            _responseSocket = new ResponseSocket();
+            _responseSocket.Bind($"tcp://*:{_responsePort}");
+            _responseSocket.Options.ReceiveHighWatermark = 100;
         }
 
         private void StopZeroMQManager()
@@ -195,6 +253,13 @@ namespace ZeroMQ
                 _subscriberSocket.Close();
                 _subscriberSocket.Dispose();
                 _subscriberSocket = null;
+            }
+
+            if (_responseSocket != null)
+            {
+                _responseSocket.Close();
+                _responseSocket.Dispose();
+                _responseSocket = null;
             }
 
             NetMQConfig.Cleanup();

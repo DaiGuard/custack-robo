@@ -1,15 +1,17 @@
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ZeroMQ
 {
-    public class Subscriber : MonoBehaviour
+    public class Publisher : MonoBehaviour
     {
         private Manager _manager = null;
 
         [SerializeField]
         private string _topic = "";
-        protected string lastMessage { get; private set; } = "";
 
+        protected string _lastMessage = "";
 
         protected virtual void Start()
         {
@@ -28,17 +30,13 @@ namespace ZeroMQ
         {
             if (_manager != null)
             {
-                string message = _manager.SubMessageForTopic(_topic);
-                if (message != null)
-                {
-                    lastMessage = message;
+                SerializeData();
 
-                    DeserializeData();
-                }
+                _manager.PubMessageForTopic(_topic, _lastMessage);
             }
         }
 
-        protected virtual void DeserializeData()
+        protected virtual void SerializeData()
         {
         }
     }

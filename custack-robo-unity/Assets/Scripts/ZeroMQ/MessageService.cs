@@ -2,15 +2,15 @@ using UnityEngine;
 
 namespace ZeroMQ
 {
-    public class Subscriber : MonoBehaviour
+    public class MessageService : MonoBehaviour
     {
         private Manager _manager = null;
 
         [SerializeField]
         private string _topic = "";
-        protected string lastMessage { get; private set; } = "";
 
 
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
         protected virtual void Start()
         {
             if (Manager.Instance != null)
@@ -22,24 +22,19 @@ namespace ZeroMQ
                 Debug.LogError("ZeroMQManager is not initialized.");
                 return;
             }
+
+            _manager.RegisterResponseForTopic(_topic, ProcessResponse);
         }
 
+        // Update is called once per frame
         protected virtual void Update()
         {
-            if (_manager != null)
-            {
-                string message = _manager.SubMessageForTopic(_topic);
-                if (message != null)
-                {
-                    lastMessage = message;
 
-                    DeserializeData();
-                }
-            }
         }
 
-        protected virtual void DeserializeData()
+        protected virtual string ProcessResponse(string message)
         {
+            return "";
         }
     }
 }

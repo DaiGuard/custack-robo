@@ -26,7 +26,7 @@ namespace ZeroMQ
         protected override void DeserializeData()
         {
             var message = lastMessage;
-            if (message != null)
+            if (message != null && message != "")
             {
                 try
                 {

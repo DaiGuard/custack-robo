@@ -2,9 +2,12 @@ using UnityEngine;
 using ZeroMQ;
 
 [RequireComponent(typeof(PoseStampedSubscriber))]
+[RequireComponent(typeof(TwistStampedPublisher))]
 public class PlayerActions : MonoBehaviour
 {
     private PoseStampedSubscriber _posestampedSubscriber = null;
+    private TwistStampedPublisher _twistStampedPublisher = null;
+
     private uint _lastSeq = 0u;
 
 
@@ -15,6 +18,13 @@ public class PlayerActions : MonoBehaviour
         if (_posestampedSubscriber == null)
         {
             Debug.LogError("PoseSubscriber not found.");
+            return;
+        }
+
+        _twistStampedPublisher = GetComponent<TwistStampedPublisher>();
+        if (_twistStampedPublisher == null)
+        {
+            Debug.LogError("TwistPublisher not found.");
             return;
         }
     }
@@ -50,6 +60,16 @@ public class PlayerActions : MonoBehaviour
 
             transform.Translate(position * Time.deltaTime);
             transform.Rotate(rotation.eulerAngles * Time.deltaTime);
+        }
+
+        if (_twistStampedPublisher != null)
+        {
+            var twist = _twistStampedPublisher.Twist;
+            twist.linear.x += 0.01f;
+            twist.linear.y += 0.02f;
+            twist.linear.z += 0.03f;
+
+            _twistStampedPublisher.Twist = twist;
         }
     }
 }

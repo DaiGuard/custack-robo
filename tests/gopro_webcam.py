@@ -42,13 +42,14 @@ GOPRO_CMDS = {
 
 def webcam_start(resolution: str) -> tuple[bool, subprocess.Popen]:
     if not os.path.exists(f"/dev/video{GOPRO_VIDEO_ID}"):
-        # res = subprocess.run([
-        #     "modprobe", "v4l2loopback",
-        #     "exclusive_caps=1",  "card_label='GoPro'",
-        #     f"video_nr={GOPRO_VIDEO_ID}"])
-        # print(res)
-        print("[E]: Invalid video device")
-        return False, None
+        res = subprocess.run([
+            "sudo", "-S", 
+            "modprobe", "v4l2loopback",
+            "exclusive_caps=1",  "card_label='GoPro'",
+            f"video_nr={GOPRO_VIDEO_ID}"])
+        if res.returncode != 0:
+            print("[E]: Failed to create virtual camera device")
+            return False, None
 
     if resolution in ["1080", "720", "480"]:
         res = requests.get(
@@ -91,15 +92,21 @@ def webcam_stop(process: subprocess.Popen=None) -> bool:
         json_data = res.json()
         if json_data["status"] != 1:
             print(f"[E]: Failed to stop webcam ({json_data['status']})")
-            return False
-        
-        print("[I]: Stop webcam")
-        return True
+        else:
+            print("[I]: Stop webcam")
     else:
         print(f"[E]: Failed to stop webcam ({res.status_code})")
-        return False
 
-def webcam_setting(fov: str) -> bool:
+    
+    if os.path.exists(f"/dev/video{GOPRO_VIDEO_ID}"):
+        res = subprocess.run([
+            "sudo", "-S", 
+            "modprobe", "-r", "v4l2loopback"])
+        if res.returncode != 0:
+            print("[E]: Failed to create virtual camera device")
+
+
+def webcam_setting(fov: str):
     if fov in ["wide", "superwide", "linear", "narrow"]:
 
         fov_id = 0

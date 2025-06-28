@@ -45,6 +45,7 @@ def webcam_start(resolution: str) -> tuple[bool, subprocess.Popen]:
         res = subprocess.run([
             "sudo", "-S", 
             "modprobe", "v4l2loopback",
+            "devices=1",
             "exclusive_caps=1",  "card_label='GoPro'",
             f"video_nr={GOPRO_VIDEO_ID}"])
         if res.returncode != 0:
@@ -66,13 +67,25 @@ def webcam_start(resolution: str) -> tuple[bool, subprocess.Popen]:
             return False, None
         
         process = subprocess.Popen([
-            "ffmpeg", "-nostdin", "-threads", "1",
-            "-i", "udp://@0.0.0.0:8554?overrun_nonfatal=1&fifo_size=5000000",
-            "-f:v", "mpegts", "-fflags", "nobuffer",
-            "-flags", "low_delay", "-vf", "setpts=0",
-
-            "-vf", "format=rgb24", "-f",  "v4l2", f"/dev/video{GOPRO_VIDEO_ID}"
-            # "-vf", "format=yuv420p", "-f",  "v4l2", f"/dev/video{GOPRO_VIDEO_ID}"
+            "ffmpeg",
+            "-nostdin",
+            "-threads", "1",
+            # "-i", "udp://@0.0.0.0:8554?overrun_nonfatal=1&fifo_size=5000000",
+            "-i", "udp://@0.0.0.0:8554?overrun_nonfatal=1&fifo_size=1000000&buffer_size=65536",
+            "-f:v", "mpegts",
+            "-flags", "low_delay",
+            "-fflags", "nobuffer",
+            "-avioflags", "direct",
+            "-probesize", "8192",
+            "-analyzeduration", "100000",
+            "-vf", "setpts=0",
+            # "-vf", "format=rgb24",
+            "-vf", "format=yuv420p",
+            "-f",  "v4l2", 
+            "-vcodec", "rawvideo",
+            "-pix_fmt", "yuv420p",
+            "-vsync", "0",
+            f"/dev/video{GOPRO_VIDEO_ID}"
             ])
         print(f"[I]: Start webcam PID[{process.pid}]")
         return True, process

@@ -11,6 +11,9 @@ namespace ZeroMQ
         [SerializeField]
         private string _topic = "";
 
+        [SerializeField, ReadOnly]
+        private string _message = "";
+
         protected string _lastMessage = "";
 
         protected virtual void Start()

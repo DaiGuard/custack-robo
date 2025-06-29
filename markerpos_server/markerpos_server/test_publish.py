@@ -35,7 +35,7 @@ def main():
         while True:
             logging.info(f"publish {time.time()}")
             publisher.publish(data)
-            time.sleep(1)
+            time.sleep(0.1)
     except KeyboardInterrupt:
         pass
 

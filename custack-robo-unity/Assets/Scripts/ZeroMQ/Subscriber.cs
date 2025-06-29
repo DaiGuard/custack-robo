@@ -8,7 +8,8 @@ namespace ZeroMQ
 
         [SerializeField]
         private string _topic = "";
-        protected string lastMessage { get; private set; } = "";
+        [SerializeField, ReadOnly]
+        protected string _lastMessage = "";
 
 
         protected virtual void Start()
@@ -31,7 +32,7 @@ namespace ZeroMQ
                 string message = _manager.SubMessageForTopic(_topic);
                 if (message != null)
                 {
-                    lastMessage = message;
+                    _lastMessage = message;
 
                     DeserializeData();
                 }

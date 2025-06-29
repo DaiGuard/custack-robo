@@ -2,3 +2,4 @@ opencv-python>=4.11
 opencv-contrib-python>=4.11
 requests>=2.32
 pyzmq>=27
+numpy-quaternion>=2024

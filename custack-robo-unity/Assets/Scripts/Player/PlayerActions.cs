@@ -10,9 +10,7 @@ public class PlayerActions : MonoBehaviour
     private PoseStampedSubscriber _posestampedSubscriber = null;
     private TwistStampedPublisher _twistStampedPublisher = null;
     private ItemListService _itemListService = null;
-
     private uint _lastSeq = 0u;
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -67,10 +65,13 @@ public class PlayerActions : MonoBehaviour
                 );
 
                 _lastSeq = header.seq;
+
+                transform.position = position;
+                transform.rotation = rotation;
             }
 
-            transform.Translate(position * Time.deltaTime);
-            transform.Rotate(rotation.eulerAngles * Time.deltaTime);
+            // transform.Translate(position * Time.deltaTime);
+            // transform.Rotate(rotation.eulerAngles * Time.deltaTime);
         }
 
         if (_twistStampedPublisher != null)

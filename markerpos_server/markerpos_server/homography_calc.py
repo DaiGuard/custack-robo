@@ -73,11 +73,12 @@ def main():
 
             # 特徴点を抽出
             src_points = {}
-            for square in squares:
-                for id, corner in zip(ids, corners):
-                    if square[1] == id:
-                        src_points[square[0]] = corner[0][0]
-                        break
+            if ids is not None and corners is not None:
+                for square in squares:
+                    for id, corner in zip(ids, corners):
+                        if square[1] == id:
+                            src_points[square[0]] = corner[0][0]
+                            break
 
             # ４つが見つかった場合のみ
             H = None

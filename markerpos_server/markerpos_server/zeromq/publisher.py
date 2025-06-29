@@ -24,26 +24,6 @@ class Publisher:
 
     def publish(self, data: dict) -> bool:
         try:
-            data = {
-                "header": {
-                    "seq": 0,
-                    "stamp": 0.0
-                },
-                "pose": {
-                    "position": {
-                        "x": 1.0,
-                        "y": 2.0,
-                        "z": 3.0
-                    },
-                    "orientation": {
-                        "x": 0.0,
-                        "y": 0.0,
-                        "z": 0.0,
-                        "w": 1.0
-                    }
-                }
-            }
-
             # JSON文字列のデコード
             byte_data = json.dumps(data).encode("utf-8")
 

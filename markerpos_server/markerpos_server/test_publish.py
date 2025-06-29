@@ -26,6 +26,10 @@ def main():
     data.position.x = 1.0
     data.position.y = 2.0
     data.position.z = 3.0
+    data.orientation.x = 4.0
+    data.orientation.y = 5.0
+    data.orientation.z = 6.0
+    data.orientation.w = 1.0
 
     try:
         while True:

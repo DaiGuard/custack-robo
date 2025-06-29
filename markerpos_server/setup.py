@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 PACKAGE_NAME = "markerpos_server"
 MARKERPOS_SERV = "markerpos_server"
 HOMOGRAPH_CALC = "homography_calc"
+TEST_PUBLISH = "test_publish"
 REQUIREMENTS_PATH = os.path.join(os.path.dirname(__file__), "requirements.txt")
 
 def get_requirements():
@@ -20,7 +21,8 @@ setup(
     entry_points={
         "console_scripts": [
             f"{MARKERPOS_SERV}={PACKAGE_NAME}.{MARKERPOS_SERV}:main",
-            f"{HOMOGRAPH_CALC}={PACKAGE_NAME}.{HOMOGRAPH_CALC}:main"
+            f"{HOMOGRAPH_CALC}={PACKAGE_NAME}.{HOMOGRAPH_CALC}:main",
+            f"{TEST_PUBLISH}={PACKAGE_NAME}.{TEST_PUBLISH}:main",
         ]
     },
 )

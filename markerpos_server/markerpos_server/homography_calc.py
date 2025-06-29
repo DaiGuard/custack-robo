@@ -1,17 +1,21 @@
-import argparse
+import sys
 import logging
+import argparse
 from .gopro_webcam.gopro_webcam import GoProCapture
 
 import cv2
 import cv2.aruco as aruco
 import numpy as np
 
+logging.basicConfig(
+    level=logging.INFO, stream=sys.stdout,
+    format="%(levelname)s:[homography_calc] %(message)s")
 
 def main():
 
     # 引数を設定
     parser = argparse.ArgumentParser(
-        description="GoPro Webcam capture software")
+        description="Homography calibration software")
     
     parser.add_argument("-i", "--ip", type=str, default="172.24.169.51",
                         help="gopro IP address")

@@ -8,7 +8,9 @@ import requests
 import logging
 import time
 
-logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s:[GoProCapture] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, stream=sys.stdout,
+    format="%(levelname)s:[GoProCapture] %(message)s")
 
 class GoProCapture():
     def __init__(self, ip_address: str, id: int):

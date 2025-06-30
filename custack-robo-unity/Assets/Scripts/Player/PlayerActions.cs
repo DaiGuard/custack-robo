@@ -66,8 +66,10 @@ public class PlayerActions : MonoBehaviour
 
                 _lastSeq = header.seq;
 
-                transform.position = position;
-                transform.rotation = rotation;
+                // transform.position = position;
+                // transform.rotation = rotation;
+                transform.localPosition = position;
+                transform.localRotation = rotation;
             }
 
             // transform.Translate(position * Time.deltaTime);

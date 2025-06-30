@@ -120,9 +120,9 @@ def main():
 
                     # データを配信
                     pose = Pose()
-                    pose.position.x = float(proj_center[0, 0]) * 10.0
+                    pose.position.x = float(proj_center[0, 0])
                     pose.position.y = 0.0
-                    pose.position.z = float(proj_center[0, 1]) * 10.0
+                    pose.position.z = float(proj_center[0, 1])
                     pose.orientation.x = float(quat.x)
                     pose.orientation.y = float(quat.y)
                     pose.orientation.z = float(quat.z)

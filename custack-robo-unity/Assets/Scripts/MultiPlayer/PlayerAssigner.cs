@@ -45,13 +45,6 @@ public class PlayerAssigner : MonoBehaviour
     {
         if (_playerInputManager != null)
         {
-            // // プレイヤー最大数を超えていないか確認
-            // if (_playerInputManager.playerCount >= _playerInputManager.maxPlayerCount
-            // && _playerInputManager.maxPlayerCount > 0)
-            // {
-            //     return;
-            // }
-
             // 接続されているGamepadを確認
             foreach (var gamepad in Gamepad.all)
             {

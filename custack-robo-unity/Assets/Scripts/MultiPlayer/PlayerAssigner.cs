@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Users;
+
 
 [RequireComponent(typeof(PlayerInputManager))]
 public class PlayerAssigner : MonoBehaviour
@@ -10,7 +12,10 @@ public class PlayerAssigner : MonoBehaviour
     private PlayerInputManager _playerInputManager;
 
     [SerializeField]
-    GameObject _playerPrefab;
+    private PlayerInput _player1Input;
+
+    [SerializeField]
+    private PlayerInput _player2Input;
 
     [SerializeField]
     private List<SerialPlayerPair> _devicePlayerMapping;
@@ -33,7 +38,6 @@ public class PlayerAssigner : MonoBehaviour
             Debug.LogError("not found PlayerInputManager");
             return;
         }
-        _playerInputManager.playerPrefab = _playerPrefab;
 
         foreach (var item in _devicePlayerMapping)
         {
@@ -58,29 +62,39 @@ public class PlayerAssigner : MonoBehaviour
                     {
                         var playerId = _playerIdPairs[serial];
 
-                        var playerInput = _playerInputManager.JoinPlayer(
-                            playerId, -1, null, gamepad);
-
-                        // 接続済みプレイヤーを確認する
-                        if (playerInput != null)
+                        switch (playerId)
                         {
-                            _connectedPlayer.Add(playerInput);
+                            case 1:
+                                InputUser.PerformPairingWithDevice(gamepad, _player1Input.user);
+                                break;
+                            case 2:
+                                InputUser.PerformPairingWithDevice(gamepad, _player2Input.user);
+                                break;
                         }
+
+                        // var playerInput = _playerInputManager.JoinPlayer(
+                        //     playerId, -1, null, gamepad);
+
+                        // // 接続済みプレイヤーを確認する
+                        // if (playerInput != null)
+                        // {
+                        //     _connectedPlayer.Add(playerInput);
+                        // }
                     }
                 }
             }
 
-            // 切断されたGamepadを確認
-            for(var i=_connectedPlayer.Count; i>0; i--)
-            {
-                var playerInput = _connectedPlayer[i-1];
-                if (!playerInput.devices.Any())
-                {
-                    Destroy(playerInput.gameObject);
-                    _connectedPlayer.RemoveAt(i-1);
-                }
+            // // 切断されたGamepadを確認
+                // for(var i=_connectedPlayer.Count; i>0; i--)
+                // {
+                //     var playerInput = _connectedPlayer[i-1];
+                //     if (!playerInput.devices.Any())
+                //     {
+                //         Destroy(playerInput.gameObject);
+                //         _connectedPlayer.RemoveAt(i-1);
+                //     }
+                // }
             }
-        }
     }
 
     public void OnPlayerJoined(PlayerInput playerInput)

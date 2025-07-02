@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeroMQ;
 
 [RequireComponent(typeof(PoseStampedSubscriber))]
@@ -92,5 +93,50 @@ public class PlayerActions : MonoBehaviour
         Debug.Log($"{items}");
 
         return true;
+    }
+
+    public void OnInputMove(InputAction.CallbackContext context)
+    {
+        var vec = context.ReadValue<Vector2>();
+        Debug.Log($"{vec}");
+    }
+
+    public void OnInputLook(InputAction.CallbackContext context)
+    {
+        var vec = context.ReadValue<Vector2>();
+        Debug.Log($"{vec}");
+    }
+
+
+    public void OnInputLeftAttack(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+
+        }
+        else if (context.performed)
+        {
+
+        }
+        else if (context.canceled)
+        {
+
+        }
+    }
+
+    public void OnInputRightAttack(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+
+        }
+        else if (context.performed)
+        {
+
+        }
+        else if (context.canceled)
+        {
+
+        }
     }
 }

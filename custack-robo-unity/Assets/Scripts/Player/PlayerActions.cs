@@ -13,6 +13,15 @@ public class PlayerActions : MonoBehaviour
     private ItemListService _itemListService = null;
     private uint _lastSeq = 0u;
 
+    [SerializeField]
+    private Transform _rightArmPos;
+    [SerializeField]
+    private Transform _leftArmPos;
+
+    private Vector2 _moveVec = Vector2.zero;
+    private Vector2 _lookVec = Vector2.zero;
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -47,18 +56,15 @@ public class PlayerActions : MonoBehaviour
             var header = _posestampedSubscriber.Header;
             var pose = _posestampedSubscriber.Pose;
 
-            var position = Vector3.zero;
-            var rotation = Quaternion.identity;
-
             if (_lastSeq != header.seq)
             {
-                position = new Vector3(
+                var position = new Vector3(
                     pose.position.x,
                     pose.position.y,
                     pose.position.z
                 );
 
-                rotation = new Quaternion(
+                var rotation = new Quaternion(
                     pose.orientation.x,
                     pose.orientation.y,
                     pose.orientation.z,
@@ -67,22 +73,21 @@ public class PlayerActions : MonoBehaviour
 
                 _lastSeq = header.seq;
 
-                // transform.position = position;
-                // transform.rotation = rotation;
                 transform.localPosition = position;
                 transform.localRotation = rotation;
             }
-
-            // transform.Translate(position * Time.deltaTime);
-            // transform.Rotate(rotation.eulerAngles * Time.deltaTime);
         }
 
         if (_twistStampedPublisher != null)
         {
             var twist = _twistStampedPublisher.Twist;
-            twist.linear.x += 0.01f;
-            twist.linear.y += 0.02f;
-            twist.linear.z += 0.03f;
+            twist.linear.x = _moveVec.x;
+            twist.linear.y = _moveVec.y;
+            twist.linear.z = 0.0f;
+
+            twist.angular.x = 0.0f;
+            twist.angular.y = 0.0f;
+            twist.angular.z = _lookVec.x;
 
             _twistStampedPublisher.Twist = twist;
         }
@@ -98,13 +103,13 @@ public class PlayerActions : MonoBehaviour
     public void OnInputMove(InputAction.CallbackContext context)
     {
         var vec = context.ReadValue<Vector2>();
-        Debug.Log($"{vec}");
+        _moveVec = vec;
     }
 
     public void OnInputLook(InputAction.CallbackContext context)
     {
         var vec = context.ReadValue<Vector2>();
-        Debug.Log($"{vec}");
+        _lookVec = vec;
     }
 
 

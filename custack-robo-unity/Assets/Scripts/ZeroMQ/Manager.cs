@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting.Dependencies.NCalc;
-using Unity.VisualScripting;
 
 
 namespace ZeroMQ
@@ -35,7 +33,7 @@ namespace ZeroMQ
         // バックグランドタスク
         private CancellationTokenSource _cancellationTokenSource = null;
         private Task _backgroundLoopTask = null;
-        private int loopIntervalMs = 5;
+        private int loopIntervalMs = 1;
 
         void Awake()
         {
@@ -135,7 +133,7 @@ namespace ZeroMQ
                         // Subscribe
                         List<string> messages = new List<string>();
                         if (_subscriberSocket.TryReceiveMultipartStrings(
-                            TimeSpan.FromMilliseconds(loopIntervalMs),
+                            TimeSpan.FromMilliseconds(10),
                             ref messages))
                         {
                             if (messages.Count > 1)
@@ -152,29 +150,29 @@ namespace ZeroMQ
                             }
                         }
 
-                        // Response
-                        if (_responseSocket.TryReceiveMultipartStrings(
-                            TimeSpan.FromMilliseconds(loopIntervalMs),
-                            ref messages))
-                        {
-                            string topic = "";
-                            string request = "";
-                            string response = "";
-                            if (messages.Count > 1)
-                            {
-                                topic = messages[0];
-                                request = messages[1];
+                        // // Response
+                        // if (_responseSocket.TryReceiveMultipartStrings(
+                        //     TimeSpan.FromMilliseconds(10),
+                        //     ref messages))
+                        // {
+                        //     string topic = "";
+                        //     string request = "";
+                        //     string response = "";
+                        //     if (messages.Count > 1)
+                        //     {
+                        //         topic = messages[0];
+                        //         request = messages[1];
 
-                                lock (_responseTopics)
-                                {
-                                    response = _responseTopics[topic].Invoke(request);
-                                }
-                            }
+                        //         lock (_responseTopics)
+                        //         {
+                        //             response = _responseTopics[topic].Invoke(request);
+                        //         }
+                        //     }
 
-                            _responseSocket
-                                .SendMoreFrame(topic)
-                                .SendFrame(response);
-                        }
+                        //     _responseSocket
+                        //         .SendMoreFrame(topic)
+                        //         .SendFrame(response);
+                        // }
 
                         await Task.Delay(loopIntervalMs, token);
                     }
@@ -228,6 +226,7 @@ namespace ZeroMQ
 
             _publisherSocket = new PublisherSocket();
             _publisherSocket.Bind($"tcp://*:{_publisherPort}");
+            _publisherSocket.Options.SendHighWatermark = 100;
 
             _subscriberSocket = new SubscriberSocket();
             _subscriberSocket.Bind($"tcp://*:{_subscriberPort}");

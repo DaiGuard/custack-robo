@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using UnityEngine;
 
 public class ParabolaTrajectory : WeaponTrajectory
@@ -8,8 +10,7 @@ public class ParabolaTrajectory : WeaponTrajectory
     [SerializeField]
     private float _initializeVelocity = 10f; // Initial velocity of the projectile
 
-    [SerializeField]
-    private Vector3 _launchDirection = new Vector3(0, 1, 1); // Direction of the launch
+    private Vector3 _launchDirection = new Vector3(0, 0, 1); // Direction of the launch
 
     [SerializeField]
     private Vector3 _gravityDirection = new Vector3(0, -1, 0); // Direction of gravity
@@ -18,24 +19,36 @@ public class ParabolaTrajectory : WeaponTrajectory
     private Vector3 _velocity;
     private Vector3 _gravity;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _direction = transform.rotation *_launchDirection.normalized;
-        _velocity = _initializeVelocity * _direction; // Calculate the initial velocity vector
-        _gravity = transform.rotation * _gravityDirection.normalized * _gravityScale; // Calculate the gravity vector
+        var distance = Vector3.Distance(_targetObject.transform.position, transform.position);
+        // var angle = Mathf.Asin(distance * _gravityScale / (2.0f * _initializeVelocity * _initializeVelocity)) * 0.5f;
+        var angle = Mathf.Atan2(distance * _gravityScale, 2.0f * _initializeVelocity * _initializeVelocity);
+        
+
+        Vector3 v1 = (_targetObject.transform.position - transform.position).normalized;
+        Vector3 v2 = Vector3.Cross(_gravityDirection, v1).normalized;
+
+        var term1 = v1 * Mathf.Cos(angle);
+        var term2 = Vector3.Cross(v2, v1) * Mathf.Sin(angle);
+        var term3 = v2 * Vector3.Dot(v2, v1) * (1.0f - Mathf.Cos(angle));
+
+        var direction = term1 + term2 + term3;
+
+        _direction = direction;
+        _velocity = _initializeVelocity * _direction;
+        _gravity = _gravityDirection.normalized * _gravityScale;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        _velocity += _gravity * Time.deltaTime; // Update the velocity with gravity
-        var position = transform.position;  // Get the current position of the projectile
-        var updatedPosition = position + _velocity * Time.deltaTime; // Update the position based on velocity
-        _direction = (updatedPosition - position).normalized; // Calculate the new direction
-        var updatedRotation = Quaternion.LookRotation(_direction); // Create a rotation based on the new direction
+        _velocity += _gravity * Time.deltaTime;
+        var position = transform.position;
+        var updatedPosition = position + _velocity * Time.deltaTime;
+        _direction = (updatedPosition - position).normalized;
+        var updatedRotation = Quaternion.LookRotation(_direction);
 
-        transform.position = updatedPosition; // Set the new position of the projectile
-        transform.rotation = updatedRotation; // Set the new rotation of the projectile
+        transform.position = updatedPosition;
+        transform.rotation = updatedRotation;
     }
 }

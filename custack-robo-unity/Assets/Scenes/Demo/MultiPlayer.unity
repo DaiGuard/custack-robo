@@ -1040,7 +1040,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f375a1214e17aed95abf4dcfc2ea2ff7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 8954674198282059105, guid: 58f4b30fddb489d3b90b760058ab94dc, type: 3}
+  _player1Input: {fileID: 0}
+  _player2Input: {fileID: 0}
   _devicePlayerMapping:
   - serialNumber: 88:03:4c:53:4a:f6
     playerId: 0
@@ -1050,6 +1051,12 @@ MonoBehaviour:
     playerId: 0
   - serialNumber: 24a6faeda7d4
     playerId: 1
+  _player1Transform:
+    position: {x: 0, y: 0, z: 0}
+    orientation: {x: 0, y: 0, z: 0, w: 0}
+  _player2Transform:
+    position: {x: 0, y: 0, z: 0}
+    orientation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1746161082
 GameObject:
   m_ObjectHideFlags: 0

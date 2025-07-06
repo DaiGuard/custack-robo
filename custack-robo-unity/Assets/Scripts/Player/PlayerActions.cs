@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,6 +18,14 @@ public class PlayerActions : MonoBehaviour
     private Transform _rightArmPos;
     [SerializeField]
     private Transform _leftArmPos;
+    [SerializeField]
+    private WeaponDatabase _weaponDatabase = null;
+
+    private bool _updatedItems = false;
+    private List<int> _itemIds = new List<int>();
+
+    private GameObject _rightWeapon = null;
+    private GameObject _leftWeapon = null;
 
     private Vector2 _moveVec = Vector2.zero;
     private Vector2 _lookVec = Vector2.zero;
@@ -51,6 +60,50 @@ public class PlayerActions : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // 武器情報のアップデート
+        if (_updatedItems)
+        {
+            _updatedItems = false;
+
+            lock (_itemIds)
+            {
+                var rightWeapon = _weaponDatabase.GetWeapon(_itemIds[0]);
+                if (rightWeapon != null)
+                {
+                    if (_rightWeapon != null)
+                    {
+                        Destroy(_rightWeapon);
+                    }
+
+                    _rightWeapon = Instantiate(rightWeapon,
+                        _rightArmPos.position, _rightArmPos.rotation,
+                        _rightArmPos);
+
+                }
+                else
+                {
+                    Debug.LogWarning($"Weapon with ID {_itemIds[0]} not found in database.");
+                }
+
+                var leftWeapon = _weaponDatabase.GetWeapon(_itemIds[1]);
+                if (leftWeapon != null)
+                {
+                    if (_leftWeapon != null)
+                    {
+                        Destroy(_leftWeapon);
+                    }
+
+                    _leftWeapon = Instantiate(leftWeapon,
+                        _leftArmPos.position, _leftArmPos.rotation,
+                        _leftArmPos);
+                }
+                else
+                {
+                    Debug.LogWarning($"Weapon with ID {_itemIds[1]} not found in database.");
+                }
+            }
+        }
+
         if (_posestampedSubscriber != null)
         {
             var header = _posestampedSubscriber.Header;
@@ -95,7 +148,28 @@ public class PlayerActions : MonoBehaviour
 
     public bool SpawnItems(List<string> items)
     {
-        Debug.Log($"{items}");
+        var itemIds = new List<int>();
+        foreach (var itemStr in items)
+        {
+            if(int.TryParse(itemStr, out int id))
+            {
+                itemIds.Add(id);
+            }
+            else
+            {
+                Debug.LogWarning($"Invalid item ID: {itemStr}");
+            }
+        }
+
+        if (itemIds.Count >= 2)
+        {
+            lock (_itemIds)
+            {
+                _itemIds = itemIds;
+            }
+            
+            _updatedItems = true;
+        }
 
         return true;
     }
@@ -117,7 +191,14 @@ public class PlayerActions : MonoBehaviour
     {
         if (context.started)
         {
-
+            if (_leftWeapon != null)
+            {
+                var weaponSystem = _leftWeapon.GetComponent<WeaponSystem>();
+                if (weaponSystem != null)
+                {
+                    weaponSystem.Play();
+                }
+            }
         }
         else if (context.performed)
         {
@@ -133,7 +214,14 @@ public class PlayerActions : MonoBehaviour
     {
         if (context.started)
         {
-
+            if(_rightWeapon != null)
+            {
+                var weaponSystem = _rightWeapon.GetComponent<WeaponSystem>();
+                if (weaponSystem != null)
+                {
+                    weaponSystem.Play();
+                }
+            }
         }
         else if (context.performed)
         {

@@ -9,14 +9,22 @@ def main():
     socket.setsockopt(zmq.RCVTIMEO, 1000)
     socket.connect("tcp://localhost:5557")
 
-    topic_name = "test"
+    topic_name = "p1_items"
     topic_data = {
         "header": {
             "seq": 0,
             "stamp": 0.0
         },
-        "items": ["a", "b", "c"]
+        "items": ["0", "1"]
     }
+    # topic_name = "p2_items"
+    # topic_data = {
+    #     "header": {
+    #         "seq": 0,
+    #         "stamp": 0.0
+    #     },
+    #     "items": ["2", "3"]
+    # }
     data = json.dumps(topic_data)
 
     try:

@@ -17,7 +17,7 @@ public class TrackingTrajectory : WeaponTrajectory
     private float _directionMinRatio = 0.0f; // Minimum ratio for direction adjustment
 
     [SerializeField]
-    private Vector3 _launchDirection = new Vector3(0, 1, 1); // Direction of the launch
+    private Vector3 _launchDirection = new Vector3(0, 0, 1); // Direction of the launch
 
     private Vector3 _direction;
     private float _velocity;
@@ -26,7 +26,7 @@ public class TrackingTrajectory : WeaponTrajectory
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _direction = transform.rotation * _launchDirection.normalized;
+           _direction = transform.rotation * _launchDirection.normalized;
         _velocity = _initializeVelocity;
         _velocity = Mathf.Clamp(_velocity, 0, _maxVelocity); // Ensure the initial velocity does not exceed the maximum
     }

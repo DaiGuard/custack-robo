@@ -1,21 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
+using System;
+using System.Text.Json;
 
 
 namespace ZeroMQ
 {
-    using System;
-    using System.Runtime.CompilerServices;
-    using System.Text.Json;
-    using System.Text.Json.Serialization;
     using Messages;
     public class ItemListService : MessageService
     {
         [SerializeField, ReadOnly]
-        public Header Header { get; private set; } = new();
+        private Header Header = new();
         [SerializeField, ReadOnly]
-        public List<string> Items { get; private set; } = new();
+        private List<string> Items = new();
 
         public Func<List<string>, bool> ProcessData { private get; set; } = null;
 
@@ -29,6 +26,11 @@ namespace ZeroMQ
         protected override void Update()
         {
             base.Update();
+        }
+
+        public List<string> GetItems()
+        {
+            return Items;
         }
 
         protected override string ProcessResponse(string message)

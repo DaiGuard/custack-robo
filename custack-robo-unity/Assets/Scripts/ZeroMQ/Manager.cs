@@ -150,29 +150,29 @@ namespace ZeroMQ
                             }
                         }
 
-                        // // Response
-                        // if (_responseSocket.TryReceiveMultipartStrings(
-                        //     TimeSpan.FromMilliseconds(10),
-                        //     ref messages))
-                        // {
-                        //     string topic = "";
-                        //     string request = "";
-                        //     string response = "";
-                        //     if (messages.Count > 1)
-                        //     {
-                        //         topic = messages[0];
-                        //         request = messages[1];
+                        // Response
+                        if (_responseSocket.TryReceiveMultipartStrings(
+                            TimeSpan.FromMilliseconds(10),
+                            ref messages))
+                        {
+                            string topic = "";
+                            string request = "";
+                            string response = "";
+                            if (messages.Count > 1)
+                            {
+                                topic = messages[0];
+                                request = messages[1];
 
-                        //         lock (_responseTopics)
-                        //         {
-                        //             response = _responseTopics[topic].Invoke(request);
-                        //         }
-                        //     }
+                                lock (_responseTopics)
+                                {
+                                    response = _responseTopics[topic].Invoke(request);
+                                }
+                            }
 
-                        //     _responseSocket
-                        //         .SendMoreFrame(topic)
-                        //         .SendFrame(response);
-                        // }
+                            _responseSocket
+                                .SendMoreFrame(topic)
+                                .SendFrame(response);
+                        }
 
                         await Task.Delay(loopIntervalMs, token);
                     }

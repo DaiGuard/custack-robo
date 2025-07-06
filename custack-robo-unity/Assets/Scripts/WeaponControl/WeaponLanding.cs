@@ -10,18 +10,26 @@ public class WeaponLanding : MonoBehaviour
     private GameObject _landingEffect = null;
 
     [SerializeField]
-    private float _landingEffectDuration = 2.0f; // Duration to keep the landing effect active
+    private float _landingEffectDuration = 2.0f;
+
+    [SerializeField]
+    private float _lifeTime = 5.0f;
+
+    private float _creationTime = 0.0f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        _creationTime = Time.realtimeSinceStartup;
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        if(Time.realtimeSinceStartup - _creationTime > _lifeTime)
+        {
+            Destroy(gameObject); // Destroy the object after its lifetime
+        }
     }
 
     void OnCollisionEnter(Collision collision)

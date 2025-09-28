@@ -18,10 +18,15 @@ public class WeaponTrigger : MonoBehaviour
 
     private float _triggerIntervalCounter = 0.0f; // Counter to track the cooldown time
 
+    private GameObject _currentWeaponObject = null; // Current weapon object instance
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _triggerIntervalCounter = _triggerCooldown; // Initialize the cooldown counter
+
+        _currentWeaponObject = Instantiate(_weaponObject,
+            transform.position, transform.rotation);
     }
 
     // Update is called once per frame
@@ -33,10 +38,11 @@ public class WeaponTrigger : MonoBehaviour
             {
                 if (_weaponObject != null)
                 {
-                    var obj = Instantiate(_weaponObject,
-                        transform.position, Quaternion.identity); // Trigger the weapon by instantiating it
-
-                    obj.GetComponent<WeaponTrajectory>().SetTargetObject(_targetObject); // Set the target object for the weapon trajectory
+                    var weaponSystem = _currentWeaponObject.GetComponent<WeaponSystem>();
+                    if (weaponSystem != null)
+                    {
+                        weaponSystem.Play(); // Trigger the weapon action
+                    }
                 }
 
                 _triggerIntervalCounter = 0.0f; // Reset the cooldown counter

@@ -3,38 +3,61 @@ using UnityEngine;
 public class WeaponSystem : MonoBehaviour
 {
     [SerializeField]
-    private GameObject _weaponObject = null; // The weapon object to be triggered
+    protected float _reloadTime = 1.0f;
 
-    private GameObject _targetObject = null;
-    public GameObject targetObject { get; set; }
+    protected float _lastTime = 0.0f;
 
+    protected GameObject _parentObject = null;
+    protected GameObject _targetObject = null;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    protected virtual void Start()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-
-    public void Play()
-    {
-        var obj = Instantiate(_weaponObject,
-            transform.position, transform.rotation); // Trigger the weapon by instantiating i
-
-        var trajectory = obj.GetComponent<WeaponTrajectory>();
-        if (trajectory != null)
+        var targets = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var target in targets)
         {
-            trajectory.SetTargetObject(_targetObject);
+            if (gameObject.transform.IsChildOf(target.transform))
+            {
+                _parentObject = target;
+                break;
+            }
         }
     }
 
-    public bool isPlaying()
+    // Update is called once per frame
+    protected virtual void Update()
+    {
+        // ターゲット更新
+        var targets = GameObject.FindGameObjectsWithTag("Player");
+        var minDistance = Mathf.Infinity;
+        foreach (var target in targets)
+        {
+            if (_parentObject == target)
+            {
+                continue;
+            }
+
+            var distance = Vector3.Distance(
+                transform.position,
+                target.transform.position
+            );
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                _targetObject = target;
+            }
+        }
+
+    }
+
+
+    public virtual void Play()
+    {
+
+    }
+
+    public virtual bool isPlaying()
     {
         return true;
     }

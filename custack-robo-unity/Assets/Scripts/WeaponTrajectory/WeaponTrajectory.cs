@@ -3,7 +3,7 @@ using UnityEngine;
 public class WeaponTrajectory : MonoBehaviour
 {
     [SerializeField]
-    private GameObject _targetObject = null; // The target object for the weapon trajectory
+    protected GameObject _targetObject = null; // The target object for the weapon trajectory
 
     public void SetTargetObject(GameObject target)
     {

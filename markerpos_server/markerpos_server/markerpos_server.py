@@ -39,7 +39,7 @@ def main():
 
     # 引数を設定
     parser = argparse.ArgumentParser(
-        description="GoPro Webcam capture software")
+        description="Maker position server software")
     
     # parser.add_argument("-d", "--debug", action="store_true",
     #                     help="debug mode")

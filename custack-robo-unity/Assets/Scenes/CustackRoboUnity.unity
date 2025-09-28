@@ -576,7 +576,7 @@ PrefabInstance:
       addedObject: {fileID: 711838966}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e361f4bec2e5551a08530f710b7a7b9d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 711838967}
+      addedObject: {fileID: 711838969}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e361f4bec2e5551a08530f710b7a7b9d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 711838968}
@@ -660,7 +660,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 711838967}
+      - m_Target: {fileID: 711838969}
         m_TargetAssemblyTypeName: PlayerActions, Assembly-CSharp
         m_MethodName: OnInputMove
         m_Mode: 0
@@ -676,7 +676,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 711838967}
+      - m_Target: {fileID: 711838969}
         m_TargetAssemblyTypeName: PlayerActions, Assembly-CSharp
         m_MethodName: OnInputLook
         m_Mode: 0
@@ -760,7 +760,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 711838967}
+      - m_Target: {fileID: 711838969}
         m_TargetAssemblyTypeName: PlayerActions, Assembly-CSharp
         m_MethodName: OnInputLeftAttack
         m_Mode: 0
@@ -776,7 +776,7 @@ MonoBehaviour:
     m_ActionName: 'Player/LeftAttack[/Gamepad/leftShoulder]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 711838967}
+      - m_Target: {fileID: 711838969}
         m_TargetAssemblyTypeName: PlayerActions, Assembly-CSharp
         m_MethodName: OnInputRightAttack
         m_Mode: 0
@@ -795,21 +795,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &711838967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 711838961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: deac93210610948888cb025b1da62f46, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _rightArmPos: {fileID: 1036162457}
-  _leftArmPos: {fileID: 931037263}
-  _weaponDatabase: {fileID: 11400000, guid: 75a8ab89c025edbf485699623353033d, type: 2}
 --- !u!136 &711838968
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -833,6 +818,21 @@ CapsuleCollider:
   m_Height: 0.2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &711838969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 711838961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deac93210610948888cb025b1da62f46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _rightArmPos: {fileID: 1036162457}
+  _leftArmPos: {fileID: 931037263}
+  _weaponDatabase: {fileID: 11400000, guid: 75a8ab89c025edbf485699623353033d, type: 2}
 --- !u!1 &783814095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1350,7 +1350,7 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
     m_ActionName: UI/TrackedDeviceOrientation
-  m_NeverAutoSwitchControlSchemes: 0
+  m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: Gamepad
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1

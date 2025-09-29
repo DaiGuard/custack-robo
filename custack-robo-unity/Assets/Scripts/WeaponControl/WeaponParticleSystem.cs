@@ -8,7 +8,7 @@ public class WeaponParticleSystem : WeaponSystem
     protected override void Start()
     {
         base.Start();
-        
+
         _particleSystem = GetComponent<ParticleSystem>();
     }
 

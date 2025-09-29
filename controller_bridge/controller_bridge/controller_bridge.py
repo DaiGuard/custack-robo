@@ -25,10 +25,14 @@ def main():
                         help="zeromq topic name")
     parser.add_argument("-t2", "--topic2", type=str, default="p2_cmdvel",
                         help="zeromq topic name")    
+    parser.add_argument("-t3", "--topic3", type=str, default="p3_cmdvel",
+                        help="zeromq topic name")    
     parser.add_argument("-p1", "--port1", type=str, default="/dev/ttyUSB0",
                         help="serial port 1 name")
     parser.add_argument("-p2", "--port2", type=str, default="/dev/ttyUSB1",
                         help="serial port 2 name")
+    parser.add_argument("-p3", "--port3", type=str, default="/dev/ttyUSB2",
+                        help="serial port 3 name")
     args = parser.parse_args()
 
     # ZeroMQサブスクライバの準備
@@ -37,10 +41,13 @@ def main():
     # シリアルポートの準備
     try:
         ser1 = serial.Serial(args.port1, 115200, timeout=0.1)
-        # ser2 = serial.Serial(args.port2, 115200, timeout=0.1)
+        ser2 = serial.Serial(args.port2, 115200, timeout=0.1)
+        ser3 = serial.Serial(args.port3, 115200, timeout=0.1)
     except serial.SerialException as e:
         logging.error("can not open serial port")
         return
+
+    debug = [None, None, None]
 
     try:
         while True:
@@ -67,18 +74,27 @@ def main():
             data_bytes = data_header + data_payload + data_checksum
 
             if topic == args.topic1:
-                print(data_bytes)
                 ser1.write(data_bytes)
+                debug[0] = data_bytes
             elif topic == args.topic2:
-                pass
-                # ser2.write(data_bytes)
+                ser2.write(data_bytes)
+                debug[1] = data_bytes
+            elif topic == args.topic3:
+                ser3.write(data_bytes)
+                debug[2] = data_bytes
+            else:
+                logging.warning("invalid topic")
+                continue
+
+            print(debug)
 
     except KeyboardInterrupt:
         pass
 
     # シリアルポートを閉じる
     ser1.close()
-    # ser2.close()
+    ser2.close()
+    ser3.close()
 
     # サブスクライバを閉じる
     sub.close()

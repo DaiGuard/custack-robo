@@ -5,6 +5,14 @@
 #include <controller_packet.h>
 #include <robo_packet.h>
 
+#ifndef DEVICE_ID
+#define DEVICE_ID 0
+#endif
+
+#if DEVICE_ID < 0 || DEVICE_ID > 6
+#error "DEVICE_ID must be between 0 and 6"
+#endif
+
 #ifndef TARGET_MAC
 #define TARGET_MAC "FF:FF:FF:FF:FF:FF"
 #endif
@@ -58,6 +66,8 @@ void loop() {
     M5.Lcd.setCursor(0, 0);
     M5.Lcd.setTextColor(WHITE);
     M5.Lcd.setTextSize(2);
+    M5.Lcd.print("ID: ");
+    M5.Lcd.println(DEVICE_ID);
     M5.Lcd.print("Host Mac Address: ");
     M5.Lcd.println(hostMac);
     M5.Lcd.print("Target Mac Address: ");

@@ -28,7 +28,7 @@ int colorPallet[7][3] = {
     { 96,  97, 171}   // 6: Liberty
 };
 
-int numberMask[7][5][5] = {
+int numberMask[10][5][5] = {
     // 0
     {{0, 1, 1, 1, 0}, {1, 0, 0, 1, 1}, {1, 0, 1, 0, 1}, {1, 1, 0, 0, 1}, {0, 1, 1, 1, 0}},
     // 1
@@ -39,10 +39,16 @@ int numberMask[7][5][5] = {
     {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {0, 0, 1, 1, 0}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
     // 4
     {{1, 0, 0, 1, 0}, {1, 0, 0, 1, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 1, 0}, {0, 0, 0, 1 ,0}},
-    //5
+    // 5
     {{1 ,1 ,1 ,1 ,1}, {1 ,0 ,0 ,0 ,0}, {1 ,1 ,1 ,1 ,0}, {0 ,0 ,0 ,0 ,1}, {1 ,1 ,1 ,1 ,0}},
-    //6
-    {{0 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,0}, {1 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,0}}
+    // 6
+    {{0 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,0}, {1 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,0}},
+    // 7
+    {{1 ,1 ,1 ,1 ,1}, {0 ,0 ,0 ,0 ,1}, {0 ,0 ,0 ,1 ,0}, {0 ,0 ,1 ,0 ,0}, {0 ,0 ,1 ,0 ,0}},
+    // 8
+    {{0 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,0}},
+    // 9
+    {{0 ,1 ,1 ,1 ,0}, {1 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,1}, {0 ,0 ,0 ,0 ,1}, {0 ,1 ,1 ,1 ,0}}
 };
 
 int alphabetMask[8][5][5] = {
@@ -351,6 +357,14 @@ void setup()
     sscanf(TARGET_MAC, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
         &targetMacAddr[0], &targetMacAddr[1], &targetMacAddr[2], 
         &targetMacAddr[3], &targetMacAddr[4], &targetMacAddr[5]);
+
+
+    Serial.print(hostMacAddr[0], HEX); Serial.print(":");
+    Serial.print(hostMacAddr[1], HEX); Serial.print(":");
+    Serial.print(hostMacAddr[2], HEX); Serial.print(":");
+    Serial.print(hostMacAddr[3], HEX); Serial.print(":");
+    Serial.print(hostMacAddr[4], HEX); Serial.print(":");
+    Serial.print(hostMacAddr[5], HEX); Serial.println("");
 
     // Display controll task start
     xTaskCreate(displayLoopTask, "displayLoopTask", 4096, NULL, 1, NULL);

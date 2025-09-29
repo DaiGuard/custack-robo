@@ -12,6 +12,8 @@ public class WeaponObjectSystem : WeaponSystem
     protected override void Start()
     {
         base.Start();
+
+        _lastTime = Time.realtimeSinceStartup;
     }
 
     // Update is called once per frame

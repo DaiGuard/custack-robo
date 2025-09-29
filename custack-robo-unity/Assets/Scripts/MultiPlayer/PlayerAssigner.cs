@@ -18,12 +18,17 @@ public class PlayerAssigner : MonoBehaviour
     private PlayerInput _player2Input;
 
     [SerializeField]
+    private PlayerInput _player3Input;
+
+    [SerializeField]
     private List<SerialPlayerPair> _devicePlayerMapping;
 
     [SerializeField]
     private PlayerTransform _player1Transform;
     [SerializeField]
     private PlayerTransform _player2Transform;
+    [SerializeField]
+    private PlayerTransform _player3Transform;
 
 
     private Dictionary<string, int> _playerIdPairs = new();    
@@ -62,15 +67,23 @@ public class PlayerAssigner : MonoBehaviour
                     {
                         var playerId = _playerIdPairs[serial];
 
-                        switch (playerId)
-                        {
-                            case 1:
-                                InputUser.PerformPairingWithDevice(gamepad, _player1Input.user);
-                                break;
-                            case 2:
-                                InputUser.PerformPairingWithDevice(gamepad, _player2Input.user);
-                                break;
-                        }
+                        // switch (playerId)
+                        // {
+                        //     case 1:
+                        //         _player1Input.user.UnpairDevices();
+                        //         InputUser.PerformPairingWithDevice(gamepad, _player1Input.user);
+                        //         break;
+                        //     case 2:
+                        //         _player2Input.user.UnpairDevices();
+                        //         InputUser.PerformPairingWithDevice(gamepad, _player2Input.user);
+                        //         break;
+                        //     case 3:
+                        //         _player3Input.user.UnpairDevices();
+                        //         InputUser.PerformPairingWithDevice(gamepad, _player3Input.user);
+                        //         break;
+                        //     default:
+                        //         break;
+                        // }
 
                         // var playerInput = _playerInputManager.JoinPlayer(
                         //     playerId, -1, null, gamepad);

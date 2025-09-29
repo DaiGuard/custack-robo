@@ -14,18 +14,15 @@ public class PlayerActions : MonoBehaviour
     private ItemListService _itemListService = null;
     private uint _lastSeq = 0u;
 
-    [SerializeField]
-    private Transform _rightArmPos;
-    [SerializeField]
-    private Transform _leftArmPos;
-    [SerializeField]
-    private WeaponDatabase _weaponDatabase = null;
+    [SerializeField] private Transform _rightArmPos;
+    [SerializeField] private Transform _leftArmPos;
+    [SerializeField] private WeaponDatabase _weaponDatabase = null;
 
     private bool _updatedItems = false;
     private List<int> _itemIds = new List<int>();
 
-    private GameObject _rightWeapon = null;
-    private GameObject _leftWeapon = null;
+    [SerializeField] private GameObject _rightWeapon = null;
+    [SerializeField] private GameObject _leftWeapon = null;
 
     private Vector2 _moveVec = Vector2.zero;
     private Vector2 _lookVec = Vector2.zero;

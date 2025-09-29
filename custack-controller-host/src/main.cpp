@@ -84,11 +84,11 @@ uint8_t targetMacAddr[6];
 
 int buttonState = 0;
 int clickCount = 0;
-uint32_t state = DISPLAY_ID;
+uint32_t displayState = DISPLAY_ID;
 uint32_t lastMillis = 0;
-uint32_t status = 0;
+bool roboStatus = false;
+bool serialStatus = false;
 
-String receivedString = "";
 RoboCommand_t sendCommand = {
     .velocity = {.x = 0.0, .y = 0.0, .omega = 0.0},
     .WEAPON_FLAGS = {.FLAGS = 0x00},
@@ -109,9 +109,17 @@ void displayMask(int mask[5][5], int r, int g, int b)
             }
             else
             {
-                M5.dis.drawpix(x, y, status);
+                M5.dis.drawpix(x, y, 0);
             }
         }
+    }
+
+    if(roboStatus){
+        M5.dis.drawpix(0, 4, 0xffffff);
+    }
+
+    if(serialStatus){
+        M5.dis.drawpix(4, 4, 0xffffff);
     }
 }
 
@@ -224,7 +232,7 @@ void displayLoopTask(void* parameter)
 {
     while(true)
     {
-        switch(state){
+        switch(displayState){
             case DISPLAY_ID:
                 displayID(DEVICE_ID);
                 break;
@@ -236,7 +244,96 @@ void displayLoopTask(void* parameter)
                 break;
         }
 
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+    }
+}
+
+void serialLoopTask(void* parameter)
+{
+    int seq = 0;
+    uint8_t data_len = 0u;
+    uint8_t received_size = 0u;
+    uint8_t checksum = 0u;
+    float x = 0.0f;
+    float y = 0.0f;
+    float w = 0.0f;
+    uint8_t receivedBuffer[256];
+    uint32_t errorCount = 0u;
+
+    while(true)
+    {
+        // receive command from pc
+        if(Serial.available() > 0){
+            errorCount = 0u;
+            uint8_t c = Serial.read();
+
+            switch(seq) {
+                // 開始フラグチェック
+                case 0:
+                    if(c==0xaa){
+                        seq++;
+                    }
+                    break;
+                // データ長確認
+                case 1:
+                    seq++;
+                    data_len = c;
+                    received_size = 0u;
+                    break;
+                // データ受信
+                case 2:
+                    receivedBuffer[received_size] = c;
+                    received_size++;
+                    if(received_size >= data_len){
+                        seq++;
+                    }
+                    break;
+                // チェックサム受信
+                case 3:
+                    // チェックサム計算 
+                    checksum = 0u;
+                    for(uint8_t i=0u; i<data_len; i++){
+                        checksum ^= receivedBuffer[i];
+                    }
+
+                    // チェックサム照合
+                    if(checksum == c){
+                        memcpy(&x, receivedBuffer, 4);
+                        memcpy(&y, receivedBuffer+4, 4);
+                        memcpy(&w, receivedBuffer+8, 4);
+
+                        // 値受信
+                        sendCommand.velocity.x = x;
+                        sendCommand.velocity.y = y;
+                        sendCommand.velocity.omega = w;
+
+                        serialStatus = true;
+                    }
+
+                    seq = 0;
+
+                    Serial.print(data_len); Serial.print(",");
+                    Serial.print(received_size); Serial.print(",");
+                    Serial.print(checksum, HEX); Serial.print(",");
+                    Serial.print(c, HEX); Serial.print(",");
+                    Serial.print(x); Serial.print(",");
+                    Serial.print(y); Serial.print(",");
+                    Serial.print(w); Serial.println("");
+                    
+                    break;
+                default:
+                    seq = 0;
+                    break;
+            }
+        }
+        else{
+            if(errorCount++ > 500){
+                serialStatus = false;
+                errorCount = 0u;
+            }
+        }
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 
@@ -258,11 +355,11 @@ void setup()
     // Display controll task start
     xTaskCreate(displayLoopTask, "displayLoopTask", 4096, NULL, 1, NULL);
 
+    // Serial recv task start
+    xTaskCreate(serialLoopTask, "serialLoopTask", 4096, NULL, 1, NULL);
+
     // Initialize ROBO_WCOM library
-    ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);
-    
-    // Reserve serial buffer
-    receivedString.reserve(200);
+    ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);    
 }
 
 void loop()
@@ -302,53 +399,25 @@ void loop()
     }
 
     // state transition
-    switch(state){
+    switch(displayState){
         case DISPLAY_ID:
             if(event & EVENT_SINGLE_CLICK){
-                state = DISPLAY_HOST_MAC;
+                displayState = DISPLAY_HOST_MAC;
             }
             else if(event & EVENT_DOUBLE_CLICK){
-                state = DISPLAY_TARGET_MAC;
+                displayState = DISPLAY_TARGET_MAC;
             }
             break;
         case DISPLAY_HOST_MAC:
             if(event & EVENT_SINGLE_CLICK){
-                state = DISPLAY_ID;
+                displayState = DISPLAY_ID;
             }
             break;
         case DISPLAY_TARGET_MAC:
             if(event & EVENT_SINGLE_CLICK){
-                state = DISPLAY_ID;
+                displayState = DISPLAY_ID;
             }
             break;
-    }
-
-    int x, y, w;
-
-    // receive command from pc
-    if(Serial.available() > 0){
-        char c = Serial.read();
-        switch(c){
-            // STX
-            case 0x02:
-                receivedString = "";
-                break;
-            // ETX
-            case 0x03:
-                if (receivedString.length() > 0) {
-                    x = receivedString.substring( 0,  5).toInt();
-                    y = receivedString.substring( 6, 11).toInt();
-                    w = receivedString.substring(12, 17).toInt();
-
-                    sendCommand.velocity.x = x * 0.01;
-                    sendCommand.velocity.y = y * 0.01;
-                    sendCommand.velocity.omega = w * 0.01;
-                }
-                break;
-            default:
-                receivedString += c;
-                break;
-        }
     }
 
     // send data for robot from host
@@ -366,10 +435,10 @@ void loop()
             &rcvTimeStamp, rcvAddress, reinterpret_cast<uint8_t*>(&rcvStatus), &rcvSize);
         switch(ret){
             case ROBO_WCOM::Status::Ok:
-                status = 0xffffff;
+                roboStatus = true;
                 break;
             default:
-                status = 0x000000;
+                roboStatus = false;;
                 break;
         }
 

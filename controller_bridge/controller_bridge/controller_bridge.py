@@ -2,6 +2,7 @@ import sys
 import logging
 import argparse
 import serial
+import struct
 from .zeromq import Subscriber
 
 
@@ -55,16 +56,22 @@ def main():
             y = data["twist"]["linear"]["y"]
             w = data["twist"]["angular"]["z"]
 
-            sx = f"{x:03.2f}"
-            sy = f"{y:03.2f}"
-            sw = f"{w:03.2f}"
+            data_payload = struct.pack('<fff', x, y, w)
+            data_length = len(data_payload)
+            data_header = b'\xaa' + struct.pack('<B', data_length)
+            checksum = 0
+            for b in data_payload:
+                checksum ^= b
+            data_checksum = struct.pack('<B', checksum)
 
-            print(sx, sy, sw)
+            data_bytes = data_header + data_payload + data_checksum
 
             if topic == args.topic1:
-                pass
+                print(data_bytes)
+                ser1.write(data_bytes)
             elif topic == args.topic2:
                 pass
+                # ser2.write(data_bytes)
 
     except KeyboardInterrupt:
         pass

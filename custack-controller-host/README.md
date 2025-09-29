@@ -15,34 +15,28 @@ X, Y, Z: ASCIIコード文字列（5文字）、下二桁は小数点
     <tr>
       <th>0</th>
       <th>1</th>
-      <th rowpans=5>2..6</th>
-      <th>7</th>
-      <th rowpans=5>8..12</th>
-      <th>13</th>
-      <th rowpans=5>14..18</th>
-      <th>19</th>
+      <th rowpans=4>2..5</th>
+      <th rowpans=4>6..9</th>
+      <th rowpans=4>10..13</th>
+      <th>14</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>STX(0x02)</td>
-      <td>+ or -</td>
-      <td rowpans=5>12345</td>
-      <td>+ or -</td>
-      <td rowpans=5>12345</td>
-      <td>+ or -</td>
-      <td rowpans=5>12345</td>
-      <td>ETX(0x03)</td>
+      <td>SOF(0xAA)</td>
+      <td>length</td>
+      <td rowpans=4>float 32bit</td>
+      <td rowpans=4>float 32bit</td>
+      <td rowpans=4>float 32bit</td>
+      <td>checksum</td>
     </tr>
     <tr>
       <td>開始</td>
-      <td>符号</td>
-      <td rowpans=5>X</td>
-      <td>符号</td>
-      <td rowpans=5>Y</td>
-      <td>符号</td>
-      <td rowpans=5>Z</td>
-      <td>終了</td>
+      <td>データ長</td>
+      <td rawpans=4>X</td>
+      <td rawpans=4>Y</td>
+      <td rawpans=4>W</td>
+      <td>XORチェックサム</td>
     </tr>
   </tbody>
 </table>

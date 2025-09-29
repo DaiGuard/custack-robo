@@ -12,8 +12,6 @@ public class WeaponObjectSystem : WeaponSystem
     protected override void Start()
     {
         base.Start();
-
-        _lastTime = Time.realtimeSinceStartup;
     }
 
     // Update is called once per frame
@@ -22,7 +20,7 @@ public class WeaponObjectSystem : WeaponSystem
         base.Update();
     }
 
-    public override void Play()
+    public override void Play(Transform parentTransform=null)
     {
         if(_weaponObject == null)
         {
@@ -30,14 +28,19 @@ public class WeaponObjectSystem : WeaponSystem
             return;
         }
 
-        if(Time.realtimeSinceStartup - _lastTime < _reloadTime)
+        if(Time.realtimeSinceStartup < _lastTime)
+        {
+            _lastTime = Time.realtimeSinceStartup;
+        }
+        else if (Time.realtimeSinceStartup - _lastTime < _reloadTime)
         {
             return;
         }
 
+
         _lastTime = Time.realtimeSinceStartup;
         var obj = Instantiate(_weaponObject,
-            transform.position, transform.rotation); // Trigger the weapon by instantiating i
+            parentTransform.position, transform.rotation, parentTransform);
 
         var trajectory = obj.GetComponent<WeaponTrajectory>();
         if (trajectory != null)

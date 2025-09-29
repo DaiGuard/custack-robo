@@ -2,14 +2,16 @@ using UnityEngine;
 
 public class WeaponParticleSystem : WeaponSystem
 {
+    [SerializeField]
+    private GameObject _weaponObject = null; // The weapon object to be triggered
+    private GameObject _instanceObject = null;
     private ParticleSystem _particleSystem = null;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected override void Start()
     {
         base.Start();
-
-        _particleSystem = GetComponent<ParticleSystem>();
     }
 
     // Update is called once per frame
@@ -18,15 +20,27 @@ public class WeaponParticleSystem : WeaponSystem
         base.Update();
     }
 
-    public override void Play()
+    public override void Play(Transform parentTransform=null)
     {
-        if (_particleSystem == null)
+        if(_weaponObject == null)
         {
-            Debug.LogWarning("ParticleSystem is not assigned.");
+            Debug.LogWarning("Weapon object is not assigned.");
             return;
         }
 
-        if (Time.realtimeSinceStartup - _lastTime < _reloadTime)
+        if (_instanceObject == null)
+        {
+            _instanceObject = Instantiate(_weaponObject,
+                parentTransform.position, transform.rotation, parentTransform);
+
+            _particleSystem = _instanceObject.GetComponent<ParticleSystem>();
+        }
+
+        if(Time.realtimeSinceStartup < _lastTime)
+        {
+            _lastTime = Time.realtimeSinceStartup;
+        }
+        else if (Time.realtimeSinceStartup - _lastTime < _reloadTime)
         {
             return;
         }

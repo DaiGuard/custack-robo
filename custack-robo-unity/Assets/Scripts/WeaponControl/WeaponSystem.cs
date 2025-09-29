@@ -52,7 +52,7 @@ public class WeaponSystem : MonoBehaviour
     }
 
 
-    public virtual void Play()
+    public virtual void Play(Transform parentTransform=null)
     {
 
     }

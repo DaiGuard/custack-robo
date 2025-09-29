@@ -835,7 +835,7 @@ MonoBehaviour:
   _rightArmPos: {fileID: 1036162457}
   _leftArmPos: {fileID: 931037263}
   _weaponDatabase: {fileID: 11400000, guid: 75a8ab89c025edbf485699623353033d, type: 2}
-  _rightWeapon: {fileID: 15225980831437134, guid: b20ee7f9aa730a4848fb7ec9958e319a, type: 3}
+  _rightWeapon: {fileID: 8960359954338473175, guid: ad30a7b546ec5964ebfb01f39cf22498, type: 3}
   _leftWeapon: {fileID: 1693347070401357889, guid: 84b63aa6b0ac19606ab4d650cfaf337c, type: 3}
 --- !u!1 &783814095
 GameObject:
@@ -1208,7 +1208,7 @@ MonoBehaviour:
   _rightArmPos: {fileID: 1010136647}
   _leftArmPos: {fileID: 2143062656}
   _weaponDatabase: {fileID: 11400000, guid: 75a8ab89c025edbf485699623353033d, type: 2}
-  _rightWeapon: {fileID: 15225980831437134, guid: b20ee7f9aa730a4848fb7ec9958e319a, type: 3}
+  _rightWeapon: {fileID: 8960359954338473175, guid: ad30a7b546ec5964ebfb01f39cf22498, type: 3}
   _leftWeapon: {fileID: 1693347070401357889, guid: 84b63aa6b0ac19606ab4d650cfaf337c, type: 3}
 --- !u!114 &1076704401
 MonoBehaviour:
@@ -1775,7 +1775,7 @@ MonoBehaviour:
   _rightArmPos: {fileID: 679619377}
   _leftArmPos: {fileID: 2077969795}
   _weaponDatabase: {fileID: 11400000, guid: 75a8ab89c025edbf485699623353033d, type: 2}
-  _rightWeapon: {fileID: 15225980831437134, guid: b20ee7f9aa730a4848fb7ec9958e319a, type: 3}
+  _rightWeapon: {fileID: 8960359954338473175, guid: ad30a7b546ec5964ebfb01f39cf22498, type: 3}
   _leftWeapon: {fileID: 1693347070401357889, guid: 84b63aa6b0ac19606ab4d650cfaf337c, type: 3}
 --- !u!1 &1224800229
 GameObject:

@@ -193,7 +193,7 @@ public class PlayerActions : MonoBehaviour
                 var weaponSystem = _leftWeapon.GetComponent<WeaponSystem>();
                 if (weaponSystem != null)
                 {
-                    weaponSystem.Play();
+                    weaponSystem.Play(_leftArmPos);
                 }
             }
         }
@@ -216,7 +216,7 @@ public class PlayerActions : MonoBehaviour
                 var weaponSystem = _rightWeapon.GetComponent<WeaponSystem>();
                 if (weaponSystem != null)
                 {
-                    weaponSystem.Play();
+                    weaponSystem.Play(_rightArmPos);
                 }
             }
         }

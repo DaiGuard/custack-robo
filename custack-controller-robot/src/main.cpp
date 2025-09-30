@@ -53,6 +53,12 @@ void setup() {
 
     // Initialize ROBO_WCOM library
     ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);
+
+    // Servo control pin set up
+    ledcSetup(0, 50, 16);
+    ledcAttachPin(27, 0);
+    ledcSetup(1, 50, 16);
+    ledcAttachPin(2, 1);
 }
 
 void loop() {
@@ -104,6 +110,12 @@ void loop() {
 
         lastMillis = t;
     }
+
+    // Servo control
+    int angle = t % 1800 / 10;
+    int duty_cycle = map(angle, 0, 180, 1700, 7800);
+    ledcWrite(0, duty_cycle);
+    ledcWrite(1, duty_cycle);
 
     delay(10);
 }

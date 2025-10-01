@@ -27,6 +27,10 @@ char hostMac[20];
 char targetMac[20];
 
 uint32_t lastMillis = 0u;
+uint32_t lastDutyMillis = 0u;
+
+int32_t angle = 0;
+int32_t dir = 5;
 
 void setup() {
     // Start serial communication for debugging    
@@ -55,10 +59,29 @@ void setup() {
     ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);
 
     // Servo control pin set up
+    // ledcSetup(0, 50, 16);
+    // ledcAttachPin(27, 0);
+    // ledcSetup(1, 50, 16);
+    // ledcAttachPin(2, 1);
+
     ledcSetup(0, 50, 16);
-    ledcAttachPin(27, 0);
+    ledcAttachPin(19, 0);
     ledcSetup(1, 50, 16);
-    ledcAttachPin(2, 1);
+    ledcAttachPin(33, 1);
+    ledcSetup(2, 50, 16);
+    ledcAttachPin(14, 2);
+    ledcSetup(3, 50, 16);
+    ledcAttachPin(27, 3);
+
+    int duty_cycle = map(angle, 0, 180, 1700, 7800);
+    ledcWrite(0, duty_cycle);
+    delay(800);
+    ledcWrite(1, duty_cycle);
+    delay(800);
+    ledcWrite(2, duty_cycle);
+    delay(800);
+    ledcWrite(3, duty_cycle);
+    delay(800);
 }
 
 void loop() {
@@ -112,10 +135,27 @@ void loop() {
     }
 
     // Servo control
-    int angle = t % 1800 / 10;
+    // int angle =sin(t%3000/3000.0f*M_PI*2.0f) * 180.0f;
+    // int angle = t % 1800 / 10;
+    if(t - lastDutyMillis > 1) {
+        angle += dir;
+
+        if(angle >= 180) {
+            angle = 180;
+            dir = -5;
+        }
+        else if(angle <= 0) {
+            angle = 0;
+            dir = 5;
+        }
+    }
+    
+    
     int duty_cycle = map(angle, 0, 180, 1700, 7800);
     ledcWrite(0, duty_cycle);
     ledcWrite(1, duty_cycle);
+    ledcWrite(2, duty_cycle);
+    ledcWrite(3, duty_cycle);
 
     delay(10);
 }

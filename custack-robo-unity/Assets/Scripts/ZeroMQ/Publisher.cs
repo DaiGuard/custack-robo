@@ -8,16 +8,16 @@ namespace ZeroMQ
     {
         private Manager _manager = null;
 
-        [SerializeField]
-        private string _topic = "";
-
-        [SerializeField, ReadOnly]
-        private string _message = "";
+        [SerializeField] private string _topic = "";
+        [SerializeField, ReadOnly] private string _message = "";
+        [SerializeField] float intervalTime = 0.1f;
+        [SerializeField, ReadOnly] private float lastTime = 0.0f;
 
         protected string _lastMessage = "";
 
         protected virtual void Start()
         {
+            lastTime = Time.time;
             if (Manager.Instance != null)
             {
                 _manager = Manager.Instance;
@@ -31,11 +31,15 @@ namespace ZeroMQ
 
         protected virtual void Update()
         {
-            if (_manager != null)
+            if(Time.time - lastTime > intervalTime)
             {
-                SerializeData();
+                lastTime = Time.time;
+                if (_manager != null)
+                {
+                    SerializeData();
 
-                _manager.PubMessageForTopic(_topic, _lastMessage);
+                    _manager.PubMessageForTopic(_topic, _lastMessage);
+                }
             }
         }
 

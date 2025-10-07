@@ -57,6 +57,12 @@ def main():
                         help="zeromq topic name")
     parser.add_argument("-t2", "--topic2", type=str, default="p2_pose",
                         help="zeromq topic name")    
+    parser.add_argument("-t3", "--topic3", type=str, default="p3_pose",
+                        help="zeromq topic name")    
+    parser.add_argument("-t4", "--topic4", type=str, default="p4_pose",
+                        help="zeromq topic name")    
+    parser.add_argument("-t5", "--topic5", type=str, default="p5_pose",
+                        help="zeromq topic name")    
     args = parser.parse_args()
 
     # キャリブレーションファイルの読み込み
@@ -78,6 +84,12 @@ def main():
         args.zmqip, args.zmqport, args.topic1)
     pub2 = PoseStampedPublisher(
         args.zmqip, args.zmqport, args.topic2)
+    # pub3 = PoseStampedPublisher(
+    #     args.zmqip, args.zmqport, args.topic3)
+    # pub4 = PoseStampedPublisher(
+    #     args.zmqip, args.zmqport, args.topic4)
+    # pub5 = PoseStampedPublisher(
+    #     args.zmqip, args.zmqport, args.topic5)
 
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
     parameters = aruco.DetectorParameters()
@@ -128,11 +140,20 @@ def main():
                     pose.orientation.z = float(quat.z)
                     pose.orientation.w = float(quat.w)
                     if id == 0:
-                        print(f"0: {pose}")
+                        # print(f"0: {pose}")
                         pub1.publish(pose)
                     elif id == 1:
-                        print(f"1: {pose}")
+                        # print(f"1: {pose}")
                         pub2.publish(pose)
+                    # elif id == 2:
+                    #     # print(f"2: {pose}")
+                    #     pub3.publish(pose)
+                    # elif id == 3:
+                    #     # print(f"3: {pose}")
+                    #     pub4.publish(pose)
+                    # elif id == 4:
+                    #     # print(f"4: {pose}")
+                    #     pub5.publish(pose)
     except KeyboardInterrupt:
         pass
 
@@ -140,6 +161,9 @@ def main():
     # パブリッシャを閉じる
     pub1.close()
     pub2.close()
+    # pub3.close()
+    # pub4.close()
+    # pub5.close()
 
     # GoPro Webcamデバイスを閉じる
     gopro.release()

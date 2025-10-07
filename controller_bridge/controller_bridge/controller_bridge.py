@@ -21,18 +21,10 @@ def main():
                         help="zeromq server address")
     parser.add_argument("-zp", "--zmqport", type=int, default=5555,
                         help="zeromq server port number")
-    parser.add_argument("-t1", "--topic1", type=str, default="p1_cmdvel",
+    parser.add_argument("-t", "--topic", type=str, default="p1_cmdvel",
                         help="zeromq topic name")
-    parser.add_argument("-t2", "--topic2", type=str, default="p2_cmdvel",
-                        help="zeromq topic name")    
-    parser.add_argument("-t3", "--topic3", type=str, default="p3_cmdvel",
-                        help="zeromq topic name")    
-    parser.add_argument("-p1", "--port1", type=str, default="/dev/ttyUSB0",
-                        help="serial port 1 name")
-    parser.add_argument("-p2", "--port2", type=str, default="/dev/ttyUSB1",
-                        help="serial port 2 name")
-    parser.add_argument("-p3", "--port3", type=str, default="/dev/ttyUSB2",
-                        help="serial port 3 name")
+    parser.add_argument("-p", "--port", type=str, default="/dev/ttyUSB0",
+                        help="serial port name")
     args = parser.parse_args()
 
     # ZeroMQサブスクライバの準備
@@ -40,9 +32,7 @@ def main():
 
     # シリアルポートの準備
     try:
-        ser1 = serial.Serial(args.port1, 115200, timeout=0.1)
-        ser2 = serial.Serial(args.port2, 115200, timeout=0.1)
-        ser3 = serial.Serial(args.port3, 115200, timeout=0.1)
+        ser = serial.Serial(args.port, 115200, timeout=0.1)
     except serial.SerialException as e:
         logging.error("can not open serial port")
         return
@@ -63,7 +53,10 @@ def main():
             y = data["twist"]["linear"]["y"]
             w = data["twist"]["angular"]["z"]
 
-            data_payload = struct.pack('<fff', x, y, w)
+            rw = data["right_weapon"]
+            lw = data["left_weapon"]
+
+            data_payload = struct.pack('<fffBB', x, y, w, rw, lw)
             data_length = len(data_payload)
             data_header = b'\xaa' + struct.pack('<B', data_length)
             checksum = 0
@@ -73,15 +66,9 @@ def main():
 
             data_bytes = data_header + data_payload + data_checksum
 
-            if topic == args.topic1:
-                ser1.write(data_bytes)
+            if topic == args.topic:
+                ser.write(data_bytes)
                 debug[0] = data_bytes
-            elif topic == args.topic2:
-                ser2.write(data_bytes)
-                debug[1] = data_bytes
-            elif topic == args.topic3:
-                ser3.write(data_bytes)
-                debug[2] = data_bytes
             else:
                 logging.warning("invalid topic")
                 continue
@@ -92,9 +79,7 @@ def main():
         pass
 
     # シリアルポートを閉じる
-    ser1.close()
-    ser2.close()
-    ser3.close()
+    ser.close()
 
     # サブスクライバを閉じる
     sub.close()

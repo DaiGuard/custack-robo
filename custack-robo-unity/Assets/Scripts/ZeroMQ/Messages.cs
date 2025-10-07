@@ -54,6 +54,8 @@ namespace ZeroMQ
         {
             public Header header { get; set; } = new();
             public Twist twist { get; set; } = new();
+            public bool right_weapon { get; set; } = false;
+            public bool left_weapon { get; set; } = false;
         }
 
         public class ItemListRequest

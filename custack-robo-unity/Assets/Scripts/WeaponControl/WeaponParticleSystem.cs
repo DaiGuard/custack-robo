@@ -20,7 +20,7 @@ public class WeaponParticleSystem : WeaponSystem
         base.Update();
     }
 
-    public override void Play(Transform parentTransform=null)
+    public override void Play(Transform parentTransform=null, GameObject targetObject=null)
     {
         if(_weaponObject == null)
         {
@@ -30,8 +30,9 @@ public class WeaponParticleSystem : WeaponSystem
 
         if (_instanceObject == null)
         {
-            _instanceObject = Instantiate(_weaponObject,
-                parentTransform.position, transform.rotation, parentTransform);
+            // _instanceObject = Instantiate(_weaponObject,
+            //     parentTransform.position, transform.rotation, parentTransform);
+            _instanceObject = Instantiate(_weaponObject, parentTransform);
 
             _particleSystem = _instanceObject.GetComponent<ParticleSystem>();
         }

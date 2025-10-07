@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5709898766054421107}
   - component: {fileID: 8642551937309176996}
-  m_Layer: 10
-  m_Name: MissilePreb
+  m_Layer: 12
+  m_Name: MissilePreb 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,7 +27,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -45,4 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _reloadTime: 2
-  _weaponObject: {fileID: 586079425912746491, guid: 78a579e976ab14249aeb92d18fd47989, type: 3}
+  _weaponObject: {fileID: 586079425912746491, guid: 948adde46ba9bd848a61b9b6509800ec, type: 3}

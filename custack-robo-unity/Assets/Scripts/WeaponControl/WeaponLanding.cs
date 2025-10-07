@@ -3,24 +3,20 @@ using System.Collections.Generic;
 
 public class WeaponLanding : MonoBehaviour
 {
-    [SerializeField]
-    private List<GameObject> _bulletObjects = null;
-
-    [SerializeField]
-    private GameObject _landingEffect = null;
-
-    [SerializeField]
-    private float _landingEffectDuration = 2.0f;
-
-    [SerializeField]
-    private float _lifeTime = 5.0f;
+    [SerializeField] private List<GameObject> _bulletObjects = null;
+    [SerializeField] private GameObject _landingEffect = null;
+    [SerializeField] private float _landingEffectDuration = 2.0f;
+    [SerializeField] private float _objectEffectDuration = 2.0f;
+    [SerializeField] private float _lifeTime = 5.0f;
 
     private float _creationTime = 0.0f;
+    private AudioSource _audioSource = null;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _creationTime = Time.realtimeSinceStartup;
+        _audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -34,6 +30,11 @@ public class WeaponLanding : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        if (_audioSource != null)
+        {
+            _audioSource.PlayOneShot(_audioSource.clip); // Play the landing sound effect
+        }
+
         if (_bulletObjects != null)
         {
             foreach (var bullet in _bulletObjects)
@@ -54,6 +55,6 @@ public class WeaponLanding : MonoBehaviour
         }
 
         // Optionally, destroy the landing effect after a delay
-        Destroy(gameObject); // Adjust the delay as needed
+        Destroy(gameObject, _objectEffectDuration); // Adjust the delay as needed
     }
 }

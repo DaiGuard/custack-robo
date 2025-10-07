@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 844391059877398548}
   - component: {fileID: 2437998389183297236}
   - component: {fileID: 1888244419158678961}
-  m_Layer: 10
-  m_Name: GatlingGun
+  m_Layer: 13
+  m_Name: GatlingGun 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4884,15 +4884,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3160069355940445118, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 3384647798451101239, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 3480976598082774332, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 4592602031844701604, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
+      propertyPath: CollisionModule.collisionMessages
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4592602031844701604, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
+      propertyPath: CollisionModule.collidesWith.m_Bits
+      value: 7340032
       objectReference: {fileID: 0}
     - target: {fileID: 5187291514309911487, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Name
@@ -4900,19 +4908,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5187291514309911487, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 7559006399477288915, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 7909588880300354138, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 8525519418944926936, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       propertyPath: m_Layer
-      value: 10
+      value: 13
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4920,10 +4928,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5187291514309911487, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7080678065674626622}
+      addedObject: {fileID: 4090472121561366461}
     - targetCorrespondingSourceObject: {fileID: 5187291514309911487, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8615472076593862972}
+      addedObject: {fileID: 8456985759591700711}
   m_SourcePrefab: {fileID: 100100000, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
 --- !u!4 &2151336032934516184 stripped
 Transform:
@@ -4935,7 +4943,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5187291514309911487, guid: 89649b0cc1045294a88ca5445eb84ada, type: 3}
   m_PrefabInstance: {fileID: 3777315432199810789}
   m_PrefabAsset: {fileID: 0}
---- !u!82 &7080678065674626622
+--- !u!82 &4090472121561366461
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5032,7 +5040,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &8615472076593862972
+--- !u!114 &8456985759591700711
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -17,6 +17,7 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] private Transform _rightArmPos;
     [SerializeField] private Transform _leftArmPos;
     [SerializeField] private WeaponDatabase _weaponDatabase = null;
+    [SerializeField] private GameObject _targetObject = null;  
 
     private bool _updatedItems = false;
     private List<int> _itemIds = new List<int>();
@@ -26,6 +27,8 @@ public class PlayerActions : MonoBehaviour
 
     private Vector2 _moveVec = Vector2.zero;
     private Vector2 _lookVec = Vector2.zero;
+    private bool _rightWeaponAttack = false;
+    private bool _leftWeaponAttack = false;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -140,6 +143,8 @@ public class PlayerActions : MonoBehaviour
             twist.angular.z = _lookVec.x;
 
             _twistStampedPublisher.Twist = twist;
+            _twistStampedPublisher.RightWeapon = _rightWeaponAttack;
+            _twistStampedPublisher.LeftWeapon = _leftWeaponAttack;
         }
     }
 
@@ -188,12 +193,13 @@ public class PlayerActions : MonoBehaviour
     {
         if (context.started)
         {
+            _leftWeaponAttack = true;
             if (_leftWeapon != null)
             {
                 var weaponSystem = _leftWeapon.GetComponent<WeaponSystem>();
                 if (weaponSystem != null)
                 {
-                    weaponSystem.Play(_leftArmPos);
+                    weaponSystem.Play(_leftArmPos, _targetObject);
                 }
             }
         }
@@ -203,7 +209,7 @@ public class PlayerActions : MonoBehaviour
         }
         else if (context.canceled)
         {
-
+            _leftWeaponAttack = false;
         }
     }
 
@@ -211,12 +217,13 @@ public class PlayerActions : MonoBehaviour
     {
         if (context.started)
         {
-            if(_rightWeapon != null)
+            _rightWeaponAttack = true;
+            if (_rightWeapon != null)
             {
                 var weaponSystem = _rightWeapon.GetComponent<WeaponSystem>();
                 if (weaponSystem != null)
                 {
-                    weaponSystem.Play(_rightArmPos);
+                    weaponSystem.Play(_rightArmPos, _targetObject);
                 }
             }
         }
@@ -226,7 +233,7 @@ public class PlayerActions : MonoBehaviour
         }
         else if (context.canceled)
         {
-
+            _rightWeaponAttack = false;
         }
     }
 }

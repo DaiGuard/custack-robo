@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5709898766054421107}
   - component: {fileID: 8642551937309176996}
-  m_Layer: 10
-  m_Name: MissilePreb
+  m_Layer: 13
+  m_Name: MissilePreb 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,4 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _reloadTime: 2
-  _weaponObject: {fileID: 586079425912746491, guid: 78a579e976ab14249aeb92d18fd47989, type: 3}
+  _weaponObject: {fileID: 586079425912746491, guid: c6864d7291daf74b187d44f8ee46a554, type: 3}

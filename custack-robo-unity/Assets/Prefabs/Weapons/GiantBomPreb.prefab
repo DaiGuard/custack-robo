@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5542269938981704508}
   - component: {fileID: 2506855281414764433}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: GiantBomPreb
   m_TagString: Untagged
   m_Icon: {fileID: 0}

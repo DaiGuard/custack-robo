@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2616207721387611878}
   - component: {fileID: 4881431655923952878}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: DragonGunPreb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,4 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09893615e773614cebba352d000a85b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _reloadTime: 1
   _weaponObject: {fileID: 3065055666706973574, guid: c399679e5762dec0aaa2968a486f0ea1, type: 3}

@@ -20,7 +20,7 @@ public class WeaponObjectSystem : WeaponSystem
         base.Update();
     }
 
-    public override void Play(Transform parentTransform=null)
+    public override void Play(Transform parentTransform=null, GameObject targetObject=null)
     {
         if(_weaponObject == null)
         {
@@ -40,12 +40,17 @@ public class WeaponObjectSystem : WeaponSystem
 
         _lastTime = Time.realtimeSinceStartup;
         var obj = Instantiate(_weaponObject,
-            parentTransform.position, transform.rotation, parentTransform);
+            parentTransform.position, parentTransform.rotation);
+        // var obj = Instantiate(_weaponObject,
+        //     parentTransform.localPosition, transform.localRotation, parentTransform);
+        // var obj = Instantiate(_weaponObject,
+        //                     Vector3.zero, Quaternion.identity,
+        //                     parentTransform);
 
         var trajectory = obj.GetComponent<WeaponTrajectory>();
-        if (trajectory != null)
+        if (trajectory != null && targetObject != null)
         {
-            trajectory.SetTargetObject(_targetObject);
+            trajectory.SetTargetObject(targetObject);
         }
     }
     

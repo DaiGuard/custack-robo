@@ -263,6 +263,8 @@ void serialLoopTask(void* parameter)
     float x = 0.0f;
     float y = 0.0f;
     float w = 0.0f;
+    uint8_t right_weapon = 0x00;
+    uint8_t left_weapon = 0x00;
     uint8_t receivedBuffer[256];
     uint32_t errorCount = 0u;
 
@@ -307,11 +309,15 @@ void serialLoopTask(void* parameter)
                         memcpy(&x, receivedBuffer, 4);
                         memcpy(&y, receivedBuffer+4, 4);
                         memcpy(&w, receivedBuffer+8, 4);
+                        memcpy(&right_weapon, receivedBuffer+12, 1);
+                        memcpy(&left_weapon, receivedBuffer+13, 1);
 
                         // 値受信
                         sendCommand.velocity.x = x;
                         sendCommand.velocity.y = y;
                         sendCommand.velocity.omega = w;
+                        sendCommand.WEAPON_FLAGS.FLAG.WPR00 = right_weapon>0 ? 1 : 0;
+                        sendCommand.WEAPON_FLAGS.FLAG.WPL00 = left_weapon>0 ? 1 : 0;
 
                         serialStatus = true;
                     }
@@ -324,8 +330,10 @@ void serialLoopTask(void* parameter)
                     Serial.print(c, HEX); Serial.print(",");
                     Serial.print(x); Serial.print(",");
                     Serial.print(y); Serial.print(",");
-                    Serial.print(w); Serial.println("");
-                    
+                    Serial.print(w); Serial.print(",");
+                    Serial.print(right_weapon, HEX); Serial.print(",");
+                    Serial.print(left_weapon, HEX); Serial.println("");
+
                     break;
                 default:
                     seq = 0;
@@ -434,6 +442,9 @@ void loop()
             break;
     }
 
+    Serial.print(sendCommand.velocity.x); Serial.print(",");
+    Serial.print(sendCommand.velocity.y); Serial.print(",");
+    Serial.print(sendCommand.velocity.omega); Serial.println("");
     // send data for robot from host
     ROBO_WCOM::SendPacket(t,
         reinterpret_cast<uint8_t*>(&sendCommand), sizeof(RoboCommand_t));
@@ -459,5 +470,5 @@ void loop()
         lastMillis = t;
     }        
 
-    delay(10);
+    delay(100);
 }

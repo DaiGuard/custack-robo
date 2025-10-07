@@ -17,6 +17,18 @@
 #define TARGET_MAC "FF:FF:FF:FF:FF:FF"
 #endif
 
+#ifndef DRIVE_TYPE
+#define DRIVE_TYPE "Diff2Wheel"
+#endif
+
+#ifdef DIFF2WHEEL
+#undef OMNIWHEEL
+#elif OMNIWHEEL
+#undef DIFF2WHEEL
+#else
+#error "Please define DRIVE_TYPE to either Diff2Wheel or OmniWheel"
+#endif
+
 
 // ready MAC address
 uint8_t hostMacAddr[6];
@@ -31,6 +43,10 @@ uint32_t lastDutyMillis = 0u;
 
 int32_t angle = 0;
 int32_t dir = 5;
+int32_t last_d1 = 0;
+int32_t last_d2 = 0;
+int32_t last_d3 = 0;
+int32_t last_d4 = 0;
 
 void setup() {
     // Start serial communication for debugging    
@@ -39,6 +55,7 @@ void setup() {
     // Initialize the M5Stack
     auto cfg = M5.config();
     M5.begin(cfg);
+    M5.Power.begin();
 
     // get host mac address
     WiFi.macAddress(hostMacAddr);
@@ -58,12 +75,18 @@ void setup() {
     // Initialize ROBO_WCOM library
     ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);
 
+    int duty_cycle = map(0, -100, 100, 1800, 7800);
     // Servo control pin set up
-    // ledcSetup(0, 50, 16);
-    // ledcAttachPin(27, 0);
-    // ledcSetup(1, 50, 16);
-    // ledcAttachPin(2, 1);
-
+    #ifdef DIFF2WHEEL
+    ledcSetup(0, 50, 16);
+    ledcAttachPin(27, 0);
+    ledcSetup(1, 50, 16);
+    ledcAttachPin(2, 1);
+    ledcWrite(0, duty_cycle);
+    delay(800);
+    ledcWrite(1, duty_cycle);
+    delay(800);
+    #elif OMNIWHEEL
     ledcSetup(0, 50, 16);
     ledcAttachPin(19, 0);
     ledcSetup(1, 50, 16);
@@ -72,8 +95,6 @@ void setup() {
     ledcAttachPin(14, 2);
     ledcSetup(3, 50, 16);
     ledcAttachPin(27, 3);
-
-    int duty_cycle = map(angle, 0, 180, 1700, 7800);
     ledcWrite(0, duty_cycle);
     delay(800);
     ledcWrite(1, duty_cycle);
@@ -82,6 +103,7 @@ void setup() {
     delay(800);
     ledcWrite(3, duty_cycle);
     delay(800);
+    #endif
 }
 
 void loop() {
@@ -111,6 +133,7 @@ void loop() {
     auto ret = ROBO_WCOM::PeekLatestPacket(t, 
         &rcvTimeStamp, controllerAddress,
         reinterpret_cast<uint8_t*>(&rcvCommand), &rcvSize);
+    M5.Lcd.print("BAT: "); M5.Lcd.println(M5.Power.getBatteryLevel());
     if(ret == ROBO_WCOM::Status::Ok)
     {
         M5.Lcd.println("OK");
@@ -135,27 +158,54 @@ void loop() {
     }
 
     // Servo control
-    // int angle =sin(t%3000/3000.0f*M_PI*2.0f) * 180.0f;
-    // int angle = t % 1800 / 10;
-    if(t - lastDutyMillis > 1) {
-        angle += dir;
+    float x = rcvCommand.velocity.x;
+    float y = rcvCommand.velocity.y;
+    float omega = rcvCommand.velocity.omega;
+    // スケーリングとクランプ
+    x = constrain(x, -1.0f, 1.0f);
+    y = constrain(y, -1.0f, 1.0f);
+    omega = constrain(omega, -1.0f, 1.0f);
 
-        if(angle >= 180) {
-            angle = 180;
-            dir = -5;
-        }
-        else if(angle <= 0) {
-            angle = 0;
-            dir = 5;
-        }
-    }
-    
-    
-    int duty_cycle = map(angle, 0, 180, 1700, 7800);
-    ledcWrite(0, duty_cycle);
-    ledcWrite(1, duty_cycle);
-    ledcWrite(2, duty_cycle);
-    ledcWrite(3, duty_cycle);
+    #ifdef DIFF2WHEEL
+    int w1 = (y * 0.5f - omega * 0.3f) * -100.0f;
+    int w2 = (y * 0.5f + omega * 0.3f) *  100.0f;
+    int d1 = map(w1, -100, 100, 1800, 7800);
+    int d2 = map(w2, -100, 100, 1800, 7800);
+    M5.Lcd.print("D1: "); M5.Lcd.println(d1);
+    M5.Lcd.print("D2: "); M5.Lcd.println(d2);
+    ledcWrite(0, d1);
+    ledcWrite(1, d2);
+    #elif OMNIWHEEL
+    // 各ホイールの速度計算 (仮の係数)
+    float w1 = (-x - y + omega);
+    float w2 = ( x - y + omega);
+    float w3 = ( x + y + omega);
+    float w4 = (-x + y + omega);
+    w1 = constrain(w1, -1.0f, 1.0f) * 100.0f;
+    w2 = constrain(w2, -1.0f, 1.0f) * 100.0f;
+    w3 = constrain(w3, -1.0f, 1.0f) * 100.0f;
+    w4 = constrain(w4, -1.0f, 1.0f) * 100.0f;
+    int d1 = map(w1, -100, 100, 2000, 7800);
+    int d2 = map(w2, -100, 100, 2000, 7800);
+    int d3 = map(w3, -100, 100, 2000, 7800);
+    int d4 = map(w4, -100, 100, 2000, 7800);
+    d1 = int(d1 * 0.4 + last_d1 * 0.6);
+    d2 = int(d2 * 0.4 + last_d2 * 0.6);
+    d3 = int(d3 * 0.4 + last_d3 * 0.6);
+    d4 = int(d4 * 0.4 + last_d4 * 0.6);
+    last_d1 = d1;
+    last_d2 = d2;
+    last_d3 = d3;
+    last_d4 = d4;
+    M5.Lcd.print("D1: "); M5.Lcd.println(d1);
+    M5.Lcd.print("D2: "); M5.Lcd.println(d2);
+    M5.Lcd.print("D3: "); M5.Lcd.println(d3);
+    M5.Lcd.print("D4: "); M5.Lcd.println(d4);
+    ledcWrite(0, d1);
+    ledcWrite(1, d2);
+    ledcWrite(2, d3);
+    ledcWrite(3, d4);
+    #endif
 
-    delay(10);
+    delay(1);
 }

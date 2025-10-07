@@ -5,6 +5,8 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 
 <img src="https://github.com/user-attachments/assets/501e7aa1-9e15-4bd2-bd83-8cfae46a2b0e" width="80%" />
 
+---
+
 ## システム構成
 
 <img src="docs/systemdiagram.drawio.png" width="80%" />
@@ -13,14 +15,20 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 
 ```tree
 .
-├── projector-calibration # プロジェクタキャリブレーションソフト
-├── custack-robo-unity # Unityプログラム
-├── tools # ツール
-└── README.md
+├── controller_bridge/        #Unity⇔custackホスト間通信
+├── custack-controller-host/  #custackホスト内プログラム
+├── custack-controller-robot/ #custackロボット内プログラム
+├── custack-robo-unity/       #Unityゲーム画面
+├── docs/                     #ドキュメント
+├── markerpos_server/         #マーカ位置サーバ
+├── projector-calibration/    #(廃止) プロジェクタとカメラの校正
+├── README.md
+└── tests/                    #テストプログラム
 ```
 
 ## ToDoリスト
 
+### 
 - [x] 武器切替機能の実装
 - [x] ロボット投影モデルの試作
     - [x] ロボットの内側を白くするように変更
@@ -29,9 +37,9 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 - [ ] 接続状態をUIとして表示する
 - [x] 終了ボタンを作る
 - [ ] 障害物を設置する
-- [ ] マルチタスクスレッドで処理が固まる
-    - [ ] Queueを使用する
-    - [ ] UniTaskを使用する
-- [ ] Homographyの4点を自由に設定する
-- [ ] コントローラの切断を検知する
+- [x] マルチタスクスレッドで処理が固まる（廃止）
+    - [x] Queueを使用する（廃止）
+    - [x] UniTaskを使用する（廃止）
+- [x] Homographyの4点を自由に設定する
+- [x] コントローラの切断を検知する
 - [ ] ダメージ表示の機能追加

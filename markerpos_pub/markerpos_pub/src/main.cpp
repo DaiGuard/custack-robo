@@ -22,7 +22,7 @@ public:
     MarkerPosPublisher() : Node("markerpos_publisher")
     {
         // Declare parameter to control image publishing
-        this->declare_parameter("debug", false);
+        this->declare_parameter("debug", true);
 
         // Create a publisher for the image topic
         image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/camera/image_raw", 10);

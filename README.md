@@ -7,6 +7,18 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 
 ---
 
+## 仕様
+
+- プレーヤごとにゲームオブジェクトが存在します
+- プレーヤには2つの武器をもたせることができます
+- その武器はデータベース内から選択できるようにします
+- それぞれの武器はRightAttackEvent, LeftAttackEventのイベントでアニメーションを開始する
+- 相手プレーヤに当たったときにエフェクトを発生させます
+- 相手プレーヤに当たったら相手のHPを装備した武器の攻撃力に合わせて減らします
+- プレーヤはフィールドZ=0に設置したプレート上を移動します
+- フィールドプレート上に池や芝生など移動を阻害する状態を作る
+
+
 ## システム構成
 
 <img src="docs/systemdiagram.drawio.png" width="80%" />
@@ -15,31 +27,31 @@ Unityで構成されていて、Unityゲーム画面をプロジェクタで投�
 
 ```tree
 .
-├── controller_bridge/        #Unity⇔custackホスト間通信
-├── custack-controller-host/  #custackホスト内プログラム
-├── custack-controller-robot/ #custackロボット内プログラム
-├── custack-robo-unity/       #Unityゲーム画面
-├── docs/                     #ドキュメント
-├── markerpos_server/         #マーカ位置サーバ
-├── projector-calibration/    #(廃止) プロジェクタとカメラの校正
-├── README.md
-└── tests/                    #テストプログラム
+├── custack-unity/     #custackゲームプロジェクト
+├── custack-agent/     # custackロボット内プログラム
+├── custack-host/      # custackロボットへのデータ送信機用プログラム
+├── markerpos_server/  # マーカ位置を検出するサーバー
+├── docs/              # ドキュメント
+└── README.md
 ```
+
+## 管理ルール
+
+- 各フォル内の作業は専用のブランチ内で作業を実施する
+
+    - agent: custack-agent作業用
+    - host: custack-host作業用
+    - unity: custack-unity作業用
+    - server: markerpos_server作業用
+
+- 作業が完了したらdevelopにマージを実施する
+- developブランチで動作が確認できたらmainにマージを実施する
+
 
 ## ToDoリスト
 
-### 
-- [x] 武器切替機能の実装
-- [x] ロボット投影モデルの試作
-    - [x] ロボットの内側を白くするように変更
-- [x] ZeroMQサーバ、クライアントの試作
-- [x] GoProカメラキャプチャの試作
-- [ ] 接続状態をUIとして表示する
-- [x] 終了ボタンを作る
-- [ ] 障害物を設置する
-- [x] マルチタスクスレッドで処理が固まる（廃止）
-    - [x] Queueを使用する（廃止）
-    - [x] UniTaskを使用する（廃止）
-- [x] Homographyの4点を自由に設定する
-- [x] コントローラの切断を検知する
-- [ ] ダメージ表示の機能追加
+- [ ] フォルダ構成とgit管理を決める
+
+## 仕様検討AIチャット
+
+[Gemini](https://gemini.google.com/share/96ba88a5b598)

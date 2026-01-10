@@ -11,6 +11,6 @@ REMOTE_DIR="${WORKSPACE_DIR}/src/markerpos_server"
 echo "Stopping markerpos_server on remote Jetson device..."
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} \
-    pkill -e -f markerpos_pub
-
+    "pkill -e -f markerpos_server.launch.py"
+    
 echo " stopped markerpos_server."

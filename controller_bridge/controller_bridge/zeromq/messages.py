@@ -4,7 +4,7 @@ import time
 @dataclass
 class Header:
     seq: int = 0
-    stamp: float = time.time()
+    stamp: float = field(default_factory=time.time)
 
 @dataclass
 class Vector3:
@@ -14,11 +14,10 @@ class Vector3:
 
 @dataclass
 class Twist:
-    linear: Vector3 = Vector3()
-    angular: Vector3 = Vector3()
+    linear: Vector3 = field(default_factory=Vector3)
+    angular: Vector3 = field(default_factory=Vector3)
 
 @dataclass
 class TwistStamped:
-    header: Header = Header()
-    twist: Twist = Twist()
-
+    header: Header = field(default_factory=Header)
+    twist: Twist = field(default_factory=Twist)

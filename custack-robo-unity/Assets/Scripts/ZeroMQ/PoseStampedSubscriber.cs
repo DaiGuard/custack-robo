@@ -8,9 +8,9 @@ namespace ZeroMQ
     public class PoseStampedSubscriber : Subscriber
     {
         [SerializeField, ReadOnly]
-        public Header Header { get; private set; } = new();
+        public Header Header = new();
         [SerializeField, ReadOnly]
-        public Pose Pose { get; private set; } = new();
+        public Pose Pose = new();
 
 
         protected override void Start()

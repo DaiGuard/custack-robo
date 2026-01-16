@@ -7,10 +7,10 @@ namespace ZeroMQ
 
     public class TwistStampedPublisher : Publisher
     {
-        [SerializeField, ReadOnly] public Header Header { get; private set; } = new();
-        [SerializeField, ReadOnly] public Twist Twist { get; set; } = new();
-        [SerializeField, ReadOnly] public bool RightWeapon { get;  set; } = false;
-        [SerializeField, ReadOnly] public bool LeftWeapon { get;  set; } = false;
+        [SerializeField, ReadOnly] public Header Header = new();
+        [SerializeField, ReadOnly] public Twist Twist = new();
+        [SerializeField, ReadOnly] public bool RightWeapon = false;
+        [SerializeField, ReadOnly] public bool LeftWeapon = false;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         protected override void Start()

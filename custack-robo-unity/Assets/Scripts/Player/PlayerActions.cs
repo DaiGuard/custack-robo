@@ -34,12 +34,12 @@ public class PlayerActions : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _posestampedSubscriber = GetComponent<PoseStampedSubscriber>();
-        if (_posestampedSubscriber == null)
-        {
-            Debug.LogError("PoseSubscriber not found.");
-            return;
-        }
+        // _posestampedSubscriber = GetComponent<PoseStampedSubscriber>();
+        // if (_posestampedSubscriber == null)
+        // {
+        //     Debug.LogError("PoseSubscriber not found.");
+        //     return;
+        // }
 
         _twistStampedPublisher = GetComponent<TwistStampedPublisher>();
         if (_twistStampedPublisher == null)
@@ -104,32 +104,32 @@ public class PlayerActions : MonoBehaviour
             }
         }
 
-        if (_posestampedSubscriber != null)
-        {
-            var header = _posestampedSubscriber.Header;
-            var pose = _posestampedSubscriber.Pose;
+        // if (_posestampedSubscriber != null)
+        // {
+        //     var header = _posestampedSubscriber.Header;
+        //     var pose = _posestampedSubscriber.Pose;
 
-            if (_lastSeq != header.seq)
-            {
-                var position = new Vector3(
-                    pose.position.x,
-                    pose.position.y,
-                    pose.position.z
-                );
+        //     if (_lastSeq != header.seq)
+        //     {
+        //         var position = new Vector3(
+        //             pose.position.x,
+        //             pose.position.y,
+        //             pose.position.z
+        //         );
 
-                var rotation = new Quaternion(
-                    pose.orientation.x,
-                    pose.orientation.y,
-                    pose.orientation.z,
-                    pose.orientation.w
-                );
+        //         var rotation = new Quaternion(
+        //             pose.orientation.x,
+        //             pose.orientation.y,
+        //             pose.orientation.z,
+        //             pose.orientation.w
+        //         );
 
-                _lastSeq = header.seq;
+        //         _lastSeq = header.seq;
 
-                transform.localPosition = position;
-                transform.localRotation = rotation;
-            }
-        }
+        //         transform.localPosition = position;
+        //         transform.localRotation = rotation;
+        //     }
+        // }
 
         if (_twistStampedPublisher != null)
         {

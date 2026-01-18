@@ -56,6 +56,8 @@ def main():
             rw = data["right_weapon"]
             lw = data["left_weapon"]
 
+            print(x, y, w)
+
             data_payload = struct.pack('<fffBB', x, y, w, rw, lw)
             data_length = len(data_payload)
             data_header = b'\xaa' + struct.pack('<B', data_length)

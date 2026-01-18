@@ -442,9 +442,10 @@ void loop()
             break;
     }
 
-    Serial.print(sendCommand.velocity.x); Serial.print(",");
-    Serial.print(sendCommand.velocity.y); Serial.print(",");
-    Serial.print(sendCommand.velocity.omega); Serial.println("");
+    // Serial.print(sendCommand.velocity.x); Serial.print(",");
+    // Serial.print(sendCommand.velocity.y); Serial.print(",");
+    // Serial.print(sendCommand.velocity.omega); Serial.println("");
+
     // send data for robot from host
     ROBO_WCOM::SendPacket(t,
         reinterpret_cast<uint8_t*>(&sendCommand), sizeof(RoboCommand_t));
@@ -470,5 +471,5 @@ void loop()
         lastMillis = t;
     }        
 
-    delay(100);
+    delay(10);
 }

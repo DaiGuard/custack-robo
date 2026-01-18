@@ -43,10 +43,10 @@ uint32_t lastDutyMillis = 0u;
 
 int32_t angle = 0;
 int32_t dir = 5;
-int32_t last_d1 = 0;
-int32_t last_d2 = 0;
-int32_t last_d3 = 0;
-int32_t last_d4 = 0;
+int32_t last_d1 = map(0, -100, 100, 1850, 7800);;
+int32_t last_d2 = map(0, -100, 100, 1850, 7800);;
+int32_t last_d3 = map(0, -100, 100, 1850, 7800);;
+int32_t last_d4 = map(0, -100, 100, 1850, 7800);;
 
 void setup() {
     // Start serial communication for debugging    
@@ -75,9 +75,9 @@ void setup() {
     // Initialize ROBO_WCOM library
     ROBO_WCOM::Init(hostMacAddr, targetMacAddr, millis(), 1000);
 
-    int duty_cycle = map(0, -100, 100, 1800, 7800);
     // Servo control pin set up
     #ifdef DIFF2WHEEL
+    int duty_cycle = map(0, -100, 100, 1800, 7800);
     ledcSetup(0, 50, 16);
     ledcAttachPin(27, 0);
     ledcSetup(1, 50, 16);
@@ -87,6 +87,7 @@ void setup() {
     ledcWrite(1, duty_cycle);
     delay(800);
     #elif OMNIWHEEL
+    int duty_cycle = map(0, -100, 100, 1850, 7800);
     ledcSetup(0, 50, 16);
     ledcAttachPin(19, 0);
     ledcSetup(1, 50, 16);
@@ -167,9 +168,9 @@ void loop() {
     omega = constrain(omega, -1.0f, 1.0f);
 
     #ifdef DIFF2WHEEL
-    int w1 = (y * 0.5f - omega * 0.3f) * -100.0f;
-    int w2 = (y * 0.5f + omega * 0.3f) *  100.0f;
-    int d1 = map(w1, -100, 100, 1800, 7800);
+    int w1 = (y * 0.5f - x * 0.3f) * -100.0f;
+    int w2 = (y * 0.5f + x * 0.3f) *  100.0f;
+    int d1 = map(w1, -100, 100, 1900, 7800);
     int d2 = map(w2, -100, 100, 1800, 7800);
     M5.Lcd.print("D1: "); M5.Lcd.println(d1);
     M5.Lcd.print("D2: "); M5.Lcd.println(d2);
@@ -185,14 +186,14 @@ void loop() {
     w2 = constrain(w2, -1.0f, 1.0f) * 100.0f;
     w3 = constrain(w3, -1.0f, 1.0f) * 100.0f;
     w4 = constrain(w4, -1.0f, 1.0f) * 100.0f;
-    int d1 = map(w1, -100, 100, 2000, 7800);
-    int d2 = map(w2, -100, 100, 2000, 7800);
-    int d3 = map(w3, -100, 100, 2000, 7800);
-    int d4 = map(w4, -100, 100, 2000, 7800);
-    d1 = int(d1 * 0.4 + last_d1 * 0.6);
-    d2 = int(d2 * 0.4 + last_d2 * 0.6);
-    d3 = int(d3 * 0.4 + last_d3 * 0.6);
-    d4 = int(d4 * 0.4 + last_d4 * 0.6);
+    int d1 = map(w1, -100, 100, 1850, 7800);
+    int d2 = map(w2, -100, 100, 1850, 7800);
+    int d3 = map(w3, -100, 100, 1850, 7800);
+    int d4 = map(w4, -100, 100, 1850, 7800);
+    d1 = int(d1 * 0.3 + last_d1 * 0.7);
+    d2 = int(d2 * 0.3 + last_d2 * 0.7);
+    d3 = int(d3 * 0.3 + last_d3 * 0.7);
+    d4 = int(d4 * 0.3 + last_d4 * 0.7);
     last_d1 = d1;
     last_d2 = d2;
     last_d3 = d3;

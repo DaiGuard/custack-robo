@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using ZeroMQ;
 
+
 [RequireComponent(typeof(PoseStampedSubscriber))]
 [RequireComponent(typeof(TwistStampedPublisher))]
 [RequireComponent(typeof(ItemListService))]
@@ -180,6 +181,7 @@ public class PlayerActions : MonoBehaviour
     {
         var vec = context.ReadValue<Vector2>();
         _moveVec = vec;
+        Debug.Log($"move: {vec}");
     }
 
     public void OnInputLook(InputAction.CallbackContext context)

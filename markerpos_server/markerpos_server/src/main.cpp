@@ -41,8 +41,13 @@ public:
         );
 
         // GStreamer pipeline for camera capture
+        // auto pipeline = "nvarguscamerasrc sensor-id=0 ! \
+        //                 video/x-raw(memory:NVMM), width=(int)1280, height=(int)720, format=(string)NV12, framerate=(fraction)60/1 ! \
+        //                 nvvidconv flip-method=0 ! \
+        //                 video/x-raw, format=(string)GRAY8 ! \
+        //                 appsink drop=1 sync=false";
         auto pipeline = "nvarguscamerasrc sensor-id=0 ! \
-                        video/x-raw(memory:NVMM), width=(int)1280, height=(int)720, format=(string)NV12, framerate=(fraction)60/1 ! \
+                        video/x-raw(memory:NVMM), width=(int)1920, height=(int)1080, format=(string)NV12, framerate=(fraction)30/1 ! \
                         nvvidconv flip-method=0 ! \
                         video/x-raw, format=(string)GRAY8 ! \
                         appsink drop=1 sync=false";
@@ -119,7 +124,7 @@ private:
                 }
 
                 // Calculate quaternion from direction vector (assuming +z is up)
-                double yaw = std::atan2(direction.y, direction.x);
+                double yaw = std::atan2(direction.y, direction.x) + 3.14159;
                 geometry_msgs::msg::Quaternion orientation;
                 orientation.x = 0.0;
                 orientation.y = 0.0;
@@ -129,8 +134,8 @@ private:
                 // Create and publish PoseStamped message
                 auto pose_msg = geometry_msgs::msg::PoseStamped();
                 pose_msg.header = header;
-                pose_msg.pose.position.x = center.x;
-                pose_msg.pose.position.y = center.y;
+                pose_msg.pose.position.x = - center.x * 2.4 + 0.08;
+                pose_msg.pose.position.y = - center.y * 1.6 + 0.1;
                 pose_msg.pose.position.z = 0.0;
                 pose_msg.pose.orientation = orientation;
 

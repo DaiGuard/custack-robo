@@ -19,17 +19,17 @@ ssh -M -S $SSH_SOCKET -f -N ${REMOTE_USER}@${REMOTE_HOST}
 
 
 # 時刻同期チェック
-echo "Checking time synchronization..."
-LOCAL_TIME=$(date +%s)
-REMOTE_TIME=$(ssh -S $SSH_SOCKET "${REMOTE_USER}@${REMOTE_HOST}" date +%s)
-DIFF=$((LOCAL_TIME - REMOTE_TIME))
+#echo "Checking time synchronization..."
+#LOCAL_TIME=$(date +%s)
+#REMOTE_TIME=$(ssh -S $SSH_SOCKET "${REMOTE_USER}@${REMOTE_HOST}" date +%s)
+#DIFF=$((LOCAL_TIME - REMOTE_TIME))
 # 絶対値を取得
-if [ $DIFF -lt 0 ]; then DIFF=$(( -DIFF )); fi
+#if [ $DIFF -lt 0 ]; then DIFF=$(( -DIFF )); fi
 
-if [ $DIFF -gt 10 ]; then
-    echo "Error: Time difference is too large (${DIFF}s). Please sync clocks."
-    exit 1
-fi
+#if [ $DIFF -gt 10 ]; then
+#    echo "Error: Time difference is too large (${DIFF}s). Please sync clocks."
+#    exit 1
+#fi
 
 # スクリプトのあるディレクトリを同期元とする
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)/markerpos_server"

@@ -1,0 +1,19 @@
+{
+    "folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "src/custack_locator_cpp"
+		},
+		{
+			"path": "src/custack_msgs"
+		},
+		{
+			"path": "src/custack_locator_py"
+		},
+		{
+			"path": "src/custack_web"
+		}
+	]
+}

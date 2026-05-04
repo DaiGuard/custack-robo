@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/ros/humble/include/**",
+                "/usr/local/include/opencv4/**",
+                "/opt/nvidia/vpi3/include/**",
+                "/usr/include/aarch64-linux-gnu/qt5/**",
+                "${workspaceFolder:custack_ws}/install/custack_msgs/include/**"
+            ],
+            "intelliSenseMode": "linux-gcc-arm64",
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17"
+        }
+    ],
+    "version": 4
+}

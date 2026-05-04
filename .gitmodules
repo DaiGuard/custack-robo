@@ -1,0 +1,6 @@
+[submodule "custack_ws/src/vision_opencv"]
+	path = custack_ws/src/vision_opencv
+	url = https://github.com/ros-perception/vision_opencv.git
+[submodule "custack_ws/src/ROS-TCP-Endpoint"]
+	path = custack_ws/src/ROS-TCP-Endpoint
+	url = https://github.com/Unity-Technologies/ROS-TCP-Endpoint

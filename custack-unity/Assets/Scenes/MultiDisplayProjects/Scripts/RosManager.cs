@@ -82,10 +82,13 @@ public class RosManager : MonoBehaviour
                 targetRotations.Add(Quaternion.identity);
             }
         }
+    }
 
+    void Start()
+    {
         // ROSの初期化
         Debug.Log("Initialize ROS");
-        InitializeROS();
+        InitializeROS();        
     }
 
     void InitializeROS()

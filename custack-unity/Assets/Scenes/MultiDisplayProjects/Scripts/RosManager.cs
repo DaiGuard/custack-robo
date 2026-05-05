@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Robotics.ROSTCPConnector;
 using RosMessageTypes.Custack;
 using System.Collections.Concurrent;
-using Unity.Robotics.ROSTCPConnector.MessageGeneration;
+
 
 public class RosManager : MonoBehaviour
 {
@@ -86,13 +86,19 @@ public class RosManager : MonoBehaviour
 
     void Start()
     {
+        Application.targetFrameRate = 200;
+        QualitySettings.vSyncCount = 0;
+        
         // ROSの初期化
         Debug.Log("Initialize ROS");
-        InitializeROS();        
+        InitializeROS();
     }
 
     void InitializeROS()
     {
+        var ros = ROSConnection.GetOrCreateInstance();
+        ros.NoDelay = true;
+        ros.SleepTimeSeconds = 0.001f;
         ROSConnection.GetOrCreateInstance()
             .Subscribe<RobotPoseArrayMsg>("/robot_poses", CallbackRobotPoses);
     }
@@ -104,7 +110,7 @@ public class RosManager : MonoBehaviour
         messageCount++;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         // 周波数（Hz）の計測と1秒ごとのログ出力
         updateCount++;
@@ -124,8 +130,10 @@ public class RosManager : MonoBehaviour
             GameObject player = playerObjects[i];
             if (player != null)
             {
-                player.transform.localPosition = Vector3.Lerp(player.transform.localPosition, targetPositions[i], Time.deltaTime * lerpSpeed);
-                player.transform.localRotation = Quaternion.Lerp(player.transform.localRotation, targetRotations[i], Time.deltaTime * lerpSpeed);
+                // player.transform.localPosition = Vector3.Lerp(player.transform.localPosition, targetPositions[i], Time.deltaTime * lerpSpeed);
+                // player.transform.localRotation = Quaternion.Lerp(player.transform.localRotation, targetRotations[i], Time.deltaTime * lerpSpeed);
+                player.transform.localPosition = targetPositions[i];
+                player.transform.localRotation = targetRotations[i];
             }
         }
 
@@ -133,7 +141,7 @@ public class RosManager : MonoBehaviour
         RobotPoseArrayMsg latestMsg = null;
 
         // キューから全てのメッセージを取り出し、最新のメッセージだけを保持する
-        while(robotPosesQueue.TryDequeue(out var msg))
+        while (robotPosesQueue.TryDequeue(out var msg))
         {
             latestMsg = msg;
         }
@@ -151,7 +159,7 @@ public class RosManager : MonoBehaviour
         foreach (RobotPoseMsg pose in latestMsg.poses)
         {
             int id = pose.id;
-            
+
             // IDがplayerObjectsのリストの範囲内かチェック
             if (id >= 0 && id < playerObjects.Count)
             {
@@ -163,7 +171,7 @@ public class RosManager : MonoBehaviour
                     Quaternion initialRot = initialRotations[id];
 
                     // 【右手座標系(ROS) から 左手座標系(Unity) への変換】
-                    
+
                     // 2Dの投影面(XY平面)にマッピング
                     // ROS側: 左上(-1.0, -1.0) / 右下(1.0, 1.0)
                     // Unity側: Xは右が正、Yは上が正となるため、Yの符号を反転させます
@@ -182,8 +190,10 @@ public class RosManager : MonoBehaviour
                     float meanY = GetFilteredMean(yHistories[id], zScoreThreshold);
                     float meanTheta = GetFilteredMean(thetaHistories[id], zScoreThreshold);
 
-                    targetPositions[id] = initialPos + new Vector3(meanX, meanY, 0);
-                    targetRotations[id] = initialRot * Quaternion.Euler(0, 0, meanTheta);
+                    // targetPositions[id] = initialPos + new Vector3(meanX, meanY, 0);
+                    // targetRotations[id] = initialRot * Quaternion.Euler(0, 0, meanTheta);
+                    targetPositions[id] = initialPos + new Vector3(targetX, targetY, 0);
+                    targetRotations[id] = initialRot * Quaternion.Euler(0, 0, targetTheta);
 
                     // 毎フレームの大量のログ出力はパフォーマンス低下の原因になるためコメントアウト
                     Debug.LogFormat("ID: {0}, X: {1}, Y: {2}, Theta: {3}", id, pose.x, pose.y, pose.theta);
@@ -218,7 +228,7 @@ public class RosManager : MonoBehaviour
     private float GetFilteredMean(List<float> history, float threshold)
     {
         if (history.Count == 0) return 0f;
-        
+
         // データ数が少ない場合は最新の値を返す
         if (history.Count < 3) return history[history.Count - 1];
 
@@ -259,7 +269,7 @@ public class RosManager : MonoBehaviour
 
         // 全て除外されてしまった場合（しきい値が厳しすぎる場合など）は中央値を返す
         if (filteredCount == 0) return median;
-        
+
         return filteredSum / filteredCount;
     }
 }

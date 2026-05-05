@@ -127,9 +127,9 @@ LocatorNode::LocatorNode() : rclcpp::Node("locator_node") {
         .durability_volatile();
     image_pub_ = this->create_publisher<sensor_msgs::msg::Image>(camera_topic, image_qos);
 
-    auto robot_pose_qos = rclcpp::QoS(3)
-        // .best_effort()
-        .reliable()
+    auto robot_pose_qos = rclcpp::QoS(1)
+         .best_effort()
+        //.reliable()
         .durability_volatile();
         
     robot_pose_pub_ = this->create_publisher<custack_msgs::msg::RobotPoseArray>(
@@ -493,10 +493,10 @@ void LocatorNode::processCallback() {
     }
     robot_pose_pub_->publish(robot_poses);
 
-    //cv::Mat preview_frame;
-    //cv::resize(processed_frame_, preview_frame, cv::Size(), 0.5, 0.5, cv::INTER_AREA);
-    //cv::imshow("Processed Frame", preview_frame);
-    //cv::waitKey(1);
+    cv::Mat preview_frame;
+    cv::resize(processed_frame_, preview_frame, cv::Size(), 0.5, 0.5, cv::INTER_AREA);
+    cv::imshow("Processed Frame", preview_frame);
+    cv::waitKey(1);
 }
 
 void LocatorNode::infoCallback() {

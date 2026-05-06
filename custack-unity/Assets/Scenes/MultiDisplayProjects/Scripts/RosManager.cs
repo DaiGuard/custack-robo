@@ -86,8 +86,9 @@ public class RosManager : MonoBehaviour
 
     void Start()
     {
-        Application.targetFrameRate = 200;
         QualitySettings.vSyncCount = 0;
+        QualitySettings.maxQueuedFrames = 1;
+        Application.targetFrameRate = 200;
         
         // ROSの初期化
         Debug.Log("Initialize ROS");
@@ -110,7 +111,7 @@ public class RosManager : MonoBehaviour
         messageCount++;
     }
 
-    void FixedUpdate()
+    void LateUpdate()
     {
         // 周波数（Hz）の計測と1秒ごとのログ出力
         updateCount++;

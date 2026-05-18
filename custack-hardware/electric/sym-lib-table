@@ -1,0 +1,7 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "My_Connector_Generic") (type "KiCad") (uri "${KIPRJMOD}/libraries/symbols/My_Connector_Generic.kicad_sym") (options "") (descr ""))
+	(lib (name "My_Converter_DCDC") (type "KiCad") (uri "${KIPRJMOD}/libraries/symbols/My_Converter_DCDC.kicad_sym") (options "") (descr ""))
+	(lib (name "My_Device") (type "KiCad") (uri "${KIPRJMOD}/libraries/symbols/My_Device.kicad_sym") (options "") (descr ""))
+	(lib (name "My_Switch") (type "KiCad") (uri "${KIPRJMOD}/libraries/symbols/My_Switch.kicad_sym") (options "") (descr ""))
+)

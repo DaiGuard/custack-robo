@@ -234,7 +234,7 @@
       "no_connect_dangling": "warning",
       "pin_not_connected": "error",
       "pin_not_driven": "error",
-      "pin_to_pin": "warning",
+      "pin_to_pin": "error",
       "power_pin_not_driven": "error",
       "same_local_global_label": "warning",
       "similar_label_and_power": "warning",
@@ -252,12 +252,19 @@
     }
   },
   "libraries": {
-    "pinned_footprint_libs": [],
+    "pinned_footprint_libs": [
+      "My_Custom",
+      "My_Button_Switch_SMD"
+    ],
     "pinned_symbol_libs": [
       "My_Switch",
       "My_Device",
       "My_Connector_Generic",
-      "My_Converter_DCDC"
+      "My_Converter_DCDC",
+      "My_MCU.kicad_sym",
+      "My_MCU",
+      "My_Customy",
+      "My_Custom"
     ]
   },
   "meta": {
@@ -421,13 +428,29 @@
         "uuid": "8000b538-fd6e-48aa-8d1f-0d9d6e323dc5"
       }
     ],
-    "used_designators": "",
+    "used_designators": "#PWR46,D11,BT3,SW1,R1-2",
     "variants": []
   },
   "sheets": [
     [
       "8000b538-fd6e-48aa-8d1f-0d9d6e323dc5",
       "ルート"
+    ],
+    [
+      "11100989-5644-4f9c-b455-966faf4c2219",
+      "BatteryBoard"
+    ],
+    [
+      "3d55a280-656c-4a1d-a35c-6f94d9347620",
+      "MainBoard"
+    ],
+    [
+      "77fce9fd-60f5-4e01-b115-840085d4f78a",
+      "LegUnitBoard"
+    ],
+    [
+      "d742f8b8-686a-4774-8ed4-049b885ab7df",
+      "ArmUnitBoard"
     ]
   ],
   "text_variables": {},

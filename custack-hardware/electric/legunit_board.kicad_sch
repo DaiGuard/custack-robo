@@ -2804,6 +2804,12 @@
 		(uuid "3629fe4c-f711-48ba-ab21-872a79630ee1")
 	)
 	(junction
+		(at 80.01 100.33)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3a2b67bc-c836-4b9a-80c0-54391b52477a")
+	)
+	(junction
 		(at 78.74 45.72)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2846,16 +2852,10 @@
 		(uuid "a1eb1cdc-7486-465a-a23d-073fa9ae1eeb")
 	)
 	(junction
-		(at 80.01 100.33)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b1f9f59d-fda3-47a6-aed7-efb5a4de2067")
-	)
-	(junction
 		(at 87.63 102.87)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "df098b1b-0252-46d8-b029-0d1f2fa8ba6e")
+		(uuid "ec626ddb-f0b5-490f-8ed2-a2fe819155fd")
 	)
 	(junction
 		(at 152.4 138.43)
@@ -2933,7 +2933,7 @@
 	)
 	(wire
 		(pts
-			(xy 87.63 95.25) (xy 87.63 102.87)
+			(xy 87.63 92.71) (xy 87.63 102.87)
 		)
 		(stroke
 			(width 0)
@@ -2973,7 +2973,7 @@
 	)
 	(wire
 		(pts
-			(xy 80.01 86.36) (xy 80.01 90.17)
+			(xy 80.01 81.28) (xy 80.01 87.63)
 		)
 		(stroke
 			(width 0)
@@ -3643,7 +3643,7 @@
 	)
 	(wire
 		(pts
-			(xy 80.01 95.25) (xy 80.01 100.33)
+			(xy 80.01 92.71) (xy 80.01 100.33)
 		)
 		(stroke
 			(width 0)
@@ -3773,7 +3773,7 @@
 	)
 	(wire
 		(pts
-			(xy 87.63 86.36) (xy 87.63 90.17)
+			(xy 87.63 81.28) (xy 87.63 87.63)
 		)
 		(stroke
 			(width 0)
@@ -4469,7 +4469,7 @@
 	)
 	(symbol
 		(lib_id "My_Device:R_Small")
-		(at 80.01 92.71 180)
+		(at 80.01 90.17 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4479,7 +4479,7 @@
 		(dnp no)
 		(uuid "0273f291-8595-4b02-a222-451f4af2ae93")
 		(property "Reference" "R18"
-			(at 77.978 93.726 90)
+			(at 75.184 91.694 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4489,8 +4489,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "10K 1/4W"
-			(at 82.296 92.71 90)
+		(property "Value" "10K 1/4W ±5% 0603"
+			(at 76.708 90.17 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4499,8 +4499,8 @@
 				)
 			)
 		)
-		(property "Footprint" ""
-			(at 80.01 92.71 0)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 80.01 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4510,8 +4510,8 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
-			(at 80.01 92.71 0)
+		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/rohm-semiconductor/ESR03EZPJ103/1762722?s=N4IgTCBcDaIKIGUBKAGAzHAWgBQFIEZ0QBdAXyA"
+			(at 80.01 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4522,13 +4522,23 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
-			(at 80.01 92.71 0)
+			(at 80.01 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "ESR03EZPJ103"
+			(at 78.232 90.17 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -5195,7 +5205,7 @@
 		(dnp no)
 		(uuid "2eb5224d-2a00-45fc-9373-d097c875bf69")
 		(property "Reference" "C12"
-			(at 141.986 48.26 0)
+			(at 134.112 49.784 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5205,8 +5215,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10µF 25V X5R"
-			(at 136.906 55.372 90)
+		(property "Value" "10µF 25V X5R 0603"
+			(at 135.636 59.182 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5216,7 +5226,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 139.7 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -5227,7 +5237,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/murata-electronics/GRM188R61E106KA73J/9887674?s=N4IgTCBcDaIOICUCyBGAHGhA2FBRFADFgNICCA7AMwBSIAugL5A"
 			(at 139.7 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -5246,6 +5256,16 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "GRM188R61E106KA73J"
+			(at 137.16 52.07 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -5276,7 +5296,7 @@
 		(dnp no)
 		(uuid "2ff16986-dc46-4946-877f-439e2d321fbd")
 		(property "Reference" "C15"
-			(at 92.202 39.37 90)
+			(at 97.79 39.37 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5286,7 +5306,7 @@
 			)
 		)
 		(property "Value" "220µF 25V 105°C"
-			(at 98.298 39.37 90)
+			(at 99.822 39.37 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5295,7 +5315,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:CP_Elec_8x10"
 			(at 95.25 39.37 0)
 			(hide yes)
 			(show_name no)
@@ -5306,7 +5326,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.nichicon.co.jp/english/series_items/catalog_pdf/e-uud.pdf"
 			(at 95.25 39.37 0)
 			(hide yes)
 			(show_name no)
@@ -5325,6 +5345,16 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "UUD1E221MNL1GS"
+			(at 101.854 39.37 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -6566,7 +6596,7 @@
 	)
 	(symbol
 		(lib_id "My_Device:R_Small")
-		(at 87.63 92.71 180)
+		(at 87.63 90.17 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6576,7 +6606,7 @@
 		(dnp no)
 		(uuid "6b9a4810-37ac-4562-8d8c-93a65c6347f4")
 		(property "Reference" "R19"
-			(at 85.598 93.726 90)
+			(at 82.804 91.186 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6586,8 +6616,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "10K 1/4W"
-			(at 89.916 92.71 90)
+		(property "Value" "10K 1/4W ±5% 0603"
+			(at 84.328 90.17 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6596,8 +6626,8 @@
 				)
 			)
 		)
-		(property "Footprint" ""
-			(at 87.63 92.71 0)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 87.63 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6607,8 +6637,8 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
-			(at 87.63 92.71 0)
+		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/rohm-semiconductor/ESR03EZPJ103/1762722?s=N4IgTCBcDaIKIGUBKAGAzHAWgBQFIEZ0QBdAXyA"
+			(at 87.63 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6619,13 +6649,23 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
-			(at 87.63 92.71 0)
+			(at 87.63 90.17 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "ESR03EZPJ103"
+			(at 85.852 90.17 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -6892,7 +6932,7 @@
 		(dnp no)
 		(uuid "803dc95d-c2f0-4f6c-98a3-4f0bf633daa6")
 		(property "Reference" "C13"
-			(at 176.276 48.26 0)
+			(at 176.784 49.784 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6902,8 +6942,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10µF 25V X5R"
-			(at 171.196 55.372 90)
+		(property "Value" "10µF 25V X5R 0603"
+			(at 178.562 58.42 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6913,7 +6953,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 173.99 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -6924,7 +6964,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/murata-electronics/GRM188R61E106KA73J/9887674?s=N4IgTCBcDaIOICUCyBGAHGhA2FBRFADFgNICCA7AMwBSIAugL5A"
 			(at 173.99 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -6943,6 +6983,16 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "GRM188R61E106KA73J"
+			(at 180.594 51.308 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -7049,10 +7099,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "87719f51-5af4-435f-b0a2-ee976441f73f")
 		(property "Reference" "U2"
-			(at 59.2933 87.63 0)
+			(at 58.42 87.63 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7062,8 +7111,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "ATtiny1614"
-			(at 59.2933 90.17 0)
+		(property "Value" "20MHz 16KB FLASH"
+			(at 58.42 89.408 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7073,7 +7122,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm"
 			(at 57.15 99.06 0)
 			(hide yes)
 			(show_name no)
@@ -7084,7 +7133,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny1614-16-17-DataSheet-DS40002204A.pdf"
+		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny1614-16-17-DataSheet-DS40002204A.pdf"
 			(at 57.658 102.616 0)
 			(hide yes)
 			(show_name no)
@@ -7103,6 +7152,16 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "ATTINY1614-SSNR"
+			(at 65.532 91.186 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -7481,7 +7540,7 @@
 		(dnp no)
 		(uuid "af619c80-9b51-4010-9f1e-9db4853879e0")
 		(property "Reference" "C14"
-			(at 51.816 78.74 0)
+			(at 43.434 80.264 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7491,8 +7550,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10µF 25V X5R"
-			(at 46.736 85.852 90)
+		(property "Value" "10µF 25V X5R 0603"
+			(at 45.212 85.09 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7502,7 +7561,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 49.53 78.74 0)
 			(hide yes)
 			(show_name no)
@@ -7513,7 +7572,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/murata-electronics/GRM188R61E106KA73J/9887674?s=N4IgTCBcDaIOICUCyBGAHGhA2FBRFADFgNICCA7AMwBSIAugL5A"
 			(at 49.53 78.74 0)
 			(hide yes)
 			(show_name no)
@@ -7532,6 +7591,16 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "GRM188R61E106KA73J"
+			(at 46.736 78.74 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
 				)
 			)
 		)
@@ -8644,7 +8713,7 @@
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
-		(at 80.01 86.36 0)
+		(at 80.01 81.28 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8655,7 +8724,7 @@
 		(fields_autoplaced yes)
 		(uuid "f3e614c2-f7b7-43e4-90cc-13fd1a12bdd9")
 		(property "Reference" "#FLG023"
-			(at 80.01 84.455 0)
+			(at 80.01 79.375 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8666,7 +8735,7 @@
 			)
 		)
 		(property "Value" "+3.3V2"
-			(at 80.01 81.28 0)
+			(at 80.01 76.2 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8676,7 +8745,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 80.01 86.36 0)
+			(at 80.01 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8687,7 +8756,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 80.01 86.36 0)
+			(at 80.01 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8698,7 +8767,7 @@
 			)
 		)
 		(property "Description" "Special symbol for telling ERC where power comes from"
-			(at 80.01 86.36 0)
+			(at 80.01 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8722,7 +8791,7 @@
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
-		(at 87.63 86.36 0)
+		(at 87.63 81.28 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8733,7 +8802,7 @@
 		(fields_autoplaced yes)
 		(uuid "f3f8ac35-fed7-4de1-be7b-732507436571")
 		(property "Reference" "#FLG024"
-			(at 87.63 84.455 0)
+			(at 87.63 79.375 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8744,7 +8813,7 @@
 			)
 		)
 		(property "Value" "+3.3V2"
-			(at 87.63 81.28 0)
+			(at 87.63 76.2 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8754,7 +8823,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 87.63 86.36 0)
+			(at 87.63 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8765,7 +8834,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 87.63 86.36 0)
+			(at 87.63 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8776,7 +8845,7 @@
 			)
 		)
 		(property "Description" "Special symbol for telling ERC where power comes from"
-			(at 87.63 86.36 0)
+			(at 87.63 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

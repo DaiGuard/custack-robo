@@ -2215,7 +2215,7 @@
 		)
 		(uuid "509defa7-c68a-47a6-8151-805c819e45a1")
 	)
-	(text "R_{DS(ON)} = 29.8mohm @V_{GS} = -4.5V\n3A^2 * 0.0298ohm = 0.2682W\n125℃/W * 0.2682W = 33.525°C"
+	(text "R_{DS(ON)} = 29.8mohm @V_{GS} = -4.5V\n3A^2 * 0.0298ohm = 0.2682W\n125°C/W * 0.2682W = 33.525°C"
 		(exclude_from_sim no)
 		(at 138.684 50.038 0)
 		(effects
@@ -2237,7 +2237,7 @@
 		)
 		(uuid "bcf74e21-122e-4827-846f-082952ac4bae")
 	)
-	(text "Gate印加電圧\n3.7V~4.7V\nV_{GS} = -4.7V~-3.7V\nV_{GSS} = ±8V\n"
+	(text "Gate印加電圧\n3.7V~4.2V\nV_{GS} = -4.2V~-3.7V\nV_{GSS} = ±8V\n"
 		(exclude_from_sim no)
 		(at 114.046 47.498 0)
 		(effects
@@ -2248,7 +2248,7 @@
 		)
 		(uuid "e1c34ad1-a8d1-4c45-bc08-c36a12447b5f")
 	)
-	(text "18350バッテリ\n3.7V(MAX 4.7V) 3A\n1400mAh"
+	(text "18350バッテリ\n3.7V(MAX 4.2V) 3A\n1400mAh"
 		(exclude_from_sim no)
 		(at 32.258 38.1 0)
 		(effects
@@ -3696,7 +3696,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "XH 2.5mmピッチ 2極 オス AWG24"
+		(property "Value" "XH 2.5mmピッチ 2極 オス AWG22"
 			(at 190.52 36.8299 0)
 			(show_name no)
 			(do_not_autoplace no)

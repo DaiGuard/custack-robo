@@ -69,8 +69,187 @@
           "thermal_relief_spoke_width": 0.5
         }
       },
-      "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
+      "drc_exclusions": [
+        [
+          "lib_footprint_mismatch|50000000|48000000|935ac6e8-831b-436a-b4a3-9e8c14b38615|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "silk_edge_clearance|104178623|82791635|29b01dd7-7234-4213-b4da-e6bd9e5d370d|f0c180ef-6618-45f3-9b2d-eade1fcbbd68",
+          ""
+        ],
+        [
+          "silk_edge_clearance|106965909|83219989|29b01dd7-7234-4213-b4da-e6bd9e5d370d|5911473c-b767-4516-a8f4-1fac0ffe6ff0",
+          ""
+        ],
+        [
+          "silk_edge_clearance|107810000|69640000|5ff7262f-4637-42a6-acc2-42d20555986a|3f38e9ac-a9a1-4866-8b33-c02af9287379",
+          ""
+        ],
+        [
+          "silk_edge_clearance|107810000|70890000|5ff7262f-4637-42a6-acc2-42d20555986a|e81a5858-5c26-4bc8-939b-71218d0879fa",
+          ""
+        ],
+        [
+          "silk_edge_clearance|26531380|80125377|e266130f-6d07-47a3-a718-003e00ad5c3a|bed29d44-5f11-488c-ad74-622993dc034a",
+          ""
+        ],
+        [
+          "silk_edge_clearance|29238564|80815114|e266130f-6d07-47a3-a718-003e00ad5c3a|8de9826d-6bf1-4310-b168-4bb98d5ad666",
+          ""
+        ],
+        [
+          "silk_edge_clearance|46761436|81184886|4473104d-5385-4cae-a7aa-9f45a4c6dc92|0553f9ee-e4f5-4705-8f79-902a490ac385",
+          ""
+        ],
+        [
+          "silk_edge_clearance|49468620|81874623|4473104d-5385-4cae-a7aa-9f45a4c6dc92|957e3bc0-db01-448a-b2db-e5b3bcd079b0",
+          ""
+        ],
+        [
+          "silk_edge_clearance|52600000|66525000|281c2135-8fbf-4f81-b942-77ca6ed04e9a|af43dc2a-8b6b-47d8-9fce-19fe2cd1c012",
+          ""
+        ],
+        [
+          "silk_edge_clearance|53850000|66500000|281c2135-8fbf-4f81-b942-77ca6ed04e9a|023ec61f-2375-4d32-b911-771d8a1b84dd",
+          ""
+        ],
+        [
+          "silk_edge_clearance|55960000|70700000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|d6806747-b40a-4559-b3f9-98aabbeff908",
+          ""
+        ],
+        [
+          "silk_edge_clearance|56060000|70400000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|27d06efe-9049-4a32-b787-e0fd770d5d2b",
+          ""
+        ],
+        [
+          "silk_edge_clearance|56060000|70700000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|2ef09da7-df7c-48f1-8c9a-e9d060162fb6",
+          ""
+        ],
+        [
+          "silk_edge_clearance|56060000|70700000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|47fe40c9-7b45-4bd5-85c9-25f8d3987eed",
+          ""
+        ],
+        [
+          "silk_edge_clearance|56108054|68640000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|4eb8f4db-96e7-479d-ae40-375b27cbc9d2",
+          ""
+        ],
+        [
+          "silk_edge_clearance|56160000|69890000|51ea94d4-3c40-459a-a51b-fdf42dda19dc|5b5875b7-f5b7-4801-8efa-73e690099c0a",
+          ""
+        ],
+        [
+          "silk_edge_clearance|57190000|77110000|9d222082-a7ef-47b7-844e-10b0fc096a82|34dbc3d5-7243-445e-ba85-cb282030f5e4",
+          ""
+        ],
+        [
+          "silk_edge_clearance|57190000|78360000|9d222082-a7ef-47b7-844e-10b0fc096a82|1df6a365-d2a5-4001-8179-005b90f647f0",
+          ""
+        ],
+        [
+          "silk_edge_clearance|58164091|81780011|6b29002e-c685-4f1c-8dc3-defecd72e369|aa7ee09e-c440-4b97-9c7f-2993d6d207e6",
+          ""
+        ],
+        [
+          "silk_edge_clearance|60951377|82208365|6b29002e-c685-4f1c-8dc3-defecd72e369|631241ec-302d-48b7-b7f8-05cd0aa3d8a1",
+          ""
+        ],
+        [
+          "silk_edge_clearance|76520000|29500000|4a5948cc-e0e3-44b4-98cc-638bff3afc75|08327404-282f-48af-9f9e-a1373084e202",
+          ""
+        ],
+        [
+          "silk_edge_clearance|76520000|67600000|f9f86927-f970-4549-980a-431887e3e93a|1617aa89-bd31-412d-bd79-64b7746dac08",
+          ""
+        ],
+        [
+          "silk_edge_clearance|78461436|82684886|0a79be57-7ecf-4d24-8c35-4f50f0d761e8|bf6069fe-5522-4667-818f-8e5d53894b7d",
+          ""
+        ],
+        [
+          "silk_edge_clearance|79060000|29500000|4a5948cc-e0e3-44b4-98cc-638bff3afc75|b4b1f939-4cea-43f0-82c2-b188f219f6f6",
+          ""
+        ],
+        [
+          "silk_edge_clearance|79060000|67600000|f9f86927-f970-4549-980a-431887e3e93a|669df92d-63b8-453d-8076-89c336853a16",
+          ""
+        ],
+        [
+          "silk_edge_clearance|81168620|83374623|0a79be57-7ecf-4d24-8c35-4f50f0d761e8|a1f28e05-9564-43b3-86c8-5b708224d553",
+          ""
+        ],
+        [
+          "silk_edge_clearance|81600000|29500000|4a5948cc-e0e3-44b4-98cc-638bff3afc75|d8284cc4-5e1d-435f-9ab6-b91754ca93b3",
+          ""
+        ],
+        [
+          "silk_edge_clearance|81600000|67600000|f9f86927-f970-4549-980a-431887e3e93a|1c8e14ac-740d-4b7e-8c33-217809559c9a",
+          ""
+        ],
+        [
+          "silk_edge_clearance|83917500|81722058|9092497e-ac5c-43be-8879-e575706fd2d1|3f1f4209-d73a-45b0-8042-083c80b2389d",
+          ""
+        ],
+        [
+          "silk_edge_clearance|86677110|82238950|9092497e-ac5c-43be-8879-e575706fd2d1|665748a2-ab5f-46a4-b532-dc898e62b1c3",
+          ""
+        ],
+        [
+          "silk_overlap|104199514|82544054|f0c180ef-6618-45f3-9b2d-eade1fcbbd68|fc0cbd78-8395-41f2-85f9-f6ad6c1976af",
+          ""
+        ],
+        [
+          "silk_overlap|107080727|82223021|5911473c-b767-4516-a8f4-1fac0ffe6ff0|fc0cbd78-8395-41f2-85f9-f6ad6c1976af",
+          ""
+        ],
+        [
+          "silk_overlap|26481652|81763944|07aba9e0-1c1a-49f9-9155-f07f4208500b|bed29d44-5f11-488c-ad74-622993dc034a",
+          ""
+        ],
+        [
+          "silk_overlap|29230549|80953103|07aba9e0-1c1a-49f9-9155-f07f4208500b|8de9826d-6bf1-4310-b168-4bb98d5ad666",
+          ""
+        ],
+        [
+          "silk_overlap|46765694|80868836|0553f9ee-e4f5-4705-8f79-902a490ac385|bdffbb37-b467-405d-914e-0f386ffa4a5e",
+          ""
+        ],
+        [
+          "silk_overlap|49650727|80723021|957e3bc0-db01-448a-b2db-e5b3bcd079b0|bdffbb37-b467-405d-914e-0f386ffa4a5e",
+          ""
+        ],
+        [
+          "silk_overlap|58036938|82333554|aa7ee09e-c440-4b97-9c7f-2993d6d207e6|c495fac9-9ea7-45ec-baa8-6c8ba383560f",
+          ""
+        ],
+        [
+          "silk_overlap|60934305|82631163|631241ec-302d-48b7-b7f8-05cd0aa3d8a1|c495fac9-9ea7-45ec-baa8-6c8ba383560f",
+          ""
+        ],
+        [
+          "silk_overlap|78469450|82453103|9c81840f-f800-4ec7-b0d3-09293fd51e23|bf6069fe-5522-4667-818f-8e5d53894b7d",
+          ""
+        ],
+        [
+          "silk_overlap|81370000|82500000|9c81840f-f800-4ec7-b0d3-09293fd51e23|a1f28e05-9564-43b3-86c8-5b708224d553",
+          ""
+        ],
+        [
+          "silk_overlap|83911652|83263944|3f1f4209-d73a-45b0-8042-083c80b2389d|f8001f0d-e37e-41a0-8477-aeb60c1afe2a",
+          ""
+        ],
+        [
+          "silk_overlap|86673151|82728978|665748a2-ab5f-46a4-b532-dc898e62b1c3|f8001f0d-e37e-41a0-8477-aeb60c1afe2a",
+          ""
+        ]
+      ],
       "meta": {
         "version": 2
       },
@@ -140,22 +319,22 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.0,
-        "min_connection": 0.0,
+        "min_clearance": 0.2,
+        "min_connection": 0.2,
         "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
         "min_hole_clearance": 0.25,
-        "min_hole_to_hole": 0.25,
+        "min_hole_to_hole": 0.5,
         "min_microvia_diameter": 0.2,
         "min_microvia_drill": 0.1,
         "min_resolved_spokes": 2,
-        "min_silk_clearance": 0.0,
-        "min_text_height": 0.8,
-        "min_text_thickness": 0.08,
+        "min_silk_clearance": 0.15,
+        "min_text_height": 1.0,
+        "min_text_thickness": 0.15,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.2,
-        "min_via_annular_width": 0.1,
-        "min_via_diameter": 0.5,
+        "min_track_width": 0.25,
+        "min_via_annular_width": 0.15,
+        "min_via_diameter": 0.6,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
       },
@@ -203,7 +382,9 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
+      "track_widths": [
+        0.0
+      ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
           "corner_radius_percentage": 80,
@@ -230,7 +411,12 @@
           "spacing": 0.6
         }
       },
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "ipc2581": {
@@ -243,7 +429,161 @@
       "sch_revision": ""
     },
     "layer_pairs": [],
-    "layer_presets": [],
+    "layer_presets": [
+      {
+        "activeLayer": -2,
+        "flipBoard": false,
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          18,
+          20,
+          22,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          34,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127
+        ],
+        "name": "通常表示",
+        "renderLayers": [
+          "vias",
+          "footprint_text",
+          "footprint_anchors",
+          "ratsnest",
+          "grid",
+          "footprints_front",
+          "footprints_back",
+          "footprint_values",
+          "footprint_references",
+          "tracks",
+          "drc_errors",
+          "drawing_sheet",
+          "bitmaps",
+          "pads",
+          "zones",
+          "drc_warnings",
+          "drc_exclusions",
+          "locked_item_shadows",
+          "conflict_shadows",
+          "shapes",
+          "board_outline_area",
+          "ly_points"
+        ]
+      }
+    ],
     "viewports": []
   },
   "boards": [],
@@ -913,7 +1253,7 @@
         "uuid": "34724ce1-230f-4531-b3b7-d1c9082b67f0"
       }
     ],
-    "used_designators": "",
+    "used_designators": "C16,C20-21",
     "variants": []
   },
   "sheets": [

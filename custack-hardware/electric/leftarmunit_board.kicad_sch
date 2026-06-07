@@ -2330,12 +2330,6 @@
 		(uuid "327cef6b-1e34-4ddc-81b0-3f1637e5eb5e")
 	)
 	(junction
-		(at 49.53 72.39)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3df8c81c-b551-4026-b7df-64d53ca26806")
-	)
-	(junction
 		(at 80.01 101.6)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2521,16 +2515,6 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 74.93) (xy 41.91 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "208dc800-95b7-4dd8-a6a7-dbfdeaf001d7")
-	)
-	(wire
-		(pts
 			(xy 72.39 80.01) (xy 72.39 86.36)
 		)
 		(stroke
@@ -2568,16 +2552,6 @@
 			(type default)
 		)
 		(uuid "2bf3b26e-93c9-48de-b3bc-ab657ddd7ccb")
-	)
-	(wire
-		(pts
-			(xy 41.91 80.01) (xy 41.91 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2c32d8cb-456b-4cdc-bff5-0dad401498a7")
 	)
 	(wire
 		(pts
@@ -2661,7 +2635,7 @@
 	)
 	(wire
 		(pts
-			(xy 49.53 72.39) (xy 49.53 88.9)
+			(xy 49.53 67.31) (xy 49.53 88.9)
 		)
 		(stroke
 			(width 0)
@@ -2738,16 +2712,6 @@
 			(type default)
 		)
 		(uuid "6041dc9b-e34c-4ea7-a4d5-5d0020f795f9")
-	)
-	(wire
-		(pts
-			(xy 49.53 67.31) (xy 49.53 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "61ad6d7b-53f7-4bf2-be72-9b67e69edc31")
 	)
 	(wire
 		(pts
@@ -3011,16 +2975,6 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 72.39) (xy 49.53 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cd323f09-fcd4-4be8-ae22-1158f199b1b2")
-	)
-	(wire
-		(pts
 			(xy 133.35 39.37) (xy 143.51 39.37)
 		)
 		(stroke
@@ -3198,16 +3152,6 @@
 			(justify right bottom)
 		)
 		(uuid "6bf9c849-e368-4412-b9fd-1e24bf6d6c48")
-	)
-	(label "GND"
-		(at 41.91 83.82 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "79eba8b2-1599-4ce3-9e60-1de611ff9d75")
 	)
 	(label "VDD"
 		(at 143.51 26.67 0)
@@ -3533,6 +3477,99 @@
 			(project "custack-electric"
 				(path "/34724ce1-230f-4531-b3b7-d1c9082b67f0"
 					(reference "J17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "My_Device:C_Polarized_Small")
+		(at 95.25 39.37 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "34132705-5ba3-4b96-8806-12f7ad35c86f")
+		(property "Reference" "C20"
+			(at 97.79 36.2838 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100µF 16V 105°C"
+			(at 97.79 38.8238 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:CP_Elec_5x5.9"
+			(at 95.25 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://www.nichicon.co.jp/english/series_items/catalog_pdf/e-ucm.pdf"
+			(at 95.25 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "アルミ電解コンデンサ 100 µF 16 V ラジアル、CAN - SMD 2000時間 @ 105°C"
+			(at 95.25 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "型式" "UCM1C101MCL1GS"
+			(at 97.79 41.3638 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(justify left)
+			)
+		)
+		(pin "2"
+			(uuid "f3c3194e-9f6f-460d-8d93-d96c84ba9973")
+		)
+		(pin "1"
+			(uuid "b7b9fd59-f0ba-4dfb-ae33-ba308fc9d002")
+		)
+		(instances
+			(project "custack-electric"
+				(path "/34724ce1-230f-4531-b3b7-d1c9082b67f0"
+					(reference "C20")
 					(unit 1)
 				)
 			)
@@ -4045,99 +4082,6 @@
 		)
 	)
 	(symbol
-		(lib_id "My_Device:C_Polarized_Small")
-		(at 95.25 39.37 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "7b963344-65fb-4bcc-897e-c8cc204029e7")
-		(property "Reference" "C21"
-			(at 97.79 36.2838 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "220µF 25V 105°C"
-			(at 97.79 38.8238 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:CP_Elec_8x10"
-			(at 95.25 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.nichicon.co.jp/english/series_items/catalog_pdf/e-uud.pdf"
-			(at 95.25 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Polarized capacitor, small symbol"
-			(at 95.25 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "型式" "UUD1E221MNL1GS"
-			(at 97.79 41.3638 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify left)
-			)
-		)
-		(pin "2"
-			(uuid "82ebebb9-308f-42f1-b82a-ea29b5dba057")
-		)
-		(pin "1"
-			(uuid "cf1ab1c7-72d7-4752-834c-cd213b4bd564")
-		)
-		(instances
-			(project "custack-electric"
-				(path "/34724ce1-230f-4531-b3b7-d1c9082b67f0"
-					(reference "C21")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "My_Device:R_Small")
 		(at 80.01 88.9 180)
 		(unit 1)
@@ -4377,7 +4321,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+		(property "Footprint" "My_Custom:Pogopin_1x4_2.54mm"
 			(at 30.48 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -4399,7 +4343,7 @@
 				)
 			)
 		)
-		(property "Description" "1 セット/5 セット磁気コネクタ 2/3/4/5/6/8 ピンボンディングワイヤーストリップ配線端子強力な磁気無はんだクイックバットジョイント"
+		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 30.48 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -4625,99 +4569,6 @@
 			(project "custack-electric"
 				(path "/34724ce1-230f-4531-b3b7-d1c9082b67f0"
 					(reference "R30")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "My_Device:C_Small")
-		(at 41.91 77.47 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "c3d55008-4a95-4a09-a8f5-79860e1fdfd6")
-		(property "Reference" "C20"
-			(at 39.37 74.9362 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "10µF 25V X5R 0603"
-			(at 39.37 77.4762 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 41.91 77.47 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.digikey.jp/ja/products/detail/murata-electronics/GRM188R61E106KA73J/9887674?s=N4IgTCBcDaIOICUCyBGAHGhA2FBRFADFgNICCA7AMwBSIAugL5A"
-			(at 41.91 77.47 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 41.91 77.47 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "型式" "GRM188R61E106KA73J"
-			(at 39.37 80.0162 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify right)
-			)
-		)
-		(pin "1"
-			(uuid "6bb5400b-09df-4143-8943-4129e930bfc7")
-		)
-		(pin "2"
-			(uuid "776ac24a-7bc1-4491-9bdb-7577c1503fdf")
-		)
-		(instances
-			(project "custack-electric"
-				(path "/34724ce1-230f-4531-b3b7-d1c9082b67f0"
-					(reference "C20")
 					(unit 1)
 				)
 			)

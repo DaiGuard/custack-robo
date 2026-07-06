@@ -8073,7 +8073,6 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ba6aed08-82cb-4e13-8e0f-b658e9b3466f")
 		(property "Reference" "C9"
 			(at 187.96 102.8762 0)
@@ -8087,7 +8086,7 @@
 			)
 		)
 		(property "Value" "0.1µF 25V X8R 0603"
-			(at 187.96 105.4162 0)
+			(at 170.688 110.49 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8131,7 +8130,7 @@
 			)
 		)
 		(property "型式" "GCM188R91E104KA37D"
-			(at 187.96 107.9562 0)
+			(at 170.688 112.776 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects

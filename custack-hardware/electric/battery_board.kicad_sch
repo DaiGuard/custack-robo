@@ -1904,7 +1904,7 @@
 	)
 	(text "Source"
 		(exclude_from_sim no)
-		(at 145.034 79.248 0)
+		(at 145.288 71.628 0)
 		(effects
 			(font
 				(size 1.016 1.016)
@@ -1937,7 +1937,7 @@
 	)
 	(text "Drain"
 		(exclude_from_sim no)
-		(at 146.558 71.882 0)
+		(at 146.558 80.264 0)
 		(effects
 			(font
 				(size 1.016 1.016)
@@ -1975,16 +1975,10 @@
 		(uuid "3c7387ba-fa05-4cc1-95de-786575971674")
 	)
 	(junction
-		(at 151.13 109.22)
+		(at 151.13 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "63c0710a-5d79-434b-aa49-d2ee673e7254")
-	)
-	(junction
-		(at 127 76.2)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "72b7a260-4bad-4af5-9284-b2e4ad5169e3")
+		(uuid "8cbf7cb2-05d8-457c-9ddb-b8daa8063500")
 	)
 	(junction
 		(at 127 120.65)
@@ -1993,10 +1987,16 @@
 		(uuid "934ab3a0-d265-4ae4-b34f-2079eb019f85")
 	)
 	(junction
-		(at 151.13 68.58)
+		(at 151.13 109.22)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "e6b8b14b-53a8-4c68-908d-cd2105be99ab")
+		(uuid "a45109c3-ed92-4083-936f-3c38d667d57f")
+	)
+	(junction
+		(at 127 76.2)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d74dddbe-070d-4b9a-9f92-cba9553c73a2")
 	)
 	(no_connect
 		(at 116.84 96.52)
@@ -2848,6 +2848,7 @@
 	(symbol
 		(lib_id "My_Device:Q_PMOS")
 		(at 148.59 76.2 0)
+		(mirror x)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -2855,10 +2856,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "8c6d1c96-be72-40a0-b879-caaa93aee92a")
 		(property "Reference" "Q1"
-			(at 154.94 73.6599 0)
+			(at 154.94 78.7401 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2869,7 +2869,7 @@
 			)
 		)
 		(property "Value" "MOSFET P-CH 20V 6A SOT23F"
-			(at 154.94 76.1999 0)
+			(at 154.94 76.2001 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2880,7 +2880,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 153.67 73.66 0)
+			(at 153.67 78.74 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2913,7 +2913,7 @@
 			)
 		)
 		(property "型式" "SSM3J328R,LF"
-			(at 154.94 78.7399 0)
+			(at 154.94 73.6601 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects

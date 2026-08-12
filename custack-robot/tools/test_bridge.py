@@ -24,12 +24,12 @@ def main(port, baudrate, cmd_type):
         commands = []
         if cmd_type == "SET":
             commands = [
-                "SET,-100,-200,-300,0,0",
-                "SET,400,500,600,0,0",
-                "SET,2000,2000,2000,0,0",
-                "SET,-2000,-2000,-2000,0,0",
-                "SET,0,0,0,1,1",
-                "SET,0,0,0,100,200",
+                "SET,200,0,0,0,0",
+                "SET,-200,0,0,0,0",
+                "SET,0,200,0,0,0",
+                "SET,0,-200,0,0,0",
+                "SET,0,0,200,0,0",
+                "SET,0,0,-200,0,0",
             ]
         elif cmd_type == "TGT":
             commands = [
@@ -50,9 +50,14 @@ def main(port, baudrate, cmd_type):
         elif cmd_type == "ARM":
             commands = [
                 "ARM,0,0",
-                "ARM,1,1",
-                "ARM,20,30",
+                "ARM,1,0",
+                "ARM,0,1",
+                "ARM,10,10",
                 "ARM,-10,-10"
+            ]
+        elif cmd_type == "CAL":
+            commands = [
+                "CAL,0,4,40"
             ]
         
 

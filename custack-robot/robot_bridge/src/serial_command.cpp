@@ -132,6 +132,21 @@ bool SerialCommand::parseARM(
     return false;
 }
 
+bool SerialCommand::parseCAL(
+    const char* command,
+    int* unit_id, int* cal_addr, int* cal_val) {
+
+    int result = sscanf(command,
+        "CAL,%d,%d,%d",
+        unit_id, cal_addr, cal_val);
+
+    if (result == 3) {
+        return true;
+    }
+
+    return false;
+}
+
 void SerialCommand::error(String message) {
     // デバッグメッセージの表示
 #if DEBUG_LEVEL > 0

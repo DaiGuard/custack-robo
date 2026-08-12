@@ -1,0 +1,14 @@
+custack_router:
+  ros__parameters:
+    robot_pose_topic: "robot_poses"
+    shm_robot_poses_name: "/custack_robot_poses"
+    shm_controller_cmd_name: "/custack_controller_cmd"
+    serial_ports:
+      - "/dev/ttyUSB0"
+      - "/dev/ttyUSB1"
+      - "/dev/ttyUSB2"
+    baudrate: 115200
+    send_rate_hz: 50.0
+    cmd_timeout_ms: 1000
+    enable_serial: true
+    debug_log: false

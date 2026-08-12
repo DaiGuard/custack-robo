@@ -22,7 +22,7 @@ struct InfoData {
 
 class LocatorNode : public rclcpp::Node {
     public:
-        LocatorNode();
+        explicit LocatorNode(bool headless = false);
         ~LocatorNode();
     private:
         std::string cache_path_str_;
@@ -30,6 +30,7 @@ class LocatorNode : public rclcpp::Node {
         cv::VideoCapture cap_;
         std::thread capture_thread_;
         std::thread process_thread_;
+        bool headless_;
         std::mutex frame_mutex_;
         std::mutex info_mutex_;
         bool is_running_;

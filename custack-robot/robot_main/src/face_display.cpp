@@ -52,6 +52,9 @@ void FaceDisplay::update(
         case 1:
             battleFace(now);
             break;
+        case 2:
+            tiredFace(now);
+            break;
         default:
             break;
     }
@@ -175,6 +178,59 @@ void FaceDisplay::battleFace(uint32_t now) {
         cx + 30, cy + 20,
         cx - 20, cy + 60,
         cx + 20, cy + 60,
+        TFT_WHITE
+    );
+}
+
+void FaceDisplay::tiredFace(uint32_t now) {
+
+    int span = 500;
+    int rx = 5;
+    int ry = 10;
+    int timeline = now % span;
+    int cx = _center_x;
+    int cy = _center_y;
+    int mx, my;
+
+    // アニメーション設定
+    if (timeline < span / 2) {
+        mx = (int)(timeline / (float)(span/2) * rx);
+        my = (int)(timeline / (float)(span/2) * ry);
+    } else {
+        mx = (int)((span -timeline) / (float)(span/2) * rx);
+        my = (int)((span -timeline) / (float)(span/2) * ry);
+    }
+
+    // 目を描画する
+    _canvas.fillEllipse(
+        cx - 60, cy - 20 + my,
+        4, 4, TFT_WHITE
+    );
+    _canvas.fillEllipse(
+        cx + 60, cy - 20 + my,
+        4, 4, TFT_WHITE
+    );
+    // 眉毛を描画する
+    _canvas.fillRoundRect(
+        cx - 90, cy - 24 + my,
+        50, 4, 2, TFT_WHITE
+    );
+    _canvas.fillRoundRect(
+        cx + 40, cy - 24 + my,
+        50, 4, 2, TFT_WHITE
+    );
+
+    // 口を描画する
+    _canvas.fillTriangle(
+        cx - 15, cy + 20,
+        cx + 15, cy + 20,
+        cx - 25 - mx, cy + 60 + my,
+        TFT_WHITE
+    );
+    _canvas.fillTriangle(
+        cx + 15, cy + 20,
+        cx - 25 - mx, cy + 60 + my,
+        cx + 25 + mx, cy + 60 + my,
         TFT_WHITE
     );
 }

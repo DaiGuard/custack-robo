@@ -16,9 +16,9 @@ static constexpr uint8_t PIN_DCDC_CTRL = 19;
 // ==========================================
 // バッテリー監視・保護設定
 // ==========================================
-static constexpr float V_BATT_WARN = 6.0f; // 警告閾値
-static constexpr float V_BATT_CRIT = 5.5f; // 遮断閾値
-static constexpr float V_USB_MAX = 5.5f; // USB給電時最大
+static constexpr float V_BATT_WARN = 6.3f; // 警告閾値
+static constexpr float V_BATT_CRIT = 5.7f; // 遮断閾値
+static constexpr float V_USB_MAX = 5.0f; // USB給電時最大
 static constexpr float V_USB_MIN = 4.2f; // USB給電時最小
 
 
@@ -33,6 +33,7 @@ RobotStatus robot_status = {
   .rarm_status = false,
   .larm_status = false,
 
+  .move_status = false,
   .vx = 0,
   .vy = 0,
   .omega = 0,
@@ -107,14 +108,29 @@ void backgroundTask(void* params) {
       robot_status.battery_status = 0;
     }
 
+    // 動作中検知
+    if (robot_status.vx != 0 || robot_status.vy != 0 || robot_status.omega != 0 
+        || robot_status.rarm != 0 || robot_status.larm != 0) {
+      robot_status.move_status = true;
+    } else {
+      robot_status.move_status = false;
+    }
+
     // ロボットステータス更新
     robot_status.poweron_enable = power_enable;
     robot_status.batt_value = batt_value;
     robot_status.mac = espnowCom.getOwnMacAddress();
 
     // 表情の更新
+    int face_type = 0;
+    if (robot_status.move_status) {
+      face_type = 1;
+    }
+    if (robot_status.battery_status > 1) {
+      face_type = 2;
+    }
     faceDisplay.update(
-      0, now, 
+      face_type, now, 
       info_enable, &robot_status);
 
     vTaskDelay(pdMS_TO_TICKS(50));

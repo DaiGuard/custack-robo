@@ -12,6 +12,7 @@ struct RobotStatus {
     bool rarm_status;
     bool larm_status;
 
+    bool move_status;
     int16_t vx;
     int16_t vy;
     int16_t omega;

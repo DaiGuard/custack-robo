@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
         }                                                                \
     } while (0)
 
-LocatorNode::LocatorNode() : rclcpp::Node("locator_node") {
+LocatorNode::LocatorNode(bool headless) : rclcpp::Node("locator_node"), headless_(headless) {
     RCLCPP_INFO(this->get_logger(), "ℹ️: OpenCV %s", CV_VERSION);
 
     // デフォルトファイルパスを設定する
@@ -59,6 +59,10 @@ LocatorNode::LocatorNode() : rclcpp::Node("locator_node") {
     calib_save_path_str = this->get_parameter("calib_path").as_string();
     homography_save_path_str = this->get_parameter("homography_path").as_string();
     
+    if (headless_) {
+        RCLCPP_INFO(this->get_logger(), "👻: ヘッドレスモードで起動します。UIは表示されません。");
+    }
+
     // カメラパラメータファイルを開く
     if(fs::exists(calib_save_path_str)) {
         cv::FileStorage fs(calib_save_path_str, cv::FileStorage::READ);
@@ -494,9 +498,11 @@ void LocatorNode::processCallback() {
     robot_pose_pub_->publish(robot_poses);
 
     cv::Mat preview_frame;
-    cv::resize(processed_frame_, preview_frame, cv::Size(), 0.5, 0.5, cv::INTER_AREA);
-    cv::imshow("Processed Frame", preview_frame);
-    cv::waitKey(1);
+    if (!headless_) {
+        cv::resize(processed_frame_, preview_frame, cv::Size(), 0.5, 0.5, cv::INTER_AREA);
+        cv::imshow("Processed Frame", preview_frame);
+        cv::waitKey(1);
+    }
 }
 
 void LocatorNode::infoCallback() {

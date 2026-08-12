@@ -6,69 +6,69 @@ using UnityEngine;
 
 namespace Custack
 {
+    #region Inspector Display Classes
+
+    [System.Serializable]
+    public class ShmStatusInfo
+    {
+        [Tooltip("共有メモリファイルに接続中か")]
+        public bool isConnected = false;
+
+        [Tooltip("共有メモリファイルのパス")]
+        public string shmPath = "/dev/shm/custack_robot_poses";
+
+        [Tooltip("共有メモリプロトコルバージョン")]
+        public uint protocolVersion = 0;
+
+        [Tooltip("Seqlock シーケンス番号 (偶数: 確定)")]
+        public uint sequence = 0;
+
+        [Tooltip("ナノ秒タイムスタンプ")]
+        public ulong timestampNs = 0;
+
+        [Tooltip("現在の全検出ロボット数")]
+        public uint totalDetectedCount = 0;
+
+        [Tooltip("受信周波数 (Hz)")]
+        public float receiveRateHz = 0f;
+    }
+
+    [System.Serializable]
+    public class RobotPoseDisplay
+    {
+        [Tooltip("ロボットID (AprilTag ID)")]
+        public int targetId = 0;
+
+        [Tooltip("現在検出されているか")]
+        public bool isDetected = false;
+
+        [Tooltip("共有メモリ正規化座標 (-1.0 ~ 1.0)")]
+        public Vector2 shmPosition = Vector2.zero;
+
+        [Tooltip("共有メモリ回転角 (Radian)")]
+        public float shmThetaRad = 0f;
+
+        [Tooltip("共有メモリ回転角 (Degree)")]
+        public float shmThetaDeg = 0f;
+
+        [Tooltip("Unity換算ワールド座標 (X, Y)")]
+        public Vector3 unityPosition = Vector3.zero;
+
+        [Tooltip("Unity換算 Z軸回転角 (Degree)")]
+        public float unityRotationDeg = 0f;
+
+        [Tooltip("最終更新時刻 (Time.time)")]
+        public float lastUpdatedTime = 0f;
+    }
+
+    #endregion
+
     /// <summary>
     /// 共有メモリ (/dev/shm/custack_robot_poses) からロボットの位置姿勢データを読み取り、
     /// インスペクター上にリアルタイムで表示・確認するためのデバッグ/モニタリングコンポーネント。
     /// </summary>
     public class SharedMemoryPoseViewer : MonoBehaviour
     {
-        #region Inspector Display Classes
-
-        [System.Serializable]
-        public class ShmStatusInfo
-        {
-            [Tooltip("共有メモリファイルに接続中か")]
-            public bool isConnected = false;
-
-            [Tooltip("共有メモリファイルのパス")]
-            public string shmPath = "/dev/shm/custack_robot_poses";
-
-            [Tooltip("共有メモリプロトコルバージョン")]
-            public uint protocolVersion = 0;
-
-            [Tooltip("Seqlock シーケンス番号 (偶数: 確定)")]
-            public uint sequence = 0;
-
-            [Tooltip("ナノ秒タイムスタンプ")]
-            public ulong timestampNs = 0;
-
-            [Tooltip("現在の全検出ロボット数")]
-            public uint totalDetectedCount = 0;
-
-            [Tooltip("受信周波数 (Hz)")]
-            public float receiveRateHz = 0f;
-        }
-
-        [System.Serializable]
-        public class RobotPoseDisplay
-        {
-            [Tooltip("ロボットID (AprilTag ID)")]
-            public int targetId = 0;
-
-            [Tooltip("現在検出されているか")]
-            public bool isDetected = false;
-
-            [Tooltip("共有メモリ正規化座標 (-1.0 ~ 1.0)")]
-            public Vector2 shmPosition = Vector2.zero;
-
-            [Tooltip("共有メモリ回転角 (Radian)")]
-            public float shmThetaRad = 0f;
-
-            [Tooltip("共有メモリ回転角 (Degree)")]
-            public float shmThetaDeg = 0f;
-
-            [Tooltip("Unity換算ワールド座標 (X, Y)")]
-            public Vector3 unityPosition = Vector3.zero;
-
-            [Tooltip("Unity換算 Z軸回転角 (Degree)")]
-            public float unityRotationDeg = 0f;
-
-            [Tooltip("最終更新時刻 (Time.time)")]
-            public float lastUpdatedTime = 0f;
-        }
-
-        #endregion
-
         #region Serialized Fields (Inspector)
 
         [Header("共有メモリ設定")]

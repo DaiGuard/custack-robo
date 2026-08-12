@@ -114,40 +114,40 @@ struct SharedControllerData {
 
 ## 4. 変更・追加ファイル一覧 (Proposed Changes)
 
-### パッケージ: `custack_router` (新規作成)
+### パッケージ: `custack_router` (`custack_ws/src/custack_router/`)
 
-#### [NEW] `src/custack_router/package.xml`
+#### `custack_ws/src/custack_router/package.xml`
 - ROS 2 Humble パッケージ定義 (`rclcpp`, `custack_msgs`)
 
-#### [NEW] `src/custack_router/CMakeLists.txt`
+#### `custack_ws/src/custack_router/CMakeLists.txt`
 - C++17 ビルド設定、`pthread`, `rt` (POSIX SHM) リンク、実行可能ファイル `router_node`
 
-#### [NEW] `src/custack_router/include/custack_router/shared_memory_types.h`
+#### `custack_ws/src/custack_router/include/custack_router/shared_memory_types.h`
 - 共有メモリデータ構造体の共通ヘッダー定義
 
-#### [NEW] `src/custack_router/include/custack_router/posix_shm.hpp`
+#### `custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`
 - POSIX 共有メモリ (`shm_open`, `mmap`, `ftruncate`) 管理クラス (Seqlock 書き込み/読み出し対応)
 
-#### [NEW] `src/custack_router/include/custack_router/serial_port.hpp`
+#### `custack_ws/src/custack_router/include/custack_router/serial_port.hpp`
 - POSIX `termios` による低遅延・ノンブロッキングシリアルポート送受信クラス (自動再接続対応)
 
-#### [NEW] `src/custack_router/src/router_node.cpp`
+#### `custack_ws/src/custack_router/src/router_node.cpp`
 - メインノード実装:
   - `/robot_poses` サブスクライブ → `SharedRobotPoseData` 共有メモリ書き込み
   - `SharedControllerData` 共有メモリ読み出し → 3台のシリアルポートへ `SET` コマンド分配送信 (50Hz)
   - 切断監視・タイムアウト保護
 
-#### [NEW] `src/custack_router/config/router_config.yaml`
+#### `custack_ws/src/custack_router/config/router_config.yaml`
 - シリアルポート一覧 (`["/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2"]`)、ボーレート (`115200`)、送信周期 (`50.0` Hz)、タイムアウト等の設定
 
-#### [NEW] `run_router.sh`
+#### `custack_ws/run_router.sh`
 - `custack_ws` 直下の起動スクリプト (ビルドオプション `-b` やヘルプ対応)
 
 ---
 
 ### Unity プロジェクト側 (C# 連携用スクリプトの提供)
 
-#### [NEW] `develop/custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs`
+#### `custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs`
 - POSIX 共有メモリ (`/dev/shm/custack_robot_poses`, `/dev/shm/custack_controller_cmd`) を直接読み書きする Unity コンポーネント。
 - `RosManager.cs` と同様の座標変換・フィルタ処理を共有メモリ入力に対して実行。
 - 3台のゲームパッド入力を取得し、3つの `SingleControllerCommand` にパックして共有メモリに書き込む。
@@ -158,14 +158,14 @@ struct SharedControllerData {
 
 ### (1) ビルド検証
 ```bash
-cd /home/dai_guard/Workspaces/custack-robo/jetson/custack_ws
-colcon build --symlink-install --packages-select custack_router
+cd custack_ws
+./build_host.sh
 ```
 
 ### (2) 単体・結合テスト
 1. **共有メモリ整合性・ゼロコピー動作テスト**:
    - テストツールまたはノードを用いてダミーの `/robot_poses` を発行し、共有メモリおよび Unity 側で遅延なく正しく受信できることを確認。
 2. **マルチシリアル通信テスト**:
-   - Unity (またはテストスクリプト) から 3 つのコントローラ入力を共有メモリに書き込み、各シリアルポート (`/dev/ttyUSB0`, `/dev/ttyUSB1`, `/dev/ttyUSB2`) へ正しい `SET,vx,vy,omega,arm_r,arm_l\n` コマンドが 50Hz で送信されることを確認。
+   - Unity から 3 つのコントローラ入力を共有メモリに書き込み、各シリアルポート (`/dev/ttyUSB0`, `/dev/ttyUSB1`, `/dev/ttyUSB2`) へ正しい `SET,vx,vy,omega,arm_r,arm_l\n` コマンドが 50Hz で送信されることを確認。
 3. **安全フェイルセーフ確認**:
    - Unity を停止または入力が途絶した際、自動的に `STP\n` が送信され M5Atom 側のセーフティが働くことを確認。

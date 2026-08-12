@@ -18,10 +18,10 @@ M5Stack Core2をメインユニットとし、ESP-NOWによる上位コマンド
   - `0x31`: 右アームユニット (`robot_arm`)
   - `0x32`: 左アームユニット (`robot_arm`)
 
-## リポジトリ構造
+## ディレクトリ構成
 
-- `/robot_main`: M5Stack Core2用 メイン統括プログラム
-- `/robot_arm`: ATtiny1614用 アーム制御プログラム
-- `/robot_leg`: ATtiny1614用 脚制御プログラム
-- `/robot_bridge`: M5Atom Matrix用 ESP-NOWブリッジユニットプログラム
-- `/tools`: テスト用スクリプト郡
+- `robot_main/`: M5Stack Core2用 メイン統括プログラム
+- `robot_bridge/`: M5Atom Matrix用 ESP-NOWブリッジユニットプログラム (USBシリアル ⇔ ESP-NOW)
+- `robot_arm/`: ATtiny1614用 アーム制御プログラム
+- `robot_leg/`: ATtiny1614用 脚・オムニホイール制御プログラム
+- `tools/`: テスト用スクリプト群

@@ -53,8 +53,8 @@ classDiagram
 
 ## 📋 変更・追加ファイル
 
-### 1. `develop/custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryPoseViewer.cs` [NEW]
-* **パス**: `develop/custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryPoseViewer.cs`
+### 1. `custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryPoseViewer.cs` [NEW]
+* **パス**: `custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryPoseViewer.cs`
 * **機能**:
   * `RobotPoseDisplay` クラス (`[System.Serializable]`):
     * `targetId`: 監視対象ID (0, 1, 2)
@@ -69,7 +69,7 @@ classDiagram
   * 毎フレーム `Update()` で Seqlock 読み込みを行い、インスペクター用配列 `monitoredRobots[3]` を更新。
   * `OnDrawGizmos()` により Scene ビュー上で 3台の位置・向きを描画。
 
-### 2. `develop/custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs` [MODIFY]
-* **パス**: `develop/custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs`
+### 2. `custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs` [MODIFY]
+* **パス**: `custack-unity/Assets/Scenes/MultiDisplayProjects/Scripts/SharedMemoryManager.cs`
 * **変更点**:
   * インスペクター上でロボット3台の位置姿勢・受信ステータスを直接確認できるように `[SerializeField]` のデバッグ構造体フィールドと更新処理を追加。

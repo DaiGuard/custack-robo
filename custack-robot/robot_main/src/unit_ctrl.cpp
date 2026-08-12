@@ -74,11 +74,11 @@ void UnitControl::update(uint32_t now,
     if (_rarm_unit_found) {
         I2cArmData data;
         if (rarm > 0) {
-            data.duty = 15;
-            data.pattern = ARM_PATTERN_PULSE;
+            data.duty = 15u;
+            data.pattern = ARM_PATTERN_BLINK;
         } else {
-            data.duty = 0;
-            data.pattern = ARM_PATTERN_MANUAL;
+            data.duty = 0u;
+            data.pattern = ARM_PATTERN_BLINK;
         }
 
         bool ok1 = M5.Ex_I2C.writeRegister(
@@ -96,11 +96,11 @@ void UnitControl::update(uint32_t now,
     if (_larm_unit_found) {
         I2cArmData data;
         if (larm > 0) {
-            data.duty = 15;
-            data.pattern = ARM_PATTERN_PULSE;
+            data.duty = 15u;
+            data.pattern = ARM_PATTERN_BLINK;
         } else {
-            data.duty = 0;
-            data.pattern = ARM_PATTERN_MANUAL;
+            data.duty = 0u;
+            data.pattern = ARM_PATTERN_BLINK;
         }
 
         bool ok1 = M5.Ex_I2C.writeRegister(

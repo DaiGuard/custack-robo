@@ -65,6 +65,20 @@ public:
         int* rarm, int* larm);
 
     /**
+     * @brief 
+     * 
+     * @param command 
+     * @param unit_id 
+     * @param cal_addr
+     * @param cal_val 
+     * @return true 
+     * @return false 
+     */
+    bool parseCAL(
+        const char* command,
+        int* unit_id, int* cal_addr, int* cal_val);
+
+    /**
      * @brief シリアルコマンドの取得
      * 
      * @param command 取得したコマンド

@@ -53,6 +53,7 @@ void loop() {
     int vx, vy, omega;
     int rarm, larm;
     int watchdog;
+    int unit_id, cal_id, cal_val;
 
     // M5Atomの更新処理
     M5.update();
@@ -117,7 +118,11 @@ void loop() {
                 espnow_status ? 1 : 0,
                 vx, vy, omega, rarm, larm, watchdog);
             serialCommand.push(String(message));
-        }        
+        } else if (command.startsWith("CAL")) {
+            if (serialCommand.parseCAL(command.c_str(), &unit_id, &cal_addr, &cal_val)) {
+
+            }
+        }
     }
 
     // シリアル通信遮断で強制停止

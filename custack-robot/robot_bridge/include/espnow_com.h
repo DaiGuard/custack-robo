@@ -81,7 +81,6 @@ public:
      * @param mac 
      */
     void macByte2Str(uint8_t* mac_bytes, String& mac);
-
 };
 
 #endif // ESPNOW_COM_H

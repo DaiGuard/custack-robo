@@ -63,6 +63,13 @@ public:
     void batteryDisplay(int status, float batt);
 
     /**
+     * @brief 疲れた表情を描画
+     * 
+     * @param now 
+     */
+    void tiredFace(uint32_t now);
+
+    /**
      * @brief ESP-NOW通信状態表示
      * 
      * @param status

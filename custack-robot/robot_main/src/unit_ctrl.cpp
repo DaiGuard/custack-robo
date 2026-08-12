@@ -74,7 +74,7 @@ void UnitControl::update(uint32_t now,
     if (_rarm_unit_found) {
         I2cArmData data;
         if (rarm > 0) {
-            data.duty = 15u;
+            data.duty = 20u;
             data.pattern = ARM_PATTERN_BLINK;
         } else {
             data.duty = 0u;

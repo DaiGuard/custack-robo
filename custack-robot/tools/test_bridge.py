@@ -50,10 +50,17 @@ def main(port, baudrate, cmd_type):
         elif cmd_type == "ARM":
             commands = [
                 "ARM,0,0",
+                "ARM,0,1",
                 "ARM,1,0",
                 "ARM,0,1",
-                "ARM,10,10",
-                "ARM,-10,-10"
+                "ARM,1,0",
+                "ARM,1,1",
+                "ARM,0,0"
+                # "ARM,0,0",
+                # "ARM,1,0",
+                # "ARM,0,1",
+                # "ARM,10,10",
+                # "ARM,-10,-10"
             ]
         elif cmd_type == "CAL":
             commands = [
@@ -63,7 +70,7 @@ def main(port, baudrate, cmd_type):
 
         # コマンドライン引数でコマンドが指定されている場合
         for command in commands:
-            for i in range(500):
+            for i in range(100):
                 # コマンドを送信
                 ser.write((command + '\n').encode('ascii'))
                 print(f"送信: {command}")

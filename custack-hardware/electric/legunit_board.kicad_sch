@@ -3574,7 +3574,7 @@
 		)
 		(uuid "421c30ba-a0e7-4800-97f0-585875aed225")
 	)
-	(label "EXT_SCL"
+	(label "EXT_SDA"
 		(at 96.52 101.6 180)
 		(effects
 			(font
@@ -3694,7 +3694,7 @@
 		)
 		(uuid "8029e4c1-e479-4ba5-9b84-3404269e757c")
 	)
-	(label "EXT_SCA"
+	(label "EXT_SCL"
 		(at 53.34 38.1 180)
 		(effects
 			(font
@@ -3714,7 +3714,7 @@
 		)
 		(uuid "8e1df8a8-1274-4454-8a3e-b7669d201b29")
 	)
-	(label "EXT_SCL"
+	(label "EXT_SDA"
 		(at 53.34 35.56 180)
 		(effects
 			(font
@@ -3784,7 +3784,7 @@
 		)
 		(uuid "af474cc1-a58c-4cc3-a432-a3a5b8368f7c")
 	)
-	(label "EXT_SCA"
+	(label "EXT_SCL"
 		(at 96.52 99.06 180)
 		(effects
 			(font

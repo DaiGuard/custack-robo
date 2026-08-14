@@ -4,3 +4,6 @@
 [submodule "custack_ws/src/ROS-TCP-Endpoint"]
 	path = custack_ws/src/ROS-TCP-Endpoint
 	url = https://github.com/DaiGuard/ROS-TCP-Endpoint
+[submodule "custack-hardware/electric/libraries"]
+	path = custack-hardware/electric/libraries
+	url = https://github.com/DaiGuard/KiCad_Libraries.git

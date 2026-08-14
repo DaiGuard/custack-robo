@@ -19,7 +19,7 @@ static constexpr uint8_t PIN_DCDC_CTRL = 19;
 static constexpr float V_BATT_WARN = 6.3f; // 警告閾値
 static constexpr float V_BATT_CRIT = 5.7f; // 遮断閾値
 static constexpr float V_USB_MAX = 5.0f; // USB給電時最大
-static constexpr float V_USB_MIN = 4.2f; // USB給電時最小
+static constexpr float V_USB_MIN = 4.0f; // USB給電時最小
 
 
 RobotStatus robot_status = {

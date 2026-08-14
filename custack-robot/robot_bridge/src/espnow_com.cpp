@@ -2,10 +2,16 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <EEPROM.h>
 #include "espnow_com.h"
 #include "espnow_protocol.h"
 
 namespace {
+    // EEPROM設定
+    constexpr int EEPROM_SIZE = 32;
+    constexpr int ADDR_MAC_VALID = 0;
+    constexpr int ADDR_TAG_MAC = 1;
+
     // 自身のMACアドレス
     String own_mac = "FF:FF:FF:FF:FF:FF";
     uint8_t own_mac_bytes[6] = {
@@ -13,7 +19,7 @@ namespace {
     };
 
     // ターゲットのMACアドレス
-    String tag_mac = "3C:8A:1F:D7:49:C0";
+    String tag_mac = "3C:8A:1F:D7:49:C0"; // フォールバック用のデフォルト値
     uint8_t tag_mac_bytes[6] = {
         0x3C, 0x8A, 0x1F, 0xD7, 0x49, 0xC0
     };
@@ -47,6 +53,16 @@ bool ESPNowCom::begin() {
     // 自身のMACアドレスを取得
     own_mac = WiFi.macAddress();
     macStr2Byte(own_mac, own_mac_bytes);
+
+    // EEPROMからMACアドレスを読み込み
+    EEPROM.begin(EEPROM_SIZE);
+    if (EEPROM.read(ADDR_MAC_VALID) == 0x01) {
+        EEPROM.get(ADDR_TAG_MAC, tag_mac_bytes);
+        macByte2Str(tag_mac_bytes, tag_mac);
+    } else {
+        // 有効なMACアドレスがなければデフォルト値を書き込む
+        macStr2Byte(tag_mac, tag_mac_bytes);
+    }
 
     if (esp_now_init() != ESP_OK) {
         return false;
@@ -85,6 +101,11 @@ bool ESPNowCom::registerPeer(const String mac) {
     if(esp_now_add_peer(&peerInfo) == ESP_OK) {
         tag_mac = mac;
         macStr2Byte(tag_mac, tag_mac_bytes);
+
+        // EEPROMにMACアドレスを保存
+        EEPROM.put(ADDR_TAG_MAC, tag_mac_bytes);
+        EEPROM.write(ADDR_MAC_VALID, 0x01);
+        EEPROM.commit();
         return true;
     }
 
@@ -173,4 +194,3 @@ String ESPNowCom::getTagMac() {
 void ESPNowCom::setTagMac(String mac) {
     tag_mac = mac;
 }
-

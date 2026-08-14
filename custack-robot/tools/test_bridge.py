@@ -21,8 +21,10 @@ def main(port, baudrate, cmd_type):
         time.sleep(2)
 
         # コマンドリスト
+        loop_count = 0
         commands = []
         if cmd_type == "SET":
+            loop_count = 100
             commands = [
                 "SET,200,0,0,0,0",
                 "SET,-200,0,0,0,0",
@@ -31,16 +33,13 @@ def main(port, baudrate, cmd_type):
                 "SET,0,0,200,0,0",
                 "SET,0,0,-200,0,0",
             ]
-        elif cmd_type == "TGT":
-            commands = [
-                "TGT,00:00:00:00:00:00",
-                "TGT,3C:8A:1F:D7:49:C0",
-            ]
         elif cmd_type == "STS":
+            loop_count = 100
             commands = [
                 "STS"
             ]
         elif cmd_type == "VEL":
+            loop_count = 100
             commands = [
                 "VEL,-100,-200,-300",
                 "VEL,400,500,600",
@@ -48,6 +47,7 @@ def main(port, baudrate, cmd_type):
                 "VEL,-2000,-2000,-2000",
             ]
         elif cmd_type == "ARM":
+            loop_count = 100
             commands = [
                 "ARM,0,0",
                 "ARM,0,1",
@@ -63,14 +63,25 @@ def main(port, baudrate, cmd_type):
                 # "ARM,-10,-10"
             ]
         elif cmd_type == "CAL":
+            loop_count = 1
             commands = [
                 "CAL,0,4,40"
             ]
-        
+        elif cmd_type == "MAC":
+            loop_count = 2
+            commands = [
+                "MAC"
+            ]
+        elif cmd_type == "TGT":
+            loop_count = 1
+            commands = [
+                "TGT,2C:BC:BB:82:12:D8",
+            ]
+
 
         # コマンドライン引数でコマンドが指定されている場合
         for command in commands:
-            for i in range(100):
+            for i in range(loop_count):
                 # コマンドを送信
                 ser.write((command + '\n').encode('ascii'))
                 print(f"送信: {command}")

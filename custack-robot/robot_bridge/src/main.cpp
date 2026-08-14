@@ -53,7 +53,7 @@ void loop() {
     int vx, vy, omega;
     int rarm, larm;
     int watchdog;
-    int unit_id, cal_id, cal_val;
+    int unit_id, cal_addr, cal_val;
 
     // M5Atomの更新処理
     M5.update();
@@ -79,8 +79,9 @@ void loop() {
         // コマンドの解析
         if (command.startsWith("MAC")) {
             // 自身のMACアドレスを返信
-            String mac = espnowCom.getOwnMac();
-            serialCommand.push("MAC," + mac);
+            String ownmac = espnowCom.getOwnMac();
+            String tagMac = espnowCom.getTagMac();
+            serialCommand.push("MAC," + ownmac + "," + tagMac);
         } else if (command.startsWith("SET")) {
             // ESP-NOW通信データのセット
             if (serialCommand.parseSET(command.c_str(), &vx, &vy, &omega, &rarm, &larm)) {
@@ -120,7 +121,6 @@ void loop() {
             serialCommand.push(String(message));
         } else if (command.startsWith("CAL")) {
             if (serialCommand.parseCAL(command.c_str(), &unit_id, &cal_addr, &cal_val)) {
-
             }
         }
     }

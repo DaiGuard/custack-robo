@@ -1,0 +1,8 @@
+{
+  "allowNonWorkspaceAccess": false,
+  "enableTerminalSandbox": true,
+  "subagents": {
+    "inheritWorkspace": true,
+    "maxNestingDepth": 3
+  }
+}

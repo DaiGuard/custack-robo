@@ -4,5 +4,9 @@
   "subagents": {
     "inheritWorkspace": true,
     "maxNestingDepth": 3
+  },
+  "output": {
+    "diffView": "unified",
+    "highlightChanges": true
   }
 }

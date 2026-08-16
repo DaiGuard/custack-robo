@@ -10,8 +10,8 @@
 
 - **カメラ認識・位置推定 (Jetson / ROS 2 Humble)**: 天頂カメラ映像から NVIDIA VPI を用いて歪み補正・透視変換を行い、AprilTag (16H5) により最大60Hzで複数台ロボットの絶対位置姿勢を推定。
 - **共有メモリ・通信中継 (Host PC / C++)**: POSIX 共有メモリ（Seqlock 方式）を介して Unity と超低遅延（>200Hz）で座標共有。Unity からの操作指令を 3ch シリアル通信（115200bps）で M5Atom ブリッジへ転送。
-- **演出・ゲーム制御 (Host PC / Unity 6 URP)**: 2画面出力（PC管理画面 / プロジェクター床面投影）。ロボット位置に合わせたプロジェクションマッピング演出およびゲームパッド入力の統括。
-- **実機ロボット制御 (M5Stack Core2 + ATtiny1614 x3)**: ESP-NOW（100Hz）無線通信で指令を受信し、内部 I2C バス経由で 4 輪オムニホイール（`robot_leg`）および左右アーム（`robot_arm`）を高精度分散制御。
+- **演出・バトルゲーム制御 (Host PC / Unity 6 URP)**: 2画面出力（PC管理画面 / プロジェクター床面投影）。リアルタイム位置追従、装備（アーム武器・脚特性）×地形効果（泥・氷・溶岩等）による挙動変化、誘導ミサイルや弾幕を含むバトルゲームシステムとHUD。
+- **実機ロボット制御 (M5Stack Core2 + ATtiny1614 x3)**: ESP-NOW（100Hz）無線通信で指令を受信し、内部 I2C バス経由で 4 輪オムニホイール（`robot_leg`）および左右アーム（`robot_arm`）を高精度分散制御。攻撃時には実機ソレノイド/モーターが同期作動。
 - **専用ハードウェア基板 (KiCad v10)**: 2S Li-ion 電源回路、6A 大電流 DCDC、M5Stack スタック用メイン基板、ポゴピン接続可能な 3 種の子局基板（パネライゼーション設計）。
 
 ---
@@ -26,7 +26,7 @@ flowchart TD
         Web["web_server (FastAPI:8000)"] -.->|Web UI| Loc
     end
 
-    subgraph Host ["ホスト PC 演出・中継系"]
+    subgraph Host ["ホスト PC 演出・対戦ゲーム系"]
         LocPub -->|DDS / Network| Router["router_node (custack_router)"]
         
         subgraph SHM ["POSIX 共有メモリ (/dev/shm)"]
@@ -37,7 +37,15 @@ flowchart TD
         Router -->|Write| SHM_Pose
         SHM_Pose -->|Read| Unity["Unity 6 URP (custack-unity)"]
         
-        Gamepads["ゲームパッド (1〜3台)"] --> Unity
+        Gamepads["PS5 コントローラ (1〜2台)"] --> Unity
+        
+        subgraph UnityGame ["Unity バトルシステム"]
+            InputSys["ControllerInputManager<br/>(P1/P2/Keyboard)"] --> RM["RobotManager"]
+            TerrainSys["TerrainManager<br/>(平地/森/泥/氷/溶岩)"] --> RM
+            RM --> CombatSys["Combat / WeaponBase<br/>(ピストル/ガトリング/ミサイル)"]
+            CombatSys --> HealthSys["Health / BattleHUD<br/>(HP管理・勝敗判定)"]
+        end
+
         Unity -->|Write| SHM_Cmd
         SHM_Cmd -->|Read| Router
         
@@ -77,7 +85,7 @@ flowchart TD
 | **`custack-hardware/`** | `agent-hardware` | KiCad v10, 回路・CAD | メイン基板、電源基板、アーム/脚基板、ポゴピン配置、回路設計 | [`custack-hardware/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-hardware/GEMINI.md) |
 | **`custack-robot/`** | `agent-robot` | PlatformIO, C++, ATtiny | M5Stack Core2 メイン、M5Atom ブリッジ、ATtiny1614 脚・腕制御 | [`custack-robot/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-robot/GEMINI.md) |
 | **`custack_ws/`** | `agent-ros` | ROS 2 Humble, C++, Python | VPI 画像処理・位置推定、共有メモリルーター、キャリブレーション Web | [`custack_ws/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack_ws/GEMINI.md) |
-| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション投影演出、共有メモリ連携、ゲームパッド操作、HUD | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
+| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション演出、共有メモリ連携、対戦バトルシステム、装備×地形効果 | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
 
 ---
 
@@ -99,10 +107,25 @@ flowchart TD
 - **`custack_router`**: ホスト PC 専用。`/robot_poses` を POSIX 共有メモリ `/custack_robot_poses` へ Seqlock 書き込み。同時に Unity から `/custack_controller_cmd` を読み込み、3 台の M5Atom へシリアル転送。
 - **`custack_web`**: Jetson 上のキャリブレーション Web UI サーバー（Port 8000）。露出調整、4x5 円グリッド歪み校正、ArUco ホモグラフィ校正をブラウザで実行可能。
 
-### 4.4 Unity 演出・共有メモリ連携 (`custack-unity`)
-- **マルチディスプレイ自動有効化**: `MultiDisplayActivator.cs` が起動時にプロジェクター画面（Display 2）を自動アクティベート。
-- **超低遅延共有メモリ**: `SharedMemoryManager.cs` が 200Hz で `/dev/shm/custack_robot_poses` から座標を取得し、Z-Score トリム平均フィルタでノイズを除去して Unity 座標へ 1:1 マッピング。
-- **ゲームパッド連携**: 接続されたゲームパッドのスティック・トリガー入力を 50Hz で `/dev/shm/custack_controller_cmd` へ書き込み。
+### 4.4 Unity 演出・ゲーム制御・共有メモリ連携 (`custack-unity`)
+8 つの機能モジュール（`SharedMemory`, `Equipment`, `Input`, `Terrain`, `Combat`, `Robot`, `UI`, `Core`）による本格的なプロジェクション対戦ゲームシステム。
+
+#### ① バトルメカニクス・武器システム (`Combat` & `Equipment`)
+* **ピストル (`0x01`)**: 高速レーザー弾（威力 25, 弾速 25, 単発）
+* **ガトリング (`0x02`)**: 拡散連射弾幕（威力 8, 15発/秒, 拡散角 $\pm 7.5^\circ$）
+* **ミサイル (`0x03`)**: 誘導追尾・範囲爆発弾（威力 60, 追尾角速度 $120^\circ/\text{s}$, 爆発半径 1.8m）
+* **実機連動**: 武器発射時に `HardwareArmFlag = 1` を立て、実機ソレノイド/モーターを同期駆動。
+
+#### ② 脚ユニット特性 × 地形システム (`Terrain`)
+| 脚ユニット | 平地 (`Normal`) | 森 (`Forest`) | 泥 / 沼 (`Mud`) | 氷 (`Ice`) | 溶岩 (`Lava`) | 移動挙動の特徴 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`0x01: Omni`** | 速度: `100%` | 速度: `50%` | 速度: `30%` | 速度: `100%`<br/>スリップ: **`0.85` (大)** | ダメージ軽減: `0%` | 全方向自由スライド |
+| **`0x02: Tire`** | 速度: **`125%` (最速)** | 速度: `40%` | 速度: `20%` (スタック) | 速度: `110%`<br/>スリップ: **`0.60` (ドリフト)** | ダメージ軽減: `0%` | 前後高速・鋭い旋回 |
+| **`0x03: Crawler`** | 速度: `90%` | 速度: **`85%` (走破)** | 速度: **`80%` (走破)** | 速度: `85%`<br/>スリップ: **`0.20` (安定)** | ダメージ軽減: **`60%` カット** | 超信地旋回、**悪路無効化** |
+
+#### ③ 超低遅延共有メモリ & 入力管理
+- **Seqlock 共有メモリ**: `SharedMemoryReader` (200Hz 読出) と `SharedMemoryWriter` (50Hz 書込) により Unity ↔ C++ 間を 1ms 未満で同期。
+- **入力系**: PS5 DualSense 2台 (P1/P2) 自動認識、スティック補正、ロックオン切替 (△ボタン)、キーボードフォールバック。
 
 ---
 
@@ -152,7 +175,8 @@ cd custack_ws
 ./build_host.sh          # クリーン＆ビルド
 ./run_router.sh          # 共有メモリ・シリアルルーター起動
 ```
-Unity Hub から `custack-unity` を開き、`Assets/Scenes/MultiDisplay.unity` を実行します。
+Unity Hub から `custack-unity` を開き、`Assets/_Project/Scenes/Main/Main.unity` を実行します。
+（※単体テスト時は `Assets/_Project/Scenes/Sandbox/SharedMemorySandbox.unity` を使用）
 
 ### 3. ロボットファームウェア書き込み (PlatformIO)
 ```bash

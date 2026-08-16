@@ -5,7 +5,6 @@
 #include "serial_command.h"
 #include "espnow_com.h"
 
-
 // LED表示クラスのインスタンスを作成
 MatrixDisplay matrixDisplay;
 
@@ -17,7 +16,6 @@ ESPNowCom espnowCom;
 
 /**
  * @brief セットアップ
- * 
  */
 void setup() {
     // M5Atom 初期化
@@ -43,13 +41,12 @@ void setup() {
 
 /**
  * @brief ループ処理
- * 
  */
 void loop() {
     // シリアルコマンドの更新時間
     static uint32_t last_serial_ms = 0;
     // ローカル変数
-    char message[32];
+    char message[64];
     int vx, vy, omega;
     int rarm, larm;
     int watchdog;
@@ -82,6 +79,13 @@ void loop() {
             String ownmac = espnowCom.getOwnMac();
             String tagMac = espnowCom.getTagMac();
             serialCommand.push("MAC," + ownmac + "," + tagMac);
+        } else if (command.startsWith("TLM")) {
+            // テレメトリリクエストに対する返信 (TLM,leg_id,arm_r_id,arm_l_id,bat_mv)
+            EspNowTelemetryPacket tlm;
+            espnowCom.getTelemetry(&tlm);
+            snprintf(message, sizeof(message), "TLM,%u,%u,%u,%u",
+                tlm.leg_id, tlm.arm_right_id, tlm.arm_left_id, tlm.battery_mv);
+            serialCommand.push(String(message));
         } else if (command.startsWith("SET")) {
             // ESP-NOW通信データのセット
             if (serialCommand.parseSET(command.c_str(), &vx, &vy, &omega, &rarm, &larm)) {
@@ -89,7 +93,7 @@ void loop() {
                 espnowCom.setArm(rarm, larm);
             }
         } else if (command.startsWith("VEL")) {
-            // ESP-NOW通信速度デーーたのセット
+            // ESP-NOW通信速度データのセット
             if (serialCommand.parseVEL(command.c_str(), &vx, &vy, &omega)) {
                 espnowCom.setVelocity(vx, vy, omega);
             }
@@ -102,10 +106,9 @@ void loop() {
             // ESP-NOW通信ストップ
             espnowCom.setStop();
         } else if (command.startsWith("TGT")) {
-            sscanf(command.c_str(), "TGT,%s", message);
-            if (espnowCom.registerPeer(String(message))) {
-                String mac = espnowCom.getTagMac();
-                serialCommand.push("TGT," + mac);
+            String tgt_mac = "";
+            if (serialCommand.parseTGT(command.c_str(), tgt_mac) && espnowCom.setTagMac(tgt_mac)) {
+                serialCommand.push("TGT," + espnowCom.getTagMac());
             } else {
                 serialCommand.error("cant register peer");
             }

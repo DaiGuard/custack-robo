@@ -11,6 +11,9 @@ struct RobotStatus {
     bool leg_status;
     bool rarm_status;
     bool larm_status;
+    uint8_t leg_id;
+    uint8_t rarm_id;
+    uint8_t larm_id;
 
     bool move_status;
     int16_t vx;

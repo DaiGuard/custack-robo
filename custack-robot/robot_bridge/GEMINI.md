@@ -31,7 +31,9 @@ robot_bridge/
 - **動作モード**: Wi-Fi Station (`WIFI_STA`)
 - **チャンネル**: 1
 - **送信周期**: 10ms (100Hz)
-- **宛先MACアドレス**: デフォルト `3C:8A:1F:D7:49:C0` (M5Stack Core2) ※シリアルコマンド `TGT` で動的変更可能
+- **宛先MACアドレス**: デフォルト `3C:8A:1F:D7:49:C0` (M5Stack Core2)
+  - シリアルコマンド `TGT,XX:XX:XX:XX:XX:XX` で動的変更可能
+  - 変更時は内蔵 **EEPROM** (`ADDR_MAC_VALID = 0`, `ADDR_TAG_MAC = 1〜6`) に自動保存され、次回起動時に自動復元
 - **固定長パケット (16Bytes)**: `include/espnow_protocol.h`
 
 ```cpp
@@ -67,6 +69,7 @@ typedef struct {
 | `VEL` | `VEL,vx,vy,omega` | 移動速度（-1000〜1000）のみを設定 | なし |
 | `ARM` | `ARM,arm_r,arm_l` | アーム起動状態（0:停止, 1以上:起動）のみを設定 | なし |
 | `STP` | `STP` | 全停止（Vx=0, Vy=0, Omega=0, arm_right=0, arm_left=0）を設定 | なし |
+| `TLM` | `TLM` | 実機テレメトリ（脚ID, 右腕ID, 左腕ID, バッテリーmV）の問い合わせ（Host ➔ Bridge） | `TLM,leg_id,arm_r_id,arm_l_id,bat_mv`<br>例: `TLM,1,2,1,7400` |
 | `MAC` | `MAC` | 自身のWi-Fi MACアドレスを取得 | `MAC,XX:XX:XX:XX:XX:XX` |
 | `TGT` | `TGT,XX:XX:XX:XX:XX:XX` | ESP-NOW 送信先端末のMACアドレスを動的更新 | `TGT,XX:XX:XX:XX:XX:XX` (登録失敗時はデバッグログ出力) |
 | `PIN` | `PIN` | 死活確認 (Ping) | `PON` |
@@ -172,5 +175,36 @@ pio device monitor -d robot_bridge -b 115200
 ```
 
 > **Note**: `robot_bridge/` ディレクトリ内で実行する場合は `-d robot_bridge` は不要です（例: `pio run`, `pio run -t upload`）。
+
+---
+
+## 8. 🔌 USBシリアルポート固定化 (udev rules)
+
+PC 接続時に M5Atom Matrix 3台のシリアルポート番号（`/dev/ttyUSB*`）が入れ替わるのを防ぐため、固有の USB シリアル番号に基づいた固定シンボリックリンクを作成します。
+
+### ルール定義 (`/etc/udev/rules.d/99-custack-bridge.rules`)
+
+| 号機 | USB Serial | 固定シンボリックリンク |
+| :--- | :--- | :--- |
+| **1号機 (Robot 1)** | `4D525B1DF0` | `/dev/custack_bridge_1` |
+| **2号機 (Robot 2)** | `D1568C18F0` | `/dev/custack_bridge_2` |
+| **3号機 (Robot 3)** | `695EF516F0` | `/dev/custack_bridge_3` |
+
+### ホストPCへの登録・反映コマンド
+```bash
+# 1. ルールファイルを udev 設定ディレクトリへコピー
+sudo cp custack-robot/tools/99-custack-bridge.rules /etc/udev/rules.d/
+
+# 2. ルールを再読み込みして即時反映
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# 3. シンボリックリンクの作成確認
+ls -l /dev/custack_bridge_*
+# 出力例:
+# lrwxrwxrwx 1 root root 7  /dev/custack_bridge_1 -> ttyUSB0
+# lrwxrwxrwx 1 root root 7  /dev/custack_bridge_2 -> ttyUSB1
+# lrwxrwxrwx 1 root root 7  /dev/custack_bridge_3 -> ttyUSB2
+```
 
 

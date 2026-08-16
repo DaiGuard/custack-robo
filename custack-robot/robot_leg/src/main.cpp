@@ -172,20 +172,33 @@ void setup() {
     servo3.writeMicroseconds(SERVO_NEUTRAL_US + offset3);
     servo4.writeMicroseconds(SERVO_NEUTRAL_US + offset4);
 
-    // 待機
-    delay(500);
+    // テスト動作: 50%の速度で1000msec回転 (スケール・オフセット適用)
+#if DEVICE_ID == 0x02
+    uint16_t test1 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset1 + (((int32_t)500 * (+1) * scale1) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    uint16_t test3 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset3 + (((int32_t)500 * (-1) * scale3) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
 
-    // 20%の速度で全サーボを500msec回転 (スケール・オフセット適用)
-    uint16_t test1 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset1 + (((int32_t)TEST_SPEED_VAL * DIR1 * scale1) / 200)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
-    uint16_t test2 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset2 + (((int32_t)TEST_SPEED_VAL * DIR2 * scale2) / 200)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
-    uint16_t test3 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset3 + (((int32_t)TEST_SPEED_VAL * DIR3 * scale3) / 200)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
-    uint16_t test4 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset4 + (((int32_t)TEST_SPEED_VAL * DIR4 * scale4) / 200)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    servo1.writeMicroseconds(test1);
+    servo3.writeMicroseconds(test3);
+    delay(1000);
+#elif DEVICE_ID == 0x03
+    uint16_t test1 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset1 + (((int32_t)500 * (-1) * scale1) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    uint16_t test3 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset3 + (((int32_t)500 * (+1) * scale3) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+
+    servo1.writeMicroseconds(test1);
+    servo3.writeMicroseconds(test3);
+    delay(1000);
+#else
+    uint16_t test1 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset1 + (((int32_t)500 * DIR1 * scale1) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    uint16_t test2 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset2 + (((int32_t)500 * DIR2 * scale2) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    uint16_t test3 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset3 + (((int32_t)500 * DIR3 * scale3) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    uint16_t test4 = clamp_val((uint16_t)(SERVO_NEUTRAL_US + offset4 + (((int32_t)500 * DIR4 * scale4) / 100)), (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
 
     servo1.writeMicroseconds(test1);
     servo2.writeMicroseconds(test2);
     servo3.writeMicroseconds(test3);
     servo4.writeMicroseconds(test4);
-    delay(500);
+    delay(1000);
+#endif
 
     // 停止
     servo1.writeMicroseconds(SERVO_NEUTRAL_US + offset1);
@@ -329,8 +342,59 @@ void loop() {
 
 #elif DEVICE_ID == 0x02
     //----------------------------------------------------------------------
-    // 差動二輪モード
+    // 差動二輪モード (仮想ステアリング: 前後入力(+vx)がない場合は旋回しない)
+    // PWM1: 右輪 (正回転 DIR=+1), PWM3: 左輪 (逆回転 DIR=-1)
     //----------------------------------------------------------------------
+    int32_t speed_r = 0;
+    int32_t speed_l = 0;
+
+    // 前後入力 (+vx) がある場合のみ旋回量 (omega) をステアリング角として反映 (ゲイン 1/3)
+    if (vx != 0) {
+        speed_r = (int32_t)vx - ((int32_t)vx * omega) / 3000;
+        speed_l = (int32_t)vx + ((int32_t)vx * omega) / 3000;
+    }
+
+    // 各輪の速度を [-1000, 1000] に制限
+    speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)1000);
+    speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)1000);
+
+    // パルス幅換算 (PWM1: 右輪正方向 DIR=+1, PWM3: 左輪逆方向 DIR=-1)
+    uint16_t pulse1 = (uint16_t)(SERVO_NEUTRAL_US + offset1 + ((speed_r * (+1) * scale1) / 200));
+    uint16_t pulse3 = (uint16_t)(SERVO_NEUTRAL_US + offset3 + ((speed_l * (-1) * scale3) / 200));
+
+    // パルス幅の安全ガードクランプ [1000, 2000]
+    pulse1 = clamp_val(pulse1, (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    pulse3 = clamp_val(pulse3, (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+
+    // PWM信号出力 (PWM1: 右輪, PWM3: 左輪, PWM2/PWM4: ニュートラル停止)
+    servo1.writeMicroseconds(pulse1);
+    servo2.writeMicroseconds(SERVO_NEUTRAL_US + offset2);
+    servo3.writeMicroseconds(pulse3);
+    servo4.writeMicroseconds(SERVO_NEUTRAL_US + offset4);
+
+#elif DEVICE_ID == 0x03
+    //----------------------------------------------------------------------
+    // キャタピラモード (前後移動軸: +vx)
+    // PWM1: 右履帯 (逆回転 DIR=-1), PWM3: 左履帯 (正回転 DIR=+1)
+    //----------------------------------------------------------------------
+    int32_t speed_r = (int32_t)(vx - omega);
+    int32_t speed_l = (int32_t)(vx + omega);
+
+    speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)1000);
+    speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)1000);
+
+    // パルス幅換算 (PWM1: 右履帯逆方向 DIR=-1, PWM3: 左履帯正方向 DIR=+1)
+    uint16_t pulse1 = (uint16_t)(SERVO_NEUTRAL_US + offset1 + ((speed_r * (-1) * scale1) / 200));
+    uint16_t pulse3 = (uint16_t)(SERVO_NEUTRAL_US + offset3 + ((speed_l * (+1) * scale3) / 200));
+
+    pulse1 = clamp_val(pulse1, (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+    pulse3 = clamp_val(pulse3, (uint16_t)SERVO_MIN_US, (uint16_t)SERVO_MAX_US);
+
+    servo1.writeMicroseconds(pulse1);
+    servo2.writeMicroseconds(SERVO_NEUTRAL_US + offset2);
+    servo3.writeMicroseconds(pulse3);
+    servo4.writeMicroseconds(SERVO_NEUTRAL_US + offset4);
+
 #else
 
 #endif

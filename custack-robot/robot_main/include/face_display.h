@@ -110,14 +110,23 @@ public:
      * @brief ユニットステータス表示
      * 
      * @param leg_status 
+     * @param leg_id
      * @param rarm_status 
+     * @param rarm_id
      * @param larm_status 
+     * @param larm_id
      */
     void unitstatusDisplay(
-        bool leg_status,
-        bool rarm_status,
-        bool larm_status
+        bool leg_status, uint8_t leg_id,
+        bool rarm_status, uint8_t rarm_id,
+        bool larm_status, uint8_t larm_id
     );
+
+    /**
+     * @brief 警告音 (低電圧など)
+     * 
+     */
+    void warningSound();
 
     /**
      * @brief 起動音

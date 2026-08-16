@@ -90,11 +90,14 @@ void FaceDisplay::update(
         // MACアドレス表示
         macDisplay(robot_status->mac);
 
-        // 各ユニット状態の表示
+        // 各ユニット状態の表示 (認識時はデバイスIDを表示)
         unitstatusDisplay(
             robot_status->leg_status,
+            robot_status->leg_id,
             robot_status->rarm_status,
-            robot_status->larm_status
+            robot_status->rarm_id,
+            robot_status->larm_status,
+            robot_status->larm_id
         );
     }
 
@@ -312,16 +315,19 @@ void FaceDisplay::macDisplay(String& mac) {
 }
 
 void FaceDisplay::unitstatusDisplay(
-        bool leg_status,
-        bool rarm_status,
-        bool larm_status) {
+        bool leg_status, uint8_t leg_id,
+        bool rarm_status, uint8_t rarm_id,
+        bool larm_status, uint8_t larm_id) {
 
     _canvas.setTextSize(2);
     _canvas.setCursor(10, 200);
 
     _canvas.setTextColor(TFT_WHITE, TFT_BLACK);
     _canvas.printf("LEG:");
-    if (leg_status) {
+    if (leg_status && leg_id > 0) {
+        _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
+        _canvas.printf("%02X ", leg_id);
+    } else if (leg_status) {
         _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
         _canvas.printf("ON ");
     } else {
@@ -331,7 +337,10 @@ void FaceDisplay::unitstatusDisplay(
 
     _canvas.setTextColor(TFT_WHITE, TFT_BLACK);
     _canvas.printf("RARM:");
-    if (rarm_status) {
+    if (rarm_status && rarm_id > 0) {
+        _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
+        _canvas.printf("%02X ", rarm_id);
+    } else if (rarm_status) {
         _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
         _canvas.printf("ON ");
     } else {
@@ -341,13 +350,25 @@ void FaceDisplay::unitstatusDisplay(
 
     _canvas.setTextColor(TFT_WHITE, TFT_BLACK);
     _canvas.printf("LARM:");
-    if (larm_status) {
+    if (larm_status && larm_id > 0) {
+        _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
+        _canvas.printf("%02X ", larm_id);
+    } else if (larm_status) {
         _canvas.setTextColor(TFT_GREEN, TFT_BLACK);
         _canvas.printf("ON ");
     } else {
         _canvas.setTextColor(TFT_RED, TFT_BLACK);
         _canvas.printf("-- ");
     }
+}
+
+void FaceDisplay::warningSound() {
+    // 低電圧警告アラーム音 (ピピッ・低音)
+    M5.Speaker.tone(1600, 100);
+    delay(120);
+    M5.Speaker.tone(1600, 100);
+    delay(120);
+    M5.Speaker.tone(800, 250);
 }
 
 void FaceDisplay::wakeupSound() {

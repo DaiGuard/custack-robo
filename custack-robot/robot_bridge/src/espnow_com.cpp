@@ -27,18 +27,23 @@ namespace {
     // 通信パケット
     EspNowCommandPacket packet;
 
+    // 受信テレメトリ
+    EspNowTelemetryPacket recv_tlm;
+    bool has_new_tlm = false;
+
     // 通信状態
     bool is_connected = false;
 }
 
 ESPNowCom::ESPNowCom() {
-    // コンストラクタ (必要に応じて初期化処理を記述)
     packet.vx = 0;
     packet.vy = 0;
     packet.omega = 0;
     packet.arm_right = ESPNOW_ARM_STOP;
     packet.arm_left = ESPNOW_ARM_STOP;
     packet.watchdog = 0;
+
+    memset(&recv_tlm, 0, sizeof(EspNowTelemetryPacket));
 }
 
 bool ESPNowCom::begin() {
@@ -73,81 +78,61 @@ bool ESPNowCom::begin() {
         is_connected = (status == ESP_NOW_SEND_SUCCESS);
     });
 
+    // 受信コールバック関数の登録 (Core2からのテレメトリ受信)
+    esp_now_register_recv_cb([](const uint8_t *mac, const uint8_t *data, int len) {
+        if (len == sizeof(EspNowTelemetryPacket)) {
+            memcpy(&recv_tlm, data, sizeof(EspNowTelemetryPacket));
+            has_new_tlm = true;
+        }
+    });
+
     // 通信ペアの登録
     if (!registerPeer(tag_mac)) {
         return false;
     }
-    macStr2Byte(tag_mac, tag_mac_bytes);
 
     return true;
 }
 
-bool ESPNowCom::registerPeer(const String mac) {
+bool ESPNowCom::registerPeer(const String& mac) {
+    uint8_t mac_addr[6];
+    macStr2Byte(mac, mac_addr);
 
-    // 登録済みのMACアドレスを確認
+    // 既存の登録ピアを削除
     if (esp_now_is_peer_exist(tag_mac_bytes)) {
         esp_now_del_peer(tag_mac_bytes);
     }
+    if (esp_now_is_peer_exist(mac_addr)) {
+        esp_now_del_peer(mac_addr);
+    }
 
-    // MACアドレス文字列をバイト列に変換
-    uint8_t mac_addr[6];
-    macStr2Byte(mac, (uint8_t*)mac_addr);
-
-    // 新しいMACアドレスを登録する
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, mac_addr, 6);
     peerInfo.channel = 1;
     peerInfo.encrypt = false;
-    if(esp_now_add_peer(&peerInfo) == ESP_OK) {
-        tag_mac = mac;
-        macStr2Byte(tag_mac, tag_mac_bytes);
 
-        // EEPROMにMACアドレスを保存
-        EEPROM.put(ADDR_TAG_MAC, tag_mac_bytes);
-        EEPROM.write(ADDR_MAC_VALID, 0x01);
-        EEPROM.commit();
-        return true;
-    }
-
-    return false;
-}
-
-void ESPNowCom::macStr2Byte(String mac, uint8_t* mac_bytes) {
-    sscanf(mac.c_str(),
-        "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-        &mac_bytes[0], &mac_bytes[1], &mac_bytes[2],
-        &mac_bytes[3], &mac_bytes[4], &mac_bytes[5]);
-}
-
-void ESPNowCom::macByte2Str(uint8_t* mac_bytes, String& mac) {
-    char mac_str[18]; // 17 characters for MAC address + 1 for null terminator
-    sprintf(mac_str, "%02X:%02X:%02X:%02X:%02X:%02X",
-        mac_bytes[0], mac_bytes[1], mac_bytes[2],
-        mac_bytes[3], mac_bytes[4], mac_bytes[5]);
-    mac = String(mac_str);
-}
-
-
-bool ESPNowCom::update(uint32_t now) {
-    // ESPNOW通信の更新処理
-    static uint32_t last_espnow_ms = 0;
-    if (now - last_espnow_ms < 10) { return true; }
-    last_espnow_ms = now;
-
-    // ウォッチドック更新
-    packet.watchdog++;
-
-    // ESP-NOWデータ送信
-    esp_err_t result = esp_now_send(
-        (uint8_t*)tag_mac_bytes,
-        (uint8_t*)&packet,
-        sizeof(packet));
-    if (result != ESP_OK) {
-        is_connected = false;
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
         return false;
     }
 
+    // 成功時にターゲットMAC情報を更新
+    memcpy(tag_mac_bytes, mac_addr, 6);
+    macByte2Str(tag_mac_bytes, tag_mac);
+
     return true;
+}
+
+bool ESPNowCom::update(uint32_t now) {
+    static uint32_t last_send_time = 0;
+    if (now - last_send_time < 10) {
+        return true;
+    }
+    last_send_time = now;
+
+    packet.watchdog++;
+
+    esp_err_t result = esp_now_send(tag_mac_bytes, (uint8_t*)&packet, sizeof(EspNowCommandPacket));
+    return (result == ESP_OK);
 }
 
 bool ESPNowCom::isConnected() {
@@ -155,32 +140,44 @@ bool ESPNowCom::isConnected() {
 }
 
 void ESPNowCom::setVelocity(int vx, int vy, int omega) {
-    packet.vx = (int16_t)constrain(vx, -1000, 1000);
-    packet.vy = (int16_t)constrain(vy, -1000, 1000);
-    packet.omega = (int16_t)constrain(omega, -1000, 1000);
+    packet.vx = constrain(vx, -1000, 1000);
+    packet.vy = constrain(vy, -1000, 1000);
+    packet.omega = constrain(omega, -1000, 1000);
 }
 
 void ESPNowCom::setArm(int rarm, int larm) {
-    packet.arm_right = (uint8_t)(rarm > 0 ? ESPNOW_ARM_START : ESPNOW_ARM_STOP);
-    packet.arm_left = (uint8_t)(larm > 0 ? ESPNOW_ARM_START : ESPNOW_ARM_STOP);
+    packet.arm_right = (rarm > 0) ? ESPNOW_ARM_START : ESPNOW_ARM_STOP;
+    packet.arm_left = (larm > 0) ? ESPNOW_ARM_START : ESPNOW_ARM_STOP;
 }
 
 void ESPNowCom::setStop() {
-    packet.vx = (int16_t)0;
-    packet.vy = (int16_t)0;
-    packet.omega = (int16_t)0;
+    packet.vx = 0;
+    packet.vy = 0;
+    packet.omega = 0;
     packet.arm_right = ESPNOW_ARM_STOP;
     packet.arm_left = ESPNOW_ARM_STOP;
 }
 
-void ESPNowCom::getPacket(int* vx, int* vy, int* omega, 
-    int* rarm, int* larm, int* watchdog) {
+void ESPNowCom::getPacket(int* vx, int* vy, int* omega, int* rarm, int* larm, int* watchdog) {
     *vx = packet.vx;
     *vy = packet.vy;
     *omega = packet.omega;
     *rarm = packet.arm_right;
     *larm = packet.arm_left;
     *watchdog = packet.watchdog;
+}
+
+bool ESPNowCom::hasNewTelemetry() {
+    return has_new_tlm;
+}
+
+bool ESPNowCom::getTelemetry(EspNowTelemetryPacket* out_tlm) {
+    if (out_tlm != nullptr) {
+        memcpy(out_tlm, &recv_tlm, sizeof(EspNowTelemetryPacket));
+    }
+    bool had_new = has_new_tlm;
+    has_new_tlm = false;
+    return had_new;
 }
 
 String ESPNowCom::getOwnMac() {
@@ -191,6 +188,38 @@ String ESPNowCom::getTagMac() {
     return tag_mac;
 }
 
-void ESPNowCom::setTagMac(String mac) {
-    tag_mac = mac;
+bool ESPNowCom::setTagMac(const String& mac) {
+    if (mac.length() < 17) {
+        return false;
+    }
+
+    if (!registerPeer(mac)) {
+        return false;
+    }
+
+    EEPROM.write(ADDR_MAC_VALID, 0x01);
+    EEPROM.put(ADDR_TAG_MAC, tag_mac_bytes);
+    EEPROM.commit();
+
+    return true;
+}
+
+void ESPNowCom::macStr2Byte(const String& mac, uint8_t* mac_bytes) {
+    for (int i = 0; i < 6; i++) {
+        mac_bytes[i] = strtol(mac.substring(i * 3, i * 3 + 2).c_str(), NULL, 16);
+    }
+}
+
+void ESPNowCom::macByte2Str(const uint8_t* mac_bytes, String& mac) {
+    mac = "";
+    for (int i = 0; i < 6; i++) {
+        if (mac_bytes[i] < 0x10) {
+            mac += "0";
+        }
+        mac += String(mac_bytes[i], HEX);
+        if (i < 5) {
+            mac += ":";
+        }
+    }
+    mac.toUpperCase();
 }

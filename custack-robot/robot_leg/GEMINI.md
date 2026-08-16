@@ -14,7 +14,8 @@
 
 ## 2. 駆動機構・PWM割り当て仕様
 
-移動機構は **4輪X配置オムニホイール** とし、PWM割り当ておよびデータ仕様は以下の通りとする。
+### 2.1 オムニホイールモード (`DEVICE_ID == 0x01`: Omni)
+移動機構は **4輪X配置オムニホイール** とし、PWM割り当ては以下の通りとする。
 
 ```text
        Front (+Vy)
@@ -28,12 +29,20 @@
        Rear (-Vy)
 ```
 
-### ピン・モーター割り当て
-
 * **PWM1** (PA4 / Pin 2): **右後 (Rear-Right, RR)** サーボ信号
 * **PWM2** (PA5 / Pin 3): **右前 (Front-Right, FR)** サーボ信号
 * **PWM3** (PA6 / Pin 4): **左後 (Rear-Left, RL)** サーボ信号
 * **PWM4** (PA7 / Pin 5): **左前 (Front-Left, FL)** サーボ信号
+
+### 2.2 二輪差動モード (`0x02`: Tire) / キャタピラモード (`0x03`: Crawler)
+* **二輪差動 (Tire: 0x02)**:
+  * **PWM1** (PA4): **右輪**（正回転: `DIR = +1`）
+  * **PWM3** (PA6): **左輪**（**逆回転: `DIR = -1`**）
+  * **PWM2 / PWM4**: 未使用（ニュートラル停止パルス出力）
+* **キャタピラ (Crawler: 0x03)**:
+  * **PWM1** (PA4): **右履帯**（**逆回転: `DIR = -1`**）
+  * **PWM3** (PA6): **左履帯**（**正回転: `DIR = +1`**）
+  * **PWM2 / PWM4**: 未使用（ニュートラル停止パルス出力）
 
 ### 出力動作
 
@@ -49,10 +58,18 @@
 
 * **スケール**: `-1000` ～ `1000` (パーセント単位 `%`、`-100.0%` ～ `+100.0%`)
 * **キネマティクス式**:
-  * **FL (PWM4 / PA7)**: $\text{clamp}(-Vx + Vy + Omega)$
-  * **FR (PWM2 / PA5)**: $\text{clamp}(+Vx + Vy + Omega)$
-  * **RL (PWM3 / PA6)**: $\text{clamp}(-Vx - Vy + Omega)$
-  * **RR (PWM1 / PA4)**: $\text{clamp}(+Vx - Vy + Omega)$
+  * **オムニホイール (`0x01`: Omni)**:
+    * **FL (PWM4)**: $\text{clamp}(+Vx + Vy + Omega)$
+    * **FR (PWM2)**: $\text{clamp}(-Vx + Vy + Omega)$
+    * **RL (PWM3)**: $\text{clamp}(+Vx - Vy + Omega)$
+    * **RR (PWM1)**: $\text{clamp}(-Vx - Vy + Omega)$
+  * **二輪差動 (`0x02`: Tire - 仮想ステアリング / 前後軸: $+Vx$)**:
+    * 前後入力 $Vx \ne 0$ の時のみ旋回 $\Omega$ を反映（$Vx = 0$ の停止時は旋回しない）
+    * **右輪 (PWM1)**: $\text{clamp}\left(Vx - \frac{Vx \times \Omega}{3000}\right)$ （正回転 `DIR = +1`）
+    * **左輪 (PWM3)**: $\text{clamp}\left(Vx + \frac{Vx \times \Omega}{3000}\right)$ （逆回転 `DIR = -1`）
+  * **キャタピラ (`0x03`: Crawler - 超信地旋回対応 / 前後軸: $+Vx$)**:
+    * **右履帯 (PWM1)**: $\text{clamp}(Vx - Omega)$ （逆回転 `DIR = -1`）
+    * **左履帯 (PWM3)**: $\text{clamp}(Vx + Omega)$ （正回転 `DIR = +1`）
 
 ---
 
@@ -111,7 +128,10 @@ megaTinyCore の `Wire.swap(1)` により、Alternative TWI0 ピンへマッピ�
 ### platformio.ini
 
 ```ini
-[env:ATtiny1614]
+[platformio]
+default_envs = omni
+
+[env]
 platform = atmelmegaavr
 board = ATtiny1614
 framework = arduino
@@ -123,17 +143,48 @@ upload_flags =
     115200
 board_hardware.bod = 2.6V
 board_hardware.eesave = yes
+
+; 1. オムニホイール (Omni: 0x01)
+[env:omni]
+build_flags = 
+    -D FW_VERSION=0x10
+    -D DEVICE_ID=0x01
+
+; 2. 二輪差動 (Differential 2-Wheel: 0x02)
+[env:tire]
+build_flags = 
+    -D FW_VERSION=0x10
+    -D DEVICE_ID=0x02
+
+; 3. キャタピラ (Crawler: 0x03)
+[env:crawler]
+build_flags = 
+    -D FW_VERSION=0x10
+    -D DEVICE_ID=0x03
 ```
 
-### コマンド例
+### コマンド例 (オプション指定による脚タイプ切り替え)
 
 ```bash
-# ヒューズ書き込み (BOD 2.6V 設定)
-pio run -d custack-robot/robot_leg -t fuses --upload-port /dev/ttyUSB0
+# 1. オムニホイール (0x01: デフォルト)
+pio run -d custack-robot/robot_leg -e omni -t fuses --upload-port /dev/ttyUSB0
+pio run -d custack-robot/robot_leg -e omni -t upload --upload-port /dev/ttyUSB0
 
-# ファームウェア書き込み
-pio run -d custack-robot/robot_leg -t upload --upload-port /dev/ttyUSB0
+# 2. 二輪差動 (0x02)
+pio run -d custack-robot/robot_leg -e tire -t fuses --upload-port /dev/ttyUSB0
+pio run -d custack-robot/robot_leg -e tire -t upload --upload-port /dev/ttyUSB0
 
-# EEPROM書き込み (初期キャリブレーションデータ書き込み時)
-avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -U eeprom:w:data/eeprom.hex:i
+# 3. キャタピラ (0x03)
+pio run -d custack-robot/robot_leg -e crawler -t fuses --upload-port /dev/ttyUSB0
+pio run -d custack-robot/robot_leg -e crawler -t upload --upload-port /dev/ttyUSB0
+
+# --- EEPROM (初期オフセット・スケール) 書き込み ---
+# 1. オムニホイール用 (OFFSET: 0, SCALE: 100)
+avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/omni_eeprom.hex:i
+
+# 2. 二輪差動用 (OFFSET: 120, SCALE: 100)
+avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/tire_eeprom.hex:i
+
+# 3. キャタピラ用 (OFFSET: 120, SCALE: 60)
+avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/crawler_eeprom.hex:i
 ```

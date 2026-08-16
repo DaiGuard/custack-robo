@@ -1,0 +1,16 @@
+# /etc/udev/rules.d/99-custack-bridge.rules
+# CuStack-Robo: M5Atom Matrix (robot_bridge) USBシリアルポート固定化ルール
+#
+# 反映手順:
+#   sudo cp 99-custack-bridge.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+
+# 1号機用 M5Atom Matrix
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="4D525B1DF0", SYMLINK+="custack_bridge_1", MODE="0666"
+
+# 2号機用 M5Atom Matrix
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="D1568C18F0", SYMLINK+="custack_bridge_2", MODE="0666"
+
+# 3号機用 M5Atom Matrix
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="695EF516F0", SYMLINK+="custack_bridge_3", MODE="0666"

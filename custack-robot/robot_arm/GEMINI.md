@@ -53,7 +53,7 @@ robot_arm/
 ### 3.2. レジスタマップ
 | アドレス | R/W | 型 | 初期値 | 定数名 | 説明 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`0x00`** | R | `uint8_t` | `0x01` | `REG_DEVICE_ID` | ユニット識別ID (`DEVICE_ID`) |
+| **`0x00`** | R | `uint8_t` | `0x01`〜`0x03` | `REG_DEVICE_ID` | ユニット識別ID (`0x01`: ガトリング, `0x02`: ソード, `0x03`: 大型レーザーキャノン) |
 | **`0x01`** | R | `uint8_t` | `0x10` | `REG_FW_VERSION` | ファームウェアバージョン (`v1.0`) |
 | **`0x02`** | W | `uint8_t` | `0x00` | `REG_WATCHDOG` | ウォッチドッグ (毎周期更新。1000ms途絶でモータ停止) |
 | **`0x10`** | W | `uint8_t` | `0x00` | `REG_ARM_DUTY` | アーム駆動 Duty 比 (0〜255, 内部で最大クランプ) |
@@ -72,7 +72,7 @@ robot_arm/
 ### 4.2. 動作パターン (`REG_ARM_PATTERN`)
 1. `ARM_PATTERN_MANUAL` (`0x00`): 設定された Duty で連続回転
 2. `ARM_PATTERN_PULSE` (`0x01`): Duty が増加したトリガーから 100ms 間のみ出力し自動停止（単発攻撃）
-3. `ARM_PATTERN_BLINK` (`0x02`): 200ms 周期（150ms ON / 50ms OFF）で断続駆動（点滅・振動攻撃）
+3. `ARM_PATTERN_BLINK` (`0x02`): 200ms 周期（150ms ON / 50ms OFF）で断続駆動（点滅・連射振動攻撃）
 
 ---
 
@@ -87,6 +87,9 @@ robot_arm/
 
 ### platformio.ini
 ```ini
+[platformio]
+default_envs = arm_right_gatling, arm_left_gatling
+
 [env]
 platform = atmelmegaavr
 board = ATtiny1614
@@ -100,29 +103,36 @@ upload_flags =
 board_hardware.bod = 2.6V
 board_hardware.eesave = yes
 
-; 右アーム環境
-[env:arm_right]
-build_flags = 
-    -D FW_VERSION=0x10
-    -D DEVICE_ID=0x01
-    -D I2C_SLAVE_ADDR=0x31
+; 右アーム (0x31)
+[env:arm_right_gatling]  ; 0x01: ガトリング
+[env:arm_right_sword]    ; 0x02: ソード
+[env:arm_right_cannon]   ; 0x03: 大型レーザーキャノン
 
-; 左アーム環境
-[env:arm_left]
-build_flags =
-    -D FW_VERSION=0x10
-    -D DEVICE_ID=0x01
-    -D I2C_SLAVE_ADDR=0x32
+; 左アーム (0x32)
+[env:arm_left_gatling]   ; 0x01: ガトリング
+[env:arm_left_sword]     ; 0x02: ソード
+[env:arm_left_cannon]    ; 0x03: 大型レーザーキャノン
 ```
 
-### コマンド例 (右アーム / 左アームの切り替え)
+### コマンド例 (オプション指定による左右・兵装切り替え書き込み)
 ```bash
-# 右アームのヒューズ書き込み (BOD 2.6V)
-pio run -d custack-robot/robot_arm -e arm_right -t fuses --upload-port /dev/ttyUSB0
+# --- 右アーム書き込み (I2C: 0x31) ---
+# 1. 右アーム: ガトリング (0x01)
+pio run -d custack-robot/robot_arm -e arm_right_gatling -t upload --upload-port /dev/ttyUSB0
 
-# 右アームのファームウェア書き込み
-pio run -d custack-robot/robot_arm -e arm_right -t upload --upload-port /dev/ttyUSB0
+# 2. 右アーム: ソード (0x02)
+pio run -d custack-robot/robot_arm -e arm_right_sword -t upload --upload-port /dev/ttyUSB0
 
-# 左アームのファームウェア書き込み
-pio run -d custack-robot/robot_arm -e arm_left -t upload --upload-port /dev/ttyUSB0
+# 3. 右アーム: 大型レーザーキャノン (0x03)
+pio run -d custack-robot/robot_arm -e arm_right_cannon -t upload --upload-port /dev/ttyUSB0
+
+# --- 左アーム書き込み (I2C: 0x32) ---
+# 1. 左アーム: ガトリング (0x01)
+pio run -d custack-robot/robot_arm -e arm_left_gatling -t upload --upload-port /dev/ttyUSB0
+
+# 2. 左アーム: ソード (0x02)
+pio run -d custack-robot/robot_arm -e arm_left_sword -t upload --upload-port /dev/ttyUSB0
+
+# 3. 左アーム: 大型レーザーキャノン (0x03)
+pio run -d custack-robot/robot_arm -e arm_left_cannon -t upload --upload-port /dev/ttyUSB0
 ```

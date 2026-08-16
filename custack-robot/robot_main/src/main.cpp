@@ -1,79 +1,46 @@
 #include <Arduino.h>
 #include <M5Unified.h>
-#include "robot_status.h"
-#include "face_display.h"
+#include "espnow_protocol.h"
 #include "espnow_com.h"
 #include "unit_ctrl.h"
+#include "face_display.h"
+#include "robot_status.h"
 
-// ==========================================
-// ピン・ハードウェア定義
-// ==========================================
-static constexpr uint8_t PIN_I2C_SDA   = 32;
-static constexpr uint8_t PIN_I2C_SCL   = 33;
-static constexpr uint8_t PIN_BAT_ADC   = 34;
-static constexpr uint8_t PIN_DCDC_CTRL = 19;
+#define PIN_I2C_SDA     32
+#define PIN_I2C_SCL     33
 
-// ==========================================
-// バッテリー監視・保護設定
-// ==========================================
-static constexpr float V_BATT_WARN = 6.3f; // 警告閾値
-static constexpr float V_BATT_CRIT = 5.7f; // 遮断閾値
-static constexpr float V_USB_MAX = 5.0f; // USB給電時最大
-static constexpr float V_USB_MIN = 4.0f; // USB給電時最小
+#define PIN_BAT_ADC     34
+#define PIN_DCDC_CTRL   19
 
+#define V_BATT_WARN     6.3f
+#define V_BATT_CRIT     5.7f
+#define V_USB_MAX       5.0f
+#define V_USB_MIN       4.0f
 
-RobotStatus robot_status = {
-  .battery_status = 0,
-  .batt_value = 0.0f,
-
-  .espnow_status = false,
-  .poweron_enable = true,
-
-  .leg_status = false,
-  .rarm_status = false,
-  .larm_status = false,
-
-  .move_status = false,
-  .vx = 0,
-  .vy = 0,
-  .omega = 0,
-  .rarm = 0,
-  .larm = 0,
-  .watchdog = 0,
-};
-
-// 顔表示クラスのインスタンスを作成
-FaceDisplay faceDisplay;
-
-// ESP-NOW通信のインスタンスを作成
+RobotStatus robot_status;
 ESPNowCom espnowCom;
-
-// ユニットコントロール用のインスタンスを作成 
+FaceDisplay faceDisplay;
 UnitControl unitControl;
 
-/**
- * @brief バックグラウンドタスク
- * 
- * @param params 
- */
-void backgroundTask(void* params) {
-  // タスクループ
+void backgroundTask(void *pvParameters) {
+  bool info_sound = false;
+  bool power_sound = false;
+
+  bool info_enable = false;
+  bool power_enable = true;
+
   while(true) {
-    // M5Stack Core2 の更新処理
+    uint32_t now = millis();
     M5.update();
 
-    // 現在時間の取得
-    uint32_t now = millis();
-
-    // ボタン操作を検出
-    static bool info_sound = false;
-    static bool power_sound = false;
-    static bool info_enable = false;
-    static bool power_enable = true;
+    // ボタンAが長押しされた場合
     if (M5.BtnA.wasHold()) {
       info_sound = true;
       info_enable = !info_enable;
-    } else if (M5.BtnB.wasHold()) {
+    }
+
+    // ボタンBが長押しされた場合
+    if (M5.BtnB.wasHold()) {
       power_sound = true;
       power_enable = !power_enable;
     }
@@ -120,14 +87,29 @@ void backgroundTask(void* params) {
     robot_status.poweron_enable = power_enable;
     robot_status.batt_value = batt_value;
     robot_status.mac = espnowCom.getOwnMacAddress();
+    robot_status.leg_status = unitControl.legUnitFound();
+    robot_status.rarm_status = unitControl.rarmUnitFound();
+    robot_status.larm_status = unitControl.larmUnitFound();
+    robot_status.leg_id = unitControl.getLegId();
+    robot_status.rarm_id = unitControl.getRightArmId();
+    robot_status.larm_id = unitControl.getLeftArmId();
 
-    // 表情の更新
+    // バッテリークリティカル (5.7V未満) 警告音 (3秒周期)
+    static uint32_t last_crit_beep_ms = 0;
+    if (robot_status.battery_status == 2) {
+      if (now - last_crit_beep_ms > 3000) {
+        last_crit_beep_ms = now;
+        faceDisplay.warningSound();
+      }
+    }
+
+    // 表情の更新 (0: 待機, 1: 移動・戦闘, 2: 困り顔/低電圧)
     int face_type = 0;
     if (robot_status.move_status) {
       face_type = 1;
     }
-    if (robot_status.battery_status > 1) {
-      face_type = 2;
+    if (robot_status.battery_status == 2) {
+      face_type = 2; // 5.7V未満で困り顔
     }
     faceDisplay.update(
       face_type, now, 
@@ -137,18 +119,13 @@ void backgroundTask(void* params) {
   }
 }
 
-/**
- * @brief セットアップ
- * 
- */
 void setup() {
   // M5Stack Core2 初期化
   auto cfg = M5.config();
-  cfg.external_spk = true;
   cfg.external_spk = false;
   M5.begin(cfg);
 
-  // ボタンしきい値を表示
+  // ボタンしきい値を設定
   M5.BtnA.setHoldThresh(700);
   M5.BtnB.setHoldThresh(700);
   M5.BtnC.setHoldThresh(700);
@@ -181,7 +158,6 @@ void setup() {
 }
 
 void loop() {
-  // 現在時間の取得
   uint32_t now = millis();
 
   EspNowCommandPacket packet;
@@ -205,7 +181,35 @@ void loop() {
   robot_status.leg_status = unitControl.legUnitFound();
   robot_status.rarm_status = unitControl.rarmUnitFound();
   robot_status.larm_status = unitControl.larmUnitFound();
+  robot_status.leg_id = unitControl.getLegId();
+  robot_status.rarm_id = unitControl.getRightArmId();
+  robot_status.larm_id = unitControl.getLeftArmId();
+
+  // テレメトリ定期送信 (500ms周期)
+  static uint32_t last_telemetry_ms = 0;
+  static uint8_t tlm_watchdog = 0;
+  if (now - last_telemetry_ms >= 500) {
+    last_telemetry_ms = now;
+
+    uint8_t flags = 0;
+    if (robot_status.poweron_enable) flags |= (1 << 0);
+    if (robot_status.battery_status == 1) flags |= (1 << 1);
+    if (robot_status.battery_status >= 2) flags |= (1 << 2);
+
+    uint16_t batt_mv = (uint16_t)(robot_status.batt_value * 1000.0f);
+
+    EspNowTelemetryPacket tlm = {
+      .leg_id = unitControl.getLegId(),
+      .arm_right_id = unitControl.getRightArmId(),
+      .arm_left_id = unitControl.getLeftArmId(),
+      .status_flags = flags,
+      .battery_mv = batt_mv,
+      .reserved = {0},
+      .watchdog = ++tlm_watchdog
+    };
+
+    espnowCom.sendTelemetry(&tlm);
+  }
 
   vTaskDelay(1);
 }
-

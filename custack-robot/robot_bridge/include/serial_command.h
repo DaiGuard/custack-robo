@@ -79,6 +79,31 @@ public:
         int* unit_id, int* cal_addr, int* cal_val);
 
     /**
+     * @brief 
+     * 
+     * @param command 
+     * @param mac 
+     * @return true 
+     * @return false 
+     */
+    bool parseTGT(
+        const char* command,
+        String& mac);
+
+    /**
+     * @brief 
+     * 
+     * @param command 
+     * @param mac 
+     * @param max_len 
+     * @return true 
+     * @return false 
+     */
+    bool parseTGT(
+        const char* command,
+        char* mac, size_t max_len);
+
+    /**
      * @brief シリアルコマンドの取得
      * 
      * @param command 取得したコマンド

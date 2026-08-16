@@ -3,52 +3,56 @@
 #include "unit_ctrl.h"
 #include "i2c_protocol.h"
 
-
 UnitControl::UnitControl() {
-    // コンストラクタ（必要に応じて初期化処理を記述）
     _leg_unit_found = false;
     _rarm_unit_found = false;
     _larm_unit_found = false;
+    _leg_id = 0;
+    _rarm_id = 0;
+    _larm_id = 0;
+    _last_scan_ms = 0;
 }
 
 void UnitControl::begin(int sda, int scl) {
-    //( M5.dis は M5.begin() で初期化されるため、ここでは明るさ設定などを行う
-
-    // M5.Ex_I2C.begin(sda, scl, I2C_FREQ);
     M5.Ex_I2C.begin();
 }
-
 
 void UnitControl::update(uint32_t now, 
     int16_t vx, int16_t vy, int16_t omega,
     uint8_t rarm, uint8_t larm, uint8_t watchdog) {
-    // 最終更新時刻を保存
-    static uint32_t last_unit_ms = 0;
+    
+    // ユニットスキャンを定期実行 (500ms周期)
+    if (now - _last_scan_ms > 500) {
+        _last_scan_ms = now;
 
-    // ユニットスキャンを実行
-    if (now - last_unit_ms > 500) {
-        last_unit_ms = now;
+        // 脚ユニットを確認
+        int leg_id = checkUnit(I2C_ADDR_LEG);
+        if (leg_id > 0) {
+            _leg_unit_found = true;
+            _leg_id = (uint8_t)leg_id;
+        } else {
+            _leg_unit_found = false;
+            _leg_id = 0;
+        }
 
-        // 脚ユニットを確認する
-        if (!_leg_unit_found) {
-            int id = checkUnit(I2C_ADDR_LEG);
-            if (id > 0) {
-                _leg_unit_found = true;
-            }
+        // 右アームユニットを確認
+        int rarm_id = checkUnit(I2C_ADDR_ARM_RIGHT);
+        if (rarm_id > 0) {
+            _rarm_unit_found = true;
+            _rarm_id = (uint8_t)rarm_id;
+        } else {
+            _rarm_unit_found = false;
+            _rarm_id = 0;
         }
-        // 右アームユニットを確認する
-        if(!_rarm_unit_found) {
-            int id = checkUnit(I2C_ADDR_ARM_RIGHT);
-            if (id > 0) {
-                _rarm_unit_found = true;
-            }
-        }
-        // 左アームユニットを確認する
-        if(!_larm_unit_found) {
-            int id = checkUnit(I2C_ADDR_ARM_LEFT);
-            if (id > 0) {
-                _larm_unit_found = true;
-            }
+
+        // 左アームユニットを確認
+        int larm_id = checkUnit(I2C_ADDR_ARM_LEFT);
+        if (larm_id > 0) {
+            _larm_unit_found = true;
+            _larm_id = (uint8_t)larm_id;
+        } else {
+            _larm_unit_found = false;
+            _larm_id = 0;
         }
     }
 
@@ -132,7 +136,7 @@ bool UnitControl::scanUnit(uint8_t addr) {
 }
 
 int UnitControl::getDeviceID(uint8_t addr) {
-    uint8_t buf;
+    uint8_t buf = 0;
     bool ok = M5.Ex_I2C.readRegister(addr, REG_DEVICE_ID, &buf, 1, I2C_FREQ);
     if (ok) {
         return (int)buf;

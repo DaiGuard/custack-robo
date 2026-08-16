@@ -147,6 +147,39 @@ bool SerialCommand::parseCAL(
     return false;
 }
 
+bool SerialCommand::parseTGT(const char* command, String& mac) {
+    char buf[32] = {0};
+    if (parseTGT(command, buf, sizeof(buf))) {
+        mac = String(buf);
+        return true;
+    }
+    return false;
+}
+
+bool SerialCommand::parseTGT(const char* command, char* mac, size_t max_len) {
+    if (command == nullptr || mac == nullptr || max_len == 0) {
+        return false;
+    }
+    const char* p = strchr(command, ',');
+    if (p == nullptr) {
+        p = strchr(command, ' ');
+    }
+    if (p != nullptr) {
+        p++;
+        while (*p == ' ') p++;
+        if (strlen(p) >= 17) {
+            strncpy(mac, p, max_len - 1);
+            mac[max_len - 1] = '\0';
+            size_t len = strlen(mac);
+            while (len > 0 && (mac[len - 1] == ' ' || mac[len - 1] == '\r' || mac[len - 1] == '\n')) {
+                mac[--len] = '\0';
+            }
+            return (len >= 17);
+        }
+    }
+    return false;
+}
+
 void SerialCommand::error(String message) {
     // デバッグメッセージの表示
 #if DEBUG_LEVEL > 0

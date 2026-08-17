@@ -243,18 +243,7 @@ namespace Custack.Robot
             visual.centerWhiteRenderer = null;
             visual.donutRenderer = mrDonut;
 
-            // 2. 進行方向インジケーター (外周リング外側前方に配置: ダイヤ型)
-            var arrowChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            arrowChild.name = "DirectionArrow";
-            arrowChild.transform.SetParent(robotObj.transform);
-            arrowChild.transform.localPosition = new Vector3(0, 0.65f, -0.01f);
-            arrowChild.transform.localScale = new Vector3(0.20f, 0.20f, 1f);
-            arrowChild.transform.localRotation = Quaternion.Euler(0, 0, 45f);
-            var arrowCol = arrowChild.GetComponent<Collider>();
-            if (arrowCol != null) Destroy(arrowCol);
-            arrowChild.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = Color.white };
-
-            // 3. ビジュアル初期化
+            // 2. ビジュアル初期化
             visual.Initialize(id, robotColor);
 
             // 4. マズルポイント

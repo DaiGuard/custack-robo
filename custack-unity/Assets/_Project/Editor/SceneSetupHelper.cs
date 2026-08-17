@@ -303,24 +303,10 @@ namespace Custack.Editor
             visual.centerWhiteRenderer = null;
             visual.donutRenderer = mrDonut;
 
-            // 2. 進行方向・マズル向きインジケーター (外周リング外側前方に配置: ダイヤ型 Quad)
-            var arrowChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            arrowChild.name = "DirectionArrow";
-            arrowChild.transform.SetParent(robotObj.transform);
-            arrowChild.transform.localPosition = new Vector3(0, 0.65f, -0.01f);
-            arrowChild.transform.localScale = new Vector3(0.20f, 0.20f, 1f);
-            arrowChild.transform.localRotation = Quaternion.Euler(0, 0, 45f); // ダイヤ型
-
-            var arrowCol = arrowChild.GetComponent<Collider>();
-            if (arrowCol != null) Object.DestroyImmediate(arrowCol);
-
-            var arrowMr = arrowChild.GetComponent<MeshRenderer>();
-            arrowMr.sharedMaterial = GetOrCreateMaterial("Mat_DirectionArrow", Color.white);
-
-            // 3. ビジュアル初期化
+            // 2. ビジュアル初期化 (余計な矢印や文字を排除し、外周ドーナツリングのみで構成)
             visual.Initialize(id, color);
 
-            // 4. 左右マズルポイント
+            // 3. 左右マズルポイント
             var muzzleRObj = new GameObject("Muzzle_R");
             muzzleRObj.transform.SetParent(robotObj.transform);
             muzzleRObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0);
@@ -331,7 +317,7 @@ namespace Custack.Editor
             muzzleLObj.transform.localPosition = new Vector3(-0.5f, 0.5f, 0);
             entity.leftMuzzlePoint = muzzleLObj.transform;
 
-            // 5. 衝突判定
+            // 4. 衝突判定
             var col2d = GetOrAddComponent<CircleCollider2D>(robotObj);
             col2d.radius = 0.45f;
             col2d.isTrigger = false;
@@ -357,20 +343,19 @@ namespace Custack.Editor
 
             Color zoneColor = type switch
             {
-                TerrainType.Mud => new Color(0.90f, 0.55f, 0.15f, 1.0f),      // 泥沼: オレンジブラウン枠線
-                TerrainType.Ice => new Color(0.20f, 0.85f, 1.0f, 1.0f),       // 氷上: ネオンシアン枠線
-                TerrainType.Lava => new Color(1.0f, 0.25f, 0.10f, 1.0f),      // 溶岩: 鮮烈レッド枠線
-                TerrainType.Forest => new Color(0.15f, 1.0f, 0.35f, 1.0f),    // 森林: ネオングリーン枠線
-                _ => Color.white
+                TerrainType.Mud => new Color(0.45f, 0.25f, 0.08f, 1.0f),      // 泥沼: 落ち着いたダークオレンジ枠線
+                TerrainType.Ice => new Color(0.10f, 0.40f, 0.55f, 1.0f),      // 氷上: 落ち着いたシアン枠線
+                TerrainType.Lava => new Color(0.55f, 0.12f, 0.05f, 1.0f),     // 溶岩: 落ち着いたダークレッド枠線
+                TerrainType.Forest => new Color(0.08f, 0.45f, 0.15f, 1.0f),   // 森林: 落ち着いたダークグリーン枠線
+                _ => new Color(0.3f, 0.3f, 0.3f, 1.0f)
             };
 
-            // ベタ塗り Quad を廃止し、スタイリッシュな外枠境界線 (Line Quads: 幅 5cm) を描画
-            // 内側は完全な黒 (光照射ゼロ) となり、ロボットがゾーン内に入っても AprilTag の黒が絶対に白浮きしない
+            // スタイリッシュな細い外枠境界線 (Line Quads: 幅 2cm) を描画
             var borderRoot = new GameObject("BorderLines");
             borderRoot.transform.SetParent(zoneObj.transform, false);
             borderRoot.transform.localPosition = new Vector3(0, 0, 0.5f);
 
-            float lineWidth = 0.05f; // 幅 5cm の枠線
+            float lineWidth = 0.02f; // 幅 2cm の極細枠線 (カメラ干渉を最小化)
             var lineMat = GetOrCreateMaterial($"Mat_Terrain_Border_{type}", zoneColor, false);
 
             // 上枠

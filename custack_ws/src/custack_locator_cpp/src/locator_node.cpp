@@ -157,10 +157,10 @@ LocatorNode::LocatorNode(bool headless, int cli_max_detections, const std::strin
     processed_frame_ = cv::Mat(height, width, CV_8UC1);
     // processed_frame_.setTo(0);
 
-    // VPIの初期化 (1080p 原寸検出で解像度4倍、エッジ判定精度を最大化)
+    // VPIの初期化 (0.5倍スケールでプロジェクターのピクセルモアレ高周波ノイズを除去)
     image_width_ = width;
     image_height_ = height;
-    detect_scale_ = 1.0;
+    detect_scale_ = 0.5;
     setupVPI(width, height, detect_scale_);
 
     cap_.open(camera_index, cv::CAP_V4L2);
@@ -418,7 +418,7 @@ void LocatorNode::setupVPI(int width, int height, float scale) {
         params.tagIdFilter = nullptr;
         params.tagIdFilterSize = 0;
     }
-    params.maxBitsCorrected = 2;
+    params.maxBitsCorrected = 0; // 偽陽性・ノイズ誤検出を完全排除 (16H5 厳格デコード)
     // params.family = VPI_APRILTAG_36H11;
     // params.family = VPI_APRILTAG_25H9;
     params.family = VPI_APRILTAG_16H5;

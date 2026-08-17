@@ -144,6 +144,20 @@ void setup() {
     scale3 = eeprom_read_u8(0x0A);
     scale4 = eeprom_read_u8(0x0B);
 
+    // スケール初期化 (未設定 0xFF または 0 のフォールバック)
+    if (scale1 == 0 || scale1 == 0xFF) scale1 = 100;
+    if (scale2 == 0 || scale2 == 0xFF) scale2 = 100;
+    if (scale4 == 0 || scale4 == 0xFF) scale4 = 100;
+
+#if DEVICE_ID == 0x02
+    // 差動二輪 (Tire): 左輪 (PWM3) のサーボ速度が高いため 90% に調整
+    if (scale3 == 0 || scale3 == 0xFF || scale3 == 100) {
+        scale3 = 90;
+    }
+#else
+    if (scale3 == 0 || scale3 == 0xFF) scale3 = 100;
+#endif
+
     // レジスタ初期値設定
     registers[REG_DEVICE_ID]    = DEVICE_ID;
     registers[REG_FW_VERSION]   = FW_VERSION;

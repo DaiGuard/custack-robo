@@ -290,23 +290,23 @@ namespace Custack.Editor
 
             equip.SetEquipment(leg, rArm, lArm);
 
-            // 1. 中央完全黒マスク円 (BlackMask: 半径 0.45m = 直径90cm, Z=-0.05: プロジェクターの斜め照射光がロボット本体やAprilTagに絶対に当たらないよう完全に遮蔽)
+            // 1. 中央完全黒マスク円 (BlackMask: 半径 0.55m = 直径1.1m, Z=-0.05: プロジェクター光を100%消灯しAprilTagを完全保護)
             var blackMaskChild = new GameObject("BlackMask");
             blackMaskChild.transform.SetParent(robotObj.transform);
             blackMaskChild.transform.localPosition = new Vector3(0, 0, -0.05f);
             var mfMask = blackMaskChild.AddComponent<MeshFilter>();
-            mfMask.sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.45f);
+            mfMask.sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.55f);
             var mrMask = blackMaskChild.AddComponent<MeshRenderer>();
             mrMask.sharedMaterial = GetOrCreateMaterial("Mat_Robot_BlackMask", Color.black);
 
-            // 2. 外周ドーナツ型リング (DonutRing: 内径 0.45m = 直径90cm, 外径 0.65m = 直径130cm, Z=-0.05: ロボットから十分離れた外側床面にのみプレイヤーカラーを投影)
+            // 2. 外周ドーナツ型リング (DonutRing: 内径 0.55m = 直径1.1m, 外径 0.70m = 直径1.4m, Z=-0.05: ロボット外側床面に落ち着いたプレイヤーカラーを投影)
             var donutChild = new GameObject("DonutRing");
             donutChild.transform.SetParent(robotObj.transform);
             donutChild.transform.localPosition = new Vector3(0, 0, -0.05f);
             var mfDonut = donutChild.AddComponent<MeshFilter>();
-            mfDonut.sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.45f, 0.65f);
+            mfDonut.sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.55f, 0.70f);
             var mrDonut = donutChild.AddComponent<MeshRenderer>();
-            mrDonut.sharedMaterial = GetOrCreateMaterial($"Mat_Robot_{name}", color);
+            mrDonut.sharedMaterial = GetOrCreateMaterial($"Mat_Robot_{name}", color, true);
 
             visual.blackMaskRenderer = mrMask;
             visual.donutRenderer = mrDonut;

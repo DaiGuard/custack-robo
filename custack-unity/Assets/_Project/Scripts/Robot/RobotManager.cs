@@ -232,19 +232,19 @@ namespace Custack.Robot
 
             var avatarShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
 
-            // 1. 中央完全黒マスク円 (BlackMask: 半径 0.45m = 直径90cm, Z=-0.05: プロジェクター光を100%消灯しAprilTagを完全保護)
+            // 1. 中央完全黒マスク円 (BlackMask: 半径 0.55m = 直径1.1m, Z=-0.05: プロジェクター光を100%消灯しAprilTagを完全保護)
             var blackMaskChild = new GameObject("BlackMask");
             blackMaskChild.transform.SetParent(robotObj.transform);
             blackMaskChild.transform.localPosition = new Vector3(0, 0, -0.05f);
-            blackMaskChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.45f);
+            blackMaskChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.55f);
             var mrMask = blackMaskChild.AddComponent<MeshRenderer>();
             mrMask.material = new Material(avatarShader) { color = Color.black };
 
-            // 2. 外周ドーナツ型リング (DonutRing: 内径 0.45m = 直径90cm, 外径 0.65m = 直径130cm, Z=-0.05: ロボット外側床面にプレイヤーカラー投影)
+            // 2. 外周ドーナツ型リング (DonutRing: 内径 0.55m = 直径1.1m, 外径 0.70m = 直径1.4m, Z=-0.05: ロボット外側床面に落ち着いたプレイヤーカラー投影)
             var donutChild = new GameObject("DonutRing");
             donutChild.transform.SetParent(robotObj.transform);
             donutChild.transform.localPosition = new Vector3(0, 0, -0.05f);
-            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.45f, 0.65f);
+            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.55f, 0.70f);
             var mrDonut = donutChild.AddComponent<MeshRenderer>();
             mrDonut.material = new Material(avatarShader) { color = robotColor };
 
@@ -279,29 +279,29 @@ namespace Custack.Robot
 
         public static Color GetRobotColor(int id)
         {
-            // 視認性の高い 16 色パレット
+            // カメラ認識と両立する落ち着いたネオンパレット (明度 50%)
             Color[] palette = new Color[]
             {
-                new Color(0.10f, 0.85f, 1.00f), // 0: P1 (シアン)
-                new Color(1.00f, 0.35f, 0.35f), // 1: P2 (レッド/コーラル)
-                new Color(0.20f, 1.00f, 0.40f), // 2: エメラルドグリーン
-                new Color(1.00f, 0.85f, 0.10f), // 3: イエローゴールド
-                new Color(0.80f, 0.40f, 1.00f), // 4: パープル
-                new Color(1.00f, 0.55f, 0.10f), // 5: オレンジ
-                new Color(0.20f, 0.60f, 1.00f), // 6: ロイヤルブルー
-                new Color(1.00f, 0.20f, 0.70f), // 7: マゼンタピンク
-                new Color(0.00f, 1.00f, 0.80f), // 8: ターコイズ
-                new Color(0.70f, 1.00f, 0.20f), // 9: ライムグリーン
-                new Color(1.00f, 0.70f, 0.80f), // 10: ライトピンク
-                new Color(0.50f, 0.80f, 1.00f), // 11: スカイブルー
-                new Color(0.90f, 0.50f, 0.30f), // 12: テラコッタ
-                new Color(0.60f, 0.90f, 0.60f), // 13: セージグリーン
-                new Color(0.90f, 0.90f, 0.30f), // 14: レモンイエロー
-                new Color(0.90f, 0.60f, 0.90f), // 15: ラベンダー
+                new Color(0.05f, 0.45f, 0.55f, 0.75f), // 0: P1 (シアン)
+                new Color(0.55f, 0.18f, 0.18f, 0.75f), // 1: P2 (レッド/コーラル)
+                new Color(0.10f, 0.55f, 0.20f, 0.75f), // 2: エメラルドグリーン
+                new Color(0.55f, 0.45f, 0.05f, 0.75f), // 3: イエローゴールド
+                new Color(0.40f, 0.20f, 0.55f, 0.75f), // 4: パープル
+                new Color(0.55f, 0.28f, 0.05f, 0.75f), // 5: オレンジ
+                new Color(0.10f, 0.30f, 0.55f, 0.75f), // 6: ロイヤルブルー
+                new Color(0.55f, 0.10f, 0.35f, 0.75f), // 7: マゼンタピンク
+                new Color(0.00f, 0.55f, 0.40f, 0.75f), // 8: ターコイズ
+                new Color(0.35f, 0.55f, 0.10f, 0.75f), // 9: ライムグリーン
+                new Color(0.55f, 0.35f, 0.40f, 0.75f), // 10: ライトピンク
+                new Color(0.25f, 0.40f, 0.55f, 0.75f), // 11: スカイブルー
+                new Color(0.45f, 0.25f, 0.15f, 0.75f), // 12: テラコッタ
+                new Color(0.30f, 0.45f, 0.30f, 0.75f), // 13: セージグリーン
+                new Color(0.45f, 0.45f, 0.15f, 0.75f), // 14: レモンイエロー
+                new Color(0.45f, 0.30f, 0.45f, 0.75f), // 15: ラベンダー
             };
 
             if (id >= 0 && id < palette.Length) return palette[id];
-            return Color.HSVToRGB((id * 0.618033988749895f) % 1.0f, 0.85f, 1.0f);
+            return Color.HSVToRGB((id * 0.618033988749895f) % 1.0f, 0.60f, 0.50f);
         }
 
         private void ProcessRobotInputs()

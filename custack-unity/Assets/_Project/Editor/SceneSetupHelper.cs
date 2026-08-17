@@ -24,14 +24,24 @@ namespace Custack.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 1. Camera & Lighting
-            SetupCameraAndLighting();
+            // 1. Camera & Lighting (Multi-Display: Display 1 HostDashboard, Display 2 Projection)
+            var (dashCam, projCam) = SetupMultiDisplayCameras();
 
             // 2. Arena Floor
             CreateArenaFloor(10f, 7.5f);
 
             // 3. Managers
             var managersRoot = new GameObject("--- MANAGERS ---");
+
+            var dispMgrObj = new GameObject("MultiDisplayManager");
+            dispMgrObj.transform.SetParent(managersRoot.transform);
+            var dispMgr = dispMgrObj.AddComponent<MultiDisplayManager>();
+            dispMgr.hostDashboardCamera = dashCam;
+            dispMgr.projectionCamera = projCam;
+
+            var dashUIObj = new GameObject("HostDashboardUI");
+            dashUIObj.transform.SetParent(managersRoot.transform);
+            dashUIObj.AddComponent<HostDashboardUI>();
 
             var inputMgrObj = new GameObject("ControllerInputManager");
             inputMgrObj.transform.SetParent(managersRoot.transform);
@@ -46,6 +56,7 @@ namespace Custack.Editor
             robotMgrObj.transform.SetParent(managersRoot.transform);
             var robotMgr = robotMgrObj.AddComponent<RobotManager>();
             var scaler = robotMgrObj.AddComponent<ProjectionScaler>();
+            scaler.projectionCamera = projCam;
             robotMgr.projectionScaler = scaler;
             robotMgr.terrainManager = terrainMgr;
             robotMgr.poseShmPath = "/dev/shm/custack_robot_poses";
@@ -100,14 +111,24 @@ namespace Custack.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 1. Camera & Lighting
-            SetupCameraAndLighting();
+            // 1. Camera & Lighting (Multi-Display: Display 1 HostDashboard, Display 2 Projection)
+            var (dashCam, projCam) = SetupMultiDisplayCameras();
 
             // 2. Arena Floor
             CreateArenaFloor(12f, 9f);
 
             // 3. Managers Root
             var managersRoot = new GameObject("--- MANAGERS ---");
+
+            var dispMgrObj = new GameObject("MultiDisplayManager");
+            dispMgrObj.transform.SetParent(managersRoot.transform);
+            var dispMgr = dispMgrObj.AddComponent<MultiDisplayManager>();
+            dispMgr.hostDashboardCamera = dashCam;
+            dispMgr.projectionCamera = projCam;
+
+            var dashUIObj = new GameObject("HostDashboardUI");
+            dashUIObj.transform.SetParent(managersRoot.transform);
+            dashUIObj.AddComponent<HostDashboardUI>();
 
             var inputMgrObj = new GameObject("ControllerInputManager");
             inputMgrObj.transform.SetParent(managersRoot.transform);
@@ -121,6 +142,7 @@ namespace Custack.Editor
             robotMgrObj.transform.SetParent(managersRoot.transform);
             var robotMgr = robotMgrObj.AddComponent<RobotManager>();
             var scaler = robotMgrObj.AddComponent<ProjectionScaler>();
+            scaler.projectionCamera = projCam;
             robotMgr.projectionScaler = scaler;
             robotMgr.terrainManager = terrainMgr;
             robotMgr.poseShmPath = "/dev/shm/custack_robot_poses";
@@ -187,27 +209,41 @@ namespace Custack.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！ (16台のロボット P1~P16 を配置)");
+            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のマルチディスプレイセットアップが完了しました！ (Display 1: PC管理画面 / Display 2: プロジェクター床面投影)");
         }
 
-        private static void SetupCameraAndLighting()
+        private static (Camera dashCam, Camera projCam) SetupMultiDisplayCameras()
         {
-            var camObj = new GameObject("Main Camera");
-            camObj.tag = "MainCamera";
-            var cam = camObj.AddComponent<Camera>();
-            cam.orthographic = true;
-            cam.orthographicSize = 5.0f;
-            cam.transform.position = new Vector3(0, 0, -10f);
-            cam.backgroundColor = new Color(0.08f, 0.10f, 0.15f, 1f); // 濃紺グレー背景
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            camObj.AddComponent<AudioListener>();
+            // 1. Display 1: ホスト PC 管理ダッシュボード用カメラ
+            var dashCamObj = new GameObject("HostDashboardCamera");
+            var dashCam = dashCamObj.AddComponent<Camera>();
+            dashCam.targetDisplay = 0; // Display 1 (メイン画面)
+            dashCam.clearFlags = CameraClearFlags.SolidColor;
+            dashCam.backgroundColor = new Color(0.06f, 0.08f, 0.12f, 1f); // スタイリッシュなダークテーマ
+            dashCam.depth = 0;
+            dashCamObj.AddComponent<AudioListener>();
 
+            // 2. Display 2: プロジェクター床面投影用カメラ (1:1 投影)
+            var projCamObj = new GameObject("ProjectionCamera");
+            projCamObj.tag = "MainCamera";
+            var projCam = projCamObj.AddComponent<Camera>();
+            projCam.targetDisplay = 1; // Display 2 (プロジェクター)
+            projCam.orthographic = true;
+            projCam.orthographicSize = 5.0f;
+            projCam.transform.position = new Vector3(0, 0, -10f);
+            projCam.backgroundColor = new Color(0.02f, 0.02f, 0.04f, 1f); // プロジェクター用黒背景
+            projCam.clearFlags = CameraClearFlags.SolidColor;
+            projCam.depth = 1;
+
+            // 3. ライティング
             var lightObj = new GameObject("Directional Light");
             var light = lightObj.AddComponent<Light>();
             light.type = LightType.Directional;
             light.color = new Color(1f, 0.98f, 0.95f);
             light.intensity = 1.2f;
             lightObj.transform.rotation = Quaternion.Euler(50f, -30f, 0);
+
+            return (dashCam, projCam);
         }
 
         private static void CreateArenaFloor(float width, float height)
@@ -380,11 +416,12 @@ namespace Custack.Editor
             hudObj.transform.SetParent(parent);
             var hud = hudObj.AddComponent<BattleHUD>();
 
-            // Canvas
+            // Canvas (Display 2: プロジェクター床面投影画面用 HUD)
             var canvasObj = new GameObject("BattleCanvas");
             canvasObj.transform.SetParent(hudObj.transform);
             var canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.targetDisplay = 1; // Display 2 (プロジェクター)
             canvasObj.AddComponent<CanvasScaler>();
             canvasObj.AddComponent<GraphicRaycaster>();
 

@@ -10,7 +10,10 @@
 * **Unity バージョン**: `Unity 6 (6000.3.14f1)`
 * **レンダーパイプライン**: Universal Render Pipeline (`URP 17.3.0`)
 * **入力システム**: Unity Input System (`com.unity.inputsystem 1.19.0`)
-* **設計アーキテクチャ**: 関心事の分離（SoC）に基づき 8 つの機能モジュールへモジュール化
+* **マルチディスプレイ構成**:
+  * **Display 1 (ホストPC メイン画面)**: `HostDashboardCamera` / `HostDashboardUI` (コントローラー割当、シリアルブリッジ信号、各機体テレメトリ・表示ON/OFF、ノイズ遮断プリセット、FPS)
+  * **Display 2 (プロジェクター床面投影)**: `ProjectionCamera` / `BattleCanvas` (1:1 俯瞰プロジェクションマッピング、アリーナ、地形エフェクト、ロボット、弾幕・爆発演出)
+* **設計アーキテクチャ**: 関心事の分離（SoC）に基づき機能モジュール化
 
 ```mermaid
 flowchart TD

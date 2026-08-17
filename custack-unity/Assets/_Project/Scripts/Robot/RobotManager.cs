@@ -71,7 +71,7 @@ namespace Custack.Robot
 
         void Update()
         {
-            // 1. 共有メモリからロボット位置姿勢を読み出し & 反映
+            // 1. 共有メモリからロボット位置姿勢 & デバイスIDを読み出し & 反映
             ReadAndApplyPoses();
 
             // 2. コントローラー入力の取得 & 各ロボットのフレーム処理 (武器発射・地形補正)
@@ -100,6 +100,12 @@ namespace Custack.Robot
                     Vector3 worldPos = projectionScaler.NormalizedToWorld(pose.x, pose.y);
                     float unityDeg = projectionScaler.NormalizedThetaToUnityDeg(pose.theta);
                     robots[id].ApplyPose(worldPos, unityDeg);
+
+                    // 実機ハードウェアから取得したデバイスIDを自動反映
+                    if (robots[id].EquipmentComponent != null)
+                    {
+                        robots[id].EquipmentComponent.SetFromHardware(pose.legId, pose.armRightId, pose.armLeftId);
+                    }
                 }
             }
         }

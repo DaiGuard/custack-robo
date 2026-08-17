@@ -82,14 +82,14 @@ namespace Custack.Robot
             WeaponBase weapon = null;
             switch (type)
             {
-                case ArmDeviceType.Pistol:
-                    weapon = gameObject.AddComponent<PistolWeapon>();
-                    break;
                 case ArmDeviceType.Gatling:
                     weapon = gameObject.AddComponent<GatlingWeapon>();
                     break;
-                case ArmDeviceType.Missile:
-                    weapon = gameObject.AddComponent<MissileWeapon>();
+                case ArmDeviceType.Sword:
+                    weapon = gameObject.AddComponent<SwordWeapon>();
+                    break;
+                case ArmDeviceType.Cannon:
+                    weapon = gameObject.AddComponent<LaserCannonWeapon>();
                     break;
             }
 

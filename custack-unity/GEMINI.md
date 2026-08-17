@@ -153,21 +153,23 @@ custack-unity/
 ### 3.1 共有メモリ通信 (`Custack.SharedMemory`)
 C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`）とバイナリレイアウト（`Pack = 1`）が完全に一致。
 * **`SharedMemoryTypes.cs`**:
-  - `SharedRobotPose` (16 bytes): `id` (int), `x` (float), `y` (float), `theta` (float)
-  - `SharedRobotPoseData` (536 bytes): `version`, `sequence` (Seqlock), `timestampNs`, `count`, `posesRaw[32 * 16]`
-  - `SingleControllerCommand` (8 bytes): `vx`, `vy`, `omega` (short 各 -1000〜1000), `armRight`, `armLeft`, `active`, `reserved` (byte)
-  - `SharedControllerData` (88 bytes): `version`, `sequence`, `timestampMs`, `count`, `controllersRaw[8 * 8]`
+  - `SharedRobotPose` (20 bytes, Pack=1): `id` (int), `x` (float), `y` (float), `theta` (float), `legId` (byte), `armRightId` (byte), `armLeftId` (byte), `status` (byte)
+  - `SharedRobotPoseData` (656 bytes): `version`, `sequence` (Seqlock), `timestampNs`, `count`, `posesRaw[32 * 20]`
+  - `SingleControllerCommand` (10 bytes, Pack=1): `vx`, `vy`, `omega` (short 各 -1000〜1000), `armRight`, `armLeft`, `active`, `reserved` (byte 各 1B)
+  - `SharedControllerData` (100 bytes): `version`, `sequence`, `timestampMs`, `count`, `controllersRaw[8 * 10]`
 * **`SharedMemoryReader.cs`**:
   - `/dev/shm/custack_robot_poses` を Seqlock ロックフリー（最大5回リトライ、偶数チェック、前後シーケンス一致検証）で読み取り。
 * **`SharedMemoryWriter.cs`**:
   - `/dev/shm/custack_controller_cmd` へ全コントローラー指令を Seqlock 方式（`sequence += 2` で偶数維持）で書き込み。
+* **`SharedMemoryDebugMonitor.cs`**:
+  - 共有メモリ上のロボット位置姿勢・デバイスID・更新レート（Hz）を Game 画面上にリアルタイム HUD 表示するデバッグツール（`F1` キーでトグル）。
 
 ### 3.2 装備 & デバイスID管理 (`Custack.Equipment`)
 * **`DeviceIdEnums.cs`**:
-  - `ArmDeviceType`: `0x00: None`, `0x01: Pistol`, `0x02: Gatling`, `0x03: Missile`
+  - `ArmDeviceType`: `0x00: None`, `0x01: Gatling`, `0x02: Sword`, `0x03: Cannon`
   - `LegDeviceType`: `0x00: None`, `0x01: Omni`, `0x02: Tire`, `0x03: Crawler`
 * **`ArmWeaponConfig.cs`**:
-  - 武器パラメータ（ダメージ、弾速、射程/寿命、クールダウン、フルオート可否、拡散角、ホーミング角速度、爆発半径、マテリアル色等）を定義。
+  - 武器パラメータ（ダメージ、弾速、射程/寿命、クールダウン、フルオート可否、拡散角、マテリアル色等）を定義。
 * **`LegMovementConfig.cs`**:
   - 各脚の基本速度/旋回倍率、横移動許可フラグ、地形別速度・旋回倍率、スリップ慣性係数、溶岩ダメージ軽減率を定義。
 * **`RobotEquipment.cs`**:
@@ -180,8 +182,8 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
   - 2 台の PS5 Gamepad を自動認識して P1/P2 に割り当て。
   - スティックのデッドゾーン補正（`0.15`）、L2/R2 によるアナログ旋回補助。
   - キーボードフォールバック:
-    - **P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ホーミング切替 `U`
-    - **P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ホーミング切替 `Numpad5`/`P`
+    - **P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ロックオン切替 `U`
+    - **P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ロックオン切替 `Numpad5`/`P`
 * **`PlayerInputCommand.cs`**:
   - 移動ベクトル、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
 
@@ -196,12 +198,10 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 * **`Health.cs`**: HP管理（100）、無敵時間（0.4s）、ダメージ・撃破・リスポーンイベント
 * **`WeaponBase.cs`**:
   - 武器基底クラス。発射時に `HardwareArmFlag = 1`（0.15秒保持）を立て、実機ソレノイド/モーターを連動駆動。
-* **`PistolWeapon.cs`**: 単発・高速・長射程レーザー弾（速度 25, 威力 25, CD 0.35s）
-* **`GatlingWeapon.cs`**: 拡散連射弾幕（拡散角 $\pm 7.5^\circ$, 15発/s, 威力 8, 速度 16）
-* **`MissileWeapon.cs`**: 誘導ミサイル（威力 60, 速度 9, CD 2.5s, 爆発半径 1.8m）
-* **`Projectile.cs`**: 直線飛翔体基底、寿命・敵 Health 衝突判定
-* **`HomingMissile.cs`**: `Mathf.MoveTowardsAngle` による滑らかな旋回追尾（$\omega = 120^\circ/\text{s}$）
-* **`ExplosionArea.cs`**: 爆心地からの距離減衰を伴う範囲ダメージ発動
+* **`GatlingWeapon.cs`** (`0x01`): 拡散連射弾幕（拡散角 $\pm 7.5^\circ$, 15発/s, 威力 8, 速度 16, 黄色弾幕）
+* **`SwordWeapon.cs`** (`0x02`): 近接高威力・斬撃波（威力 45, 速度 18, 寿命 0.35s, CD 0.45s, エメラルド斬撃）
+* **`LaserCannonWeapon.cs`** (`0x03`): 大型レーザーキャノン（威力 75, 速度 30, 寿命 3.5s, CD 1.8s, 高出力青ビーム）
+* **`Projectile.cs`**: 飛翔体基底、寿命・敵 Health 衝突判定
 * **`HitEffect.cs`**: 被弾・爆発エフェクト生成
 
 ### 3.6 ロボット統括 & 表示 (`Custack.Robot`)
@@ -226,9 +226,9 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 ### アームユニット (`ArmDeviceType`)
 | デバイスID | 武器名 | 弾速 / 射程 | ダメージ / CD | 特徴 & 演出 |
 | :--- | :--- | :--- | :--- | :--- |
-| **`0x01`** | **ピストル** | 25 (高速) / 3.0s (長射程) | 25 / 0.35s (単発) | 直線水色レーザー、マズルフラッシュ |
-| **`0x02`** | **ガトリング** | 16 (中速) / 0.7s (短射程) | 8 / 0.067s (15発/s) | 拡散角 $\pm 7.5^\circ$ の黄色弾幕連射 |
-| **`0x03`** | **ミサイル** | 9 (低速) / 4.0s (中射程) | 60 / 2.5s (ロングCD) | **緩やかな誘導追尾** ($\omega = 120^\circ/\text{s}$)、**着弾範囲爆発** (半径 1.8m) |
+| **`0x01`** | **ガトリング** | 16 (中速) / 0.7s (短射程) | 8 / 0.067s (15発/s) | 拡散角 $\pm 7.5^\circ$ の黄色弾幕連射 |
+| **`0x02`** | **ソード** | 18 (高速) / 0.35s (近接) | 45 / 0.45s (単発) | 近接高威力・エメラルドグリーン斬撃波 |
+| **`0x03`** | **大型レーザーキャノン** | 30 (超高速) / 3.5s (長射程) | 75 / 1.8s (ロングCD) | 高出力ブルーレーザービーム、極大ダメージ |
 
 ### 脚ユニット (`LegDeviceType`) × 地形特性
 | 脚ユニット | 平地 (`Normal`) | 森 (`Forest`) | 泥 / 沼 (`Mud`) | 氷 (`Ice`) | 溶岩 (`Lava`) | 移動挙動の特徴 |

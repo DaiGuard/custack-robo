@@ -4,7 +4,7 @@ using Custack.Equipment;
 namespace Custack.Combat
 {
     /// <summary>
-    /// デバイスID 0x02: ガトリング武器 (連射・短射程・弾幕)
+    /// デバイスID 0x01: ガトリング武器 (連射・短射程・弾幕)
     /// </summary>
     public class GatlingWeapon : WeaponBase
     {

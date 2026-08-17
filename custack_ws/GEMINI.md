@@ -38,33 +38,39 @@ flowchart LR
     Cam[天井カメラ] --> Locator["locator_node (Jetson)"]
     Locator -->|/camera/image_raw [sensor_msgs/Image]| Web["web_server (Jetson)"]
     Locator -->|/robot_poses [custack_msgs/RobotPoseArray]| Router["router_node (Host PC)"]
-    Router -->|POSIX SHM /dev/shm/custack_robot_poses| Unity["Unity 6 (Host PC)"]
-    Router -->|/dev/ttyUSB0..2 (115200bps)| Atoms["M5Atom x 3台 (robot_bridge)"]
+    Router -->|POSIX SHM /dev/shm/custack_robot_poses (20B/台)| Unity["Unity 6 (Host PC)"]
+    Unity -->|POSIX SHM /dev/shm/custack_controller_cmd| Router
+    Router -->|SET/STP (115200bps)| Atoms["M5Atom x 3台 (robot_bridge)"]
+    Atoms -->|TLM (115200bps)| Router
 ```
 
 ### 1. ROS 2 トピック一覧
 | トピック名 | メッセージ型 | 送信元 | 受信先 | 説明 |
 | :--- | :--- | :--- | :--- | :--- |
-| `/robot_poses` | [`custack_msgs/msg/RobotPoseArray`](file:///home/dai_guard/Workspaces/custack-robo/unity/custack_ws/src/custack_msgs/msg/RobotPoseArray.msg) | `locator_node` | `router_node` | 推定されたロボット 3 台分の正規化座標 (-1.0〜1.0) と回転角 |
+| `/robot_poses` | `custack_msgs/msg/RobotPoseArray` | `locator_node` | `router_node` | 推定されたロボット 3 台分の正規化座標 (-1.0〜1.0) と回転角 |
 | `/camera/image_raw` | `sensor_msgs/msg/Image` | `locator_node` | `web_server` | カメラ生画像またはキャリブレーション重畳映像 |
 
 ### 2. POSIX 共有メモリ仕様 (`custack_router`)
 * **共有メモリパス**: `/dev/shm/custack_robot_poses`
 * **アクセス制御**: Seqlock (ロックフリー、奇数: 書込中, 偶数: 確定)
-* **構造体レイアウト** ([`shared_memory_types.h`](file:///home/dai_guard/Workspaces/custack-robo/unity/custack_ws/src/custack_router/include/custack_router/shared_memory_types.h)):
+* **構造体レイアウト** (`shared_memory_types.h` / `Pack = 1` / 20 Bytes):
   ```cpp
   struct SharedRobotPose {
-      int32_t id;      // AprilTag ID
-      float x;         // 投影面座標 (-1.0 〜 1.0)
-      float y;         // 投影面座標 (-1.0 〜 1.0)
-      float theta;     // 姿勢角 (radian)
+      int32_t id;           // AprilTag ID (-1: 未検出)
+      float x;              // 投影面座標 (-1.0 〜 1.0)
+      float y;              // 投影面座標 (-1.0 〜 1.0)
+      float theta;          // 姿勢角 (radian)
+      uint8_t leg_id;       // 脚ユニットID (0x01: Omni, 0x02: Tire, 0x03: Crawler)
+      uint8_t arm_right_id; // 右アーム武器ID (0x01: Gatling, 0x02: Sword, 0x03: LaserCannon)
+      uint8_t arm_left_id;  // 左アーム武器ID (0x01: Gatling, 0x02: Sword, 0x03: LaserCannon)
+      uint8_t status;       // テレメトリ受信ステータス (0: 未受信, 1: 正常受信)
   };
   struct SharedRobotPoseData {
       uint32_t version;               // プロトコルバージョン (1)
       uint32_t sequence;              // Seqlock シーケンス
       uint64_t timestamp_ns;          // ナノ秒タイムスタンプ
       uint32_t count;                 // 検出台数 (最大32)
-      SharedRobotPose poses[32];      // 機体姿勢配列
+      SharedRobotPose poses[32];      // 機体姿勢 & デバイス情報配列
   };
   ```
 
@@ -72,81 +78,25 @@ flowchart LR
 
 ## 🔨 クリーン＆ビルド手順
 
-環境ごとに必要なパッケージのみをクリーンビルドできるスクリプトを用意しています。
-実行時に自動で `build/`, `install/`, `log/` を削除してからビルドを実行します。
-
-### 1. Jetson 環境 (`custack_locator_cpp`, `custack_web`, `custack_msgs`)
 ```bash
-cd custack_ws
-./build_jetson.sh
-```
+# Jetson 環境
+cd custack_ws && ./build_jetson.sh
 
-### 2. ホストPC環境 (`custack_router`, `custack_msgs`)
-```bash
-cd custack_ws
-./build_host.sh
+# ホストPC環境
+cd custack_ws && ./build_host.sh
 ```
 
 ---
 
 ## 🚀 起動方法
 
-各ノードの実行に必要な ROS 環境変数やディレクトリ移動、設定ファイルの読み込みを自動化するスクリプトを用意しています。
-
-### 1. 位置推定・カメラ認識ノード (`custack_locator_cpp`) 【Jetson】
-
 ```bash
-# 通常起動
+# Jetson: 位置推定ノード起動
 ./run_locator.sh
 
-# ビルドしてから起動
-./run_locator.sh -b
-
-# ヘッドレスモード（GUI描画なし）で起動
-./run_locator.sh --headless
-
-# ROSパラメータを指定して起動
-./run_locator.sh --ros-args -p camera_index:=0
-
-# ヘルプ確認
-./run_locator.sh -h
-```
-
-### 2. ルーターノード (`custack_router`) 【ホストPC】
-
-```bash
-# 通常起動 (デフォルト設定ファイル src/custack_router/config/router_config.yaml を自動読み込み)
-./run_router.sh
-
-# ビルドしてから起動
-./run_router.sh -b
-
-# シリアル無効化 (SHM のみテスト)
-./run_router.sh --ros-args -p enable_serial:=false
-
-# ヘルプ確認
-./run_router.sh -h
-```
-
-### 3. Web UI / キャリブレーションサーバー (`custack_web`) 【Jetson】
-
-```bash
-# 通常起動
+# Jetson: Web UI 起動
 ./run_web.sh
 
-# ビルドしてから起動
-./run_web.sh -b
-
-# ヘルプ確認
-./run_web.sh -h
+# ホストPC: ルーターノード起動 (SHM ↔ 3ch シリアル)
+./run_router.sh
 ```
-* 起動後、ブラウザから `http://localhost:8000` または `http://<JetsonのIP>:8000` にアクセスしてください。
-
----
-
-## ⚙️ 環境設定・共通仕様
-
-* **ROS 2 ディストリビューション**: ROS 2 Humble
-* **ROS_DOMAIN_ID**: `1`
-* **設定ファイル仕様**:
-  `locator_node` は起動時のカレントワーキングディレクトリにある `camera_calib.yaml`, `camera_config.yaml`, `homography.yaml` を読み書きします（各 `run_*.sh` スクリプト内でワークスペース直下へ自動移動して実行されます）。

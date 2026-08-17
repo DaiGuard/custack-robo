@@ -6,7 +6,7 @@ namespace Custack.Terrain
     /// フィールド上に配置する地形エリア（森、泥、氷、溶岩など）コンポーネント。
     /// Collider2D (Trigger) または 境界矩形により侵入判定を行う。
     /// </summary>
-    [RequireComponent(typeof(Collider2D))]
+    [RequireComponent(typeof(BoxCollider2D))]
     public class TerrainZone : MonoBehaviour
     {
         [Header("地形設定")]

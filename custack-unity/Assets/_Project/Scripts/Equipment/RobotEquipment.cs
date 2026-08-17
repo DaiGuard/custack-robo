@@ -11,16 +11,16 @@ namespace Custack.Equipment
     {
         [Header("インスペクター手動装備テスト設定")]
         [Tooltip("true の場合、実機からの自動取得を無視してインスペクターで指定した装備を使用")]
-        public bool overrideEquipment = true;
+        public bool overrideEquipment = false;
 
         [SerializeField]
         private LegDeviceType legType = LegDeviceType.Omni;
 
         [SerializeField]
-        private ArmDeviceType rightArmType = ArmDeviceType.Pistol;
+        private ArmDeviceType rightArmType = ArmDeviceType.Gatling;
 
         [SerializeField]
-        private ArmDeviceType leftArmType = ArmDeviceType.Gatling;
+        private ArmDeviceType leftArmType = ArmDeviceType.Sword;
 
         [Header("現在の有効パラメータ")]
         public LegMovementConfig CurrentLegConfig { get; private set; }
@@ -59,12 +59,14 @@ namespace Custack.Equipment
         {
             if (overrideEquipment) return;
 
-            LegDeviceType newLeg = Enum.IsDefined(typeof(LegDeviceType), legId) ? (LegDeviceType)legId : LegDeviceType.Omni;
-            ArmDeviceType newRArm = Enum.IsDefined(typeof(ArmDeviceType), rightArmId) ? (ArmDeviceType)rightArmId : ArmDeviceType.Pistol;
-            ArmDeviceType newLArm = Enum.IsDefined(typeof(ArmDeviceType), leftArmId) ? (ArmDeviceType)leftArmId : ArmDeviceType.Gatling;
+            // 0x00 (None/未検出) の場合は既存設定を維持、0x01以上で定義済みの場合に更新
+            LegDeviceType newLeg = Enum.IsDefined(typeof(LegDeviceType), legId) && legId != 0 ? (LegDeviceType)legId : legType;
+            ArmDeviceType newRArm = Enum.IsDefined(typeof(ArmDeviceType), rightArmId) && rightArmId != 0 ? (ArmDeviceType)rightArmId : rightArmType;
+            ArmDeviceType newLArm = Enum.IsDefined(typeof(ArmDeviceType), leftArmId) && leftArmId != 0 ? (ArmDeviceType)leftArmId : leftArmType;
 
             if (legType != newLeg || rightArmType != newRArm || leftArmType != newLArm)
             {
+                Debug.Log($"<color=#00FF88><b>[RobotEquipment]</b></color> 🤖 Robot [{gameObject.name}] DeviceID Updated from Hardware! Leg: 0x{legId:X2} ({newLeg}), ArmR: 0x{rightArmId:X2} ({newRArm}), ArmL: 0x{leftArmId:X2} ({newLArm})");
                 legType = newLeg;
                 rightArmType = newRArm;
                 leftArmType = newLArm;

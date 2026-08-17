@@ -32,9 +32,27 @@ namespace Custack.Combat
             float angle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg;
             transform.rotation = Quaternion.Euler(0, 0, angle);
 
-            // SpriteRenderer があれば色を設定
+            // レンダラーの色設定 (SpriteRenderer / MeshRenderer 両対応)
             var sr = GetComponent<SpriteRenderer>();
-            if (sr != null) sr.color = bulletColor;
+            if (sr != null)
+            {
+                sr.color = bulletColor;
+            }
+            else
+            {
+                var mr = GetComponent<MeshRenderer>();
+                if (mr != null)
+                {
+                    var shader = Shader.Find("Universal Render Pipeline/Unlit")
+                              ?? Shader.Find("Universal Render Pipeline/Lit")
+                              ?? Shader.Find("Sprites/Default")
+                              ?? Shader.Find("Unlit/Color");
+                    if (shader != null)
+                    {
+                        mr.material = new Material(shader) { color = bulletColor };
+                    }
+                }
+            }
         }
 
         protected virtual void Start()

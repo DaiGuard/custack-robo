@@ -21,7 +21,15 @@ namespace Custack.SharedMemory
 
         public SharedMemoryWriter(string path = "/dev/shm/custack_controller_cmd")
         {
-            shmPath = path;
+            if (!string.IsNullOrEmpty(path) && !path.StartsWith("/dev/shm/"))
+            {
+                shmPath = path.StartsWith("/") ? "/dev/shm" + path : "/dev/shm/" + path;
+            }
+            else
+            {
+                shmPath = path;
+            }
+
             buffer = new byte[Marshal.SizeOf<SharedControllerData>()];
             TryConnect();
         }

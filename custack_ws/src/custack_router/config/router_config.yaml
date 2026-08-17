@@ -4,11 +4,11 @@ custack_router:
     shm_robot_poses_name: "/custack_robot_poses"
     shm_controller_cmd_name: "/custack_controller_cmd"
     serial_ports:
-      - "/dev/ttyUSB0"
-      - "/dev/ttyUSB1"
-      - "/dev/ttyUSB2"
+      - "/dev/custack_bridge_1"
+      - "/dev/custack_bridge_2"
+      - "/dev/custack_bridge_3"
     baudrate: 115200
     send_rate_hz: 50.0
     cmd_timeout_ms: 1000
     enable_serial: true
-    debug_log: false
+    debug_log: true

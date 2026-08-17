@@ -20,7 +20,15 @@ namespace Custack.SharedMemory
 
         public SharedMemoryReader(string path = "/dev/shm/custack_robot_poses")
         {
-            shmPath = path;
+            if (!string.IsNullOrEmpty(path) && !path.StartsWith("/dev/shm/") && !File.Exists(path))
+            {
+                shmPath = path.StartsWith("/") ? "/dev/shm" + path : "/dev/shm/" + path;
+            }
+            else
+            {
+                shmPath = path;
+            }
+
             buffer = new byte[Marshal.SizeOf<SharedRobotPoseData>()];
             TryConnect();
         }

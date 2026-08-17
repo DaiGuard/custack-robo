@@ -15,13 +15,17 @@ constexpr uint32_t SHM_PROTOCOL_VERSION = 1;
 #pragma pack(push, 1)
 
 /**
- * @brief 個別ロボットの推定位置・姿勢
+ * @brief 個別ロボットの推定位置・姿勢およびデバイスID/ステータス
  */
 struct SharedRobotPose {
-    int32_t id;      // AprilTag ID (-1: 未検出/無効)
-    float x;         // 投影面座標 (-1.0 ~ 1.0)
-    float y;         // 投影面座標 (-1.0 ~ 1.0)
-    float theta;     // 回転角 (radian)
+    int32_t id;           // AprilTag ID (-1: 未検出)
+    float x;              // 投影面座標 (-1.0 ~ 1.0)
+    float y;              // 投影面座標 (-1.0 ~ 1.0)
+    float theta;          // 回転角 (radian)
+    uint8_t leg_id;       // 脚ユニット デバイスID (0x01: Omni, 0x02: Tire, 0x03: Crawler)
+    uint8_t arm_right_id; // 右アーム デバイスID (0x01: Pistol, 0x02: Gatling, 0x03: Missile)
+    uint8_t arm_left_id;  // 左アーム デバイスID (0x01: Pistol, 0x02: Gatling, 0x03: Missile)
+    uint8_t status;       // ステータスフラグ (0: 未受信/無効, 1: 正常受信)
 };
 
 /**
@@ -29,11 +33,11 @@ struct SharedRobotPose {
  *        Seqlock (シーケンスロック) によるロックフリー読み書きをサポート
  */
 struct SharedRobotPoseData {
-    uint32_t version;                       // プロトコルバージョン (SHM_PROTOCOL_VERSION)
-    uint32_t sequence;                      // Seqlock シーケンス (奇数: 書込中, 偶数: 確定)
-    uint64_t timestamp_ns;                  // ROS受信タイムスタンプ (ナノ秒)
-    uint32_t count;                         // 現在の検出機体数 (0 〜 MAX_SHARED_ROBOTS)
-    SharedRobotPose poses[MAX_SHARED_ROBOTS]; // 各ロボットの位置姿勢
+    uint32_t version;                         // プロトコルバージョン (SHM_PROTOCOL_VERSION)
+    uint32_t sequence;                        // Seqlock シーケンス (奇数: 書込中, 偶数: 確定)
+    uint64_t timestamp_ns;                    // ROS受信タイムスタンプ (ナノ秒)
+    uint32_t count;                           // 現在の検出機体数 (0 〜 MAX_SHARED_ROBOTS)
+    SharedRobotPose poses[MAX_SHARED_ROBOTS]; // 各ロボットの位置姿勢・デバイス情報
 };
 
 /**
@@ -53,10 +57,10 @@ struct SingleControllerCommand {
  * @brief 全コントローラの操作コマンド共有メモリ構造体 (Unity -> custack_router -> M5Atom)
  */
 struct SharedControllerData {
-    uint32_t version;                                     // プロトコルバージョン (SHM_PROTOCOL_VERSION)
-    uint32_t sequence;                                    // Seqlock シーケンス (奇数: 書込中, 偶数: 確定)
-    uint64_t timestamp_ms;                                // Unity側送信タイムスタンプ (ミリ秒)
-    uint32_t count;                                       // 有効コントローラ数 (通常 3)
+    uint32_t version;                                            // プロトコルバージョン (SHM_PROTOCOL_VERSION)
+    uint32_t sequence;                                           // Seqlock シーケンス (奇数: 書込中, 偶数: 確定)
+    uint64_t timestamp_ms;                                       // Unity側送信タイムスタンプ (ミリ秒)
+    uint32_t count;                                              // 有効コントローラ数 (通常 3)
     SingleControllerCommand controllers[MAX_SHARED_CONTROLLERS]; // 各コントローラの入力
 };
 

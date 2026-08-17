@@ -21,13 +21,20 @@ namespace Custack.Robot
         public Transform hpBarFillTransform;
         public Vector3 hpBarOffset = new Vector3(0, 0.8f, 0);
 
-        private SpriteRenderer mainRenderer;
+        private SpriteRenderer spriteRenderer;
+        private Renderer meshOrGeneralRenderer;
         private Health health;
         private float flashEndTime = 0f;
 
         void Awake()
         {
-            mainRenderer = GetComponentInChildren<SpriteRenderer>();
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+            meshOrGeneralRenderer = GetComponentInChildren<MeshRenderer>();
+            if (meshOrGeneralRenderer == null && spriteRenderer != null)
+            {
+                meshOrGeneralRenderer = spriteRenderer;
+            }
+
             health = GetComponent<Health>();
 
             if (health != null)
@@ -40,7 +47,7 @@ namespace Custack.Robot
         public void Initialize(int playerId, Color color)
         {
             playerColor = color;
-            if (mainRenderer != null) mainRenderer.color = playerColor;
+            ApplyColor(playerColor);
         }
 
         public void SetLockOnStatus(bool locked)
@@ -68,19 +75,28 @@ namespace Custack.Robot
             }
         }
 
+        private void ApplyColor(Color col)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = col;
+            }
+            else if (meshOrGeneralRenderer != null && meshOrGeneralRenderer.material != null)
+            {
+                meshOrGeneralRenderer.material.color = col;
+            }
+        }
+
         void Update()
         {
             // 被弾点滅処理
-            if (mainRenderer != null)
+            if (Time.time < flashEndTime)
             {
-                if (Time.time < flashEndTime)
-                {
-                    mainRenderer.color = hitFlashColor;
-                }
-                else
-                {
-                    mainRenderer.color = playerColor;
-                }
+                ApplyColor(hitFlashColor);
+            }
+            else
+            {
+                ApplyColor(playerColor);
             }
         }
 

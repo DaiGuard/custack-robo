@@ -17,6 +17,7 @@ workspace: inherit
 - `agent-robot`: `custack-robot/` 配下の実機制御・組込みファームウェア担当
 - `agent-unity`: `custack-unity/` 配下のシミュレータ環境・可視化担当
 - `agent-ros`: `custack_ws/` 配下の ROS/ROS2 ワークスペース・通信ノード担当
+- `agent-promoter`: プロジェクト全体を参照し、プロジェクトを説明・紹介する広告担当
 
 ## 作業フロー
 1. ユーザーの要望を分析し、どのサブモジュールに変更が必要か特定する。

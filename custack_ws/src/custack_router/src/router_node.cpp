@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <mutex>
 
 #include "rclcpp/rclcpp.hpp"
 #include "custack_msgs/msg/robot_pose_array.hpp"
@@ -14,6 +15,34 @@
 using namespace std::chrono_literals;
 
 namespace custack_router {
+
+struct RobotTelemetry {
+    uint8_t leg_id{0};
+    uint8_t arm_right_id{0};
+    uint8_t arm_left_id{0};
+    uint16_t bat_mv{0};
+    uint8_t status{0};
+    bool valid{false};
+    std::chrono::steady_clock::time_point last_recv_time{};
+};
+
+inline const char* get_leg_name(uint8_t id) {
+    switch (id) {
+        case 0x01: return "Omni";
+        case 0x02: return "Tire";
+        case 0x03: return "Crawler";
+        default:   return "Unknown";
+    }
+}
+
+inline const char* get_arm_name(uint8_t id) {
+    switch (id) {
+        case 0x01: return "Gatling";
+        case 0x02: return "Sword";
+        case 0x03: return "LaserCannon";
+        default:   return "Unknown";
+    }
+}
 
 class RouterNode : public rclcpp::Node {
 public:
@@ -45,6 +74,8 @@ public:
         cmd_timeout_ms_ = this->get_parameter("cmd_timeout_ms").as_int();
         enable_serial_ = this->get_parameter("enable_serial").as_bool();
         debug_log_ = this->get_parameter("debug_log").as_bool();
+
+        telemetry_.resize(std::max(port_names_.size(), MAX_SHARED_ROBOTS));
 
         RCLCPP_INFO(this->get_logger(), "=========================================");
         RCLCPP_INFO(this->get_logger(), "  custack_router Initializing...");
@@ -93,6 +124,12 @@ public:
             std::chrono::duration_cast<std::chrono::nanoseconds>(timer_period),
             std::bind(&RouterNode::send_timer_callback, this)
         );
+
+        // --- テレメトリ要求タイマー (1秒周期で各シリアルポートへTLMコマンド送信) ---
+        tlm_timer_ = this->create_wall_timer(
+            std::chrono::seconds(1),
+            std::bind(&RouterNode::tlm_timer_callback, this)
+        );
     }
 
     ~RouterNode() override {
@@ -115,6 +152,47 @@ private:
         }
     }
 
+    bool parse_telemetry(const std::string& line, RobotTelemetry& out_tlm) {
+        if (line.rfind("TLM,", 0) != 0 && line.rfind("TLM", 0) != 0) {
+            return false;
+        }
+
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::string> tokens;
+        while (std::getline(ss, token, ',')) {
+            size_t start = token.find_first_not_of(" \t\r\n");
+            size_t end = token.find_last_not_of(" \t\r\n");
+            if (start != std::string::npos && end != std::string::npos) {
+                tokens.push_back(token.substr(start, end - start + 1));
+            } else {
+                tokens.push_back("");
+            }
+        }
+
+        if (tokens.size() < 5) {
+            return false;
+        }
+
+        try {
+            int leg = std::stoi(tokens[1], nullptr, 0);
+            int arm_r = std::stoi(tokens[2], nullptr, 0);
+            int arm_l = std::stoi(tokens[3], nullptr, 0);
+            int bat = std::stoi(tokens[4], nullptr, 0);
+
+            out_tlm.leg_id = static_cast<uint8_t>(leg);
+            out_tlm.arm_right_id = static_cast<uint8_t>(arm_r);
+            out_tlm.arm_left_id = static_cast<uint8_t>(arm_l);
+            out_tlm.bat_mv = static_cast<uint16_t>(bat);
+            out_tlm.status = 1;
+            out_tlm.valid = true;
+            out_tlm.last_recv_time = std::chrono::steady_clock::now();
+            return true;
+        } catch (const std::exception&) {
+            return false;
+        }
+    }
+
     void robot_pose_callback(const custack_msgs::msg::RobotPoseArray::SharedPtr msg) {
         if (!shm_robot_poses_.is_valid()) return;
 
@@ -125,11 +203,28 @@ private:
         size_t count = std::min(msg->poses.size(), MAX_SHARED_ROBOTS);
         data.count = static_cast<uint32_t>(count);
 
+        std::lock_guard<std::mutex> lock(telemetry_mutex_);
+
         for (size_t i = 0; i < count; ++i) {
-            data.poses[i].id = msg->poses[i].id;
+            int32_t tag_id = msg->poses[i].id;
+            data.poses[i].id = tag_id;
             data.poses[i].x = msg->poses[i].x;
             data.poses[i].y = msg->poses[i].y;
             data.poses[i].theta = msg->poses[i].theta;
+
+            // 該当 ID に対応するテレメトリ情報（ポート0=ID 0, ポート1=ID 1, ポート2=ID 2）をセット
+            if (tag_id >= 0 && static_cast<size_t>(tag_id) < telemetry_.size()) {
+                const auto& tlm = telemetry_[tag_id];
+                data.poses[i].leg_id = tlm.leg_id;
+                data.poses[i].arm_right_id = tlm.arm_right_id;
+                data.poses[i].arm_left_id = tlm.arm_left_id;
+                data.poses[i].status = tlm.status;
+            } else {
+                data.poses[i].leg_id = 0;
+                data.poses[i].arm_right_id = 0;
+                data.poses[i].arm_left_id = 0;
+                data.poses[i].status = 0;
+            }
         }
 
         // Seqlock で共有メモリへ書き込み
@@ -168,7 +263,7 @@ private:
             is_timeout = true;
         }
 
-        // 各シリアルポートに対してコマンドを送信
+        // 各シリアルポートに対して受信処理 & コマンド送信
         for (size_t i = 0; i < serial_ports_.size(); ++i) {
             auto& port = serial_ports_[i];
 
@@ -180,10 +275,41 @@ private:
                 RCLCPP_INFO(this->get_logger(), "✅ Reconnected serial port [%zu]: %s", i, port->get_port_name().c_str());
             }
 
-            // レスポンスの読み捨て（バッファ詰まり防止）
+            // テレメトリ受信パース & レスポンス処理
             std::string rx_line;
             while (port->read_line(rx_line)) {
-                if (debug_log_) {
+                RobotTelemetry tlm{};
+                if (parse_telemetry(rx_line, tlm)) {
+                    bool id_changed = false;
+                    {
+                        std::lock_guard<std::mutex> lock(telemetry_mutex_);
+                        if (i < telemetry_.size()) {
+                            if (telemetry_[i].leg_id != tlm.leg_id ||
+                                telemetry_[i].arm_right_id != tlm.arm_right_id ||
+                                telemetry_[i].arm_left_id != tlm.arm_left_id) {
+                                id_changed = true;
+                            }
+                            telemetry_[i] = tlm;
+                        }
+                    }
+
+                    // デバイスIDのデバッグ出力 (RCLCPP_DEBUG)
+                    RCLCPP_DEBUG(this->get_logger(),
+                        "[DEBUG Port %zu DeviceID] Leg: 0x%02X (%s), ArmR: 0x%02X (%s), ArmL: 0x%02X (%s), Battery: %u mV",
+                        i, tlm.leg_id, get_leg_name(tlm.leg_id),
+                        tlm.arm_right_id, get_arm_name(tlm.arm_right_id),
+                        tlm.arm_left_id, get_arm_name(tlm.arm_left_id),
+                        tlm.bat_mv);
+
+                    if (debug_log_ || id_changed) {
+                        RCLCPP_INFO(this->get_logger(),
+                            "🔋 [Port %zu DeviceID] Leg: 0x%02X (%s), ArmR: 0x%02X (%s), ArmL: 0x%02X (%s), Battery: %u mV",
+                            i, tlm.leg_id, get_leg_name(tlm.leg_id),
+                            tlm.arm_right_id, get_arm_name(tlm.arm_right_id),
+                            tlm.arm_left_id, get_arm_name(tlm.arm_left_id),
+                            tlm.bat_mv);
+                    }
+                } else if (debug_log_) {
                     RCLCPP_DEBUG(this->get_logger(), "[Serial %zu RX] %s", i, rx_line.c_str());
                 }
             }
@@ -213,6 +339,15 @@ private:
         }
     }
 
+    void tlm_timer_callback() {
+        if (!enable_serial_) return;
+        for (size_t i = 0; i < serial_ports_.size(); ++i) {
+            if (serial_ports_[i]->is_open()) {
+                serial_ports_[i]->write_command("TLM");
+            }
+        }
+    }
+
     void send_all_stop() {
         for (size_t i = 0; i < serial_ports_.size(); ++i) {
             if (serial_ports_[i]->is_open()) {
@@ -235,10 +370,15 @@ private:
     // ROS 2 & SHM & Serial
     rclcpp::Subscription<custack_msgs::msg::RobotPoseArray>::SharedPtr robot_pose_sub_;
     rclcpp::TimerBase::SharedPtr send_timer_;
+    rclcpp::TimerBase::SharedPtr tlm_timer_;
 
     PosixSharedMemory<SharedRobotPoseData> shm_robot_poses_;
     PosixSharedMemory<SharedControllerData> shm_controller_cmd_;
     std::vector<std::unique_ptr<SerialPort>> serial_ports_;
+
+    // テレメトリ管理
+    std::mutex telemetry_mutex_;
+    std::vector<RobotTelemetry> telemetry_;
 
     // 統計 & タイムアウト管理
     uint64_t pose_msg_count_;

@@ -11,7 +11,7 @@ namespace Custack.Equipment
         public ArmDeviceType type = ArmDeviceType.None;
         public string weaponName = "None";
 
-        [Header("射撃性能")]
+        [Header("射撃・攻撃性能")]
         public float damage = 10f;             // 単発ダメージ
         public float projectileSpeed = 15f;    // 弾速
         public float projectileLifeTime = 2f;  // 弾丸寿命 (射程)
@@ -19,10 +19,10 @@ namespace Custack.Equipment
         public bool isAutomatic = false;       // フルオート連射対応か
         public float spreadAngle = 0f;         // 拡散角 (度)
 
-        [Header("ホーミング性能 (ミサイル用)")]
+        [Header("特殊性能")]
         public bool isHoming = false;
         public float homingTurnSpeed = 120f;   // 旋回角速度 (度/秒)
-        public float explosionRadius = 1.5f;   // 着弾時爆発半径
+        public float explosionRadius = 0f;     // 着弾時爆発半径
 
         [Header("Prefab & 演出")]
         public GameObject projectilePrefab;
@@ -33,20 +33,6 @@ namespace Custack.Equipment
         {
             switch (type)
             {
-                case ArmDeviceType.Pistol:
-                    return new ArmWeaponConfig
-                    {
-                        type = ArmDeviceType.Pistol,
-                        weaponName = "Pistol",
-                        damage = 25f,
-                        projectileSpeed = 25f,       // 高速
-                        projectileLifeTime = 3.0f,   // 長射程 (画面端まで届く)
-                        cooldown = 0.35f,            // 単発セミオート
-                        isAutomatic = false,
-                        spreadAngle = 0f,
-                        weaponColor = new Color(0.2f, 0.8f, 1f) // 水色レーザー
-                    };
-
                 case ArmDeviceType.Gatling:
                     return new ArmWeaponConfig
                     {
@@ -61,20 +47,32 @@ namespace Custack.Equipment
                         weaponColor = new Color(1f, 0.8f, 0.2f) // 黄色弾幕
                     };
 
-                case ArmDeviceType.Missile:
+                case ArmDeviceType.Sword:
                     return new ArmWeaponConfig
                     {
-                        type = ArmDeviceType.Missile,
-                        weaponName = "Homing Missile",
-                        damage = 60f,                // 大ダメージ
-                        projectileSpeed = 9f,        // 低速〜中速
-                        projectileLifeTime = 4.0f,
-                        cooldown = 2.5f,             // ロングCD
+                        type = ArmDeviceType.Sword,
+                        weaponName = "Beam Sword",
+                        damage = 45f,                // 近接高威力
+                        projectileSpeed = 18f,       // 高速スイング
+                        projectileLifeTime = 0.35f,  // 短射程・近接スラッシュ
+                        cooldown = 0.45f,            // セミオート
                         isAutomatic = false,
-                        isHoming = true,
-                        homingTurnSpeed = 120f,      // 緩やかなホーミング
-                        explosionRadius = 1.8f,
-                        weaponColor = new Color(1f, 0.3f, 0.2f) // 赤ミサイル
+                        spreadAngle = 0f,
+                        weaponColor = new Color(0.2f, 1f, 0.4f) // エメラルドグリーン斬撃
+                    };
+
+                case ArmDeviceType.Cannon:
+                    return new ArmWeaponConfig
+                    {
+                        type = ArmDeviceType.Cannon,
+                        weaponName = "Heavy Laser Cannon",
+                        damage = 75f,                // 極大ダメージ
+                        projectileSpeed = 30f,       // 超高速レーザー
+                        projectileLifeTime = 3.5f,   // 画面端まで届く長射程
+                        cooldown = 1.8f,             // ロングCD
+                        isAutomatic = false,
+                        spreadAngle = 0f,
+                        weaponColor = new Color(0.3f, 0.7f, 1f) // 高出力ブルーレーザー
                     };
 
                 default:

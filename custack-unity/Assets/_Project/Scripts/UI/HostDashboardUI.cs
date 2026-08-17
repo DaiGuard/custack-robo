@@ -38,9 +38,26 @@ namespace Custack.UI
         void Update()
         {
             // F1 キーでダッシュボードの最小化/展開切り替え
-            if (Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame)
+            if (Keyboard.current != null)
             {
-                showDashboard = !showDashboard;
+                if (Keyboard.current.f1Key.wasPressedThisFrame)
+                {
+                    showDashboard = !showDashboard;
+                }
+
+                // [ / ] キーで視差スケールを微調整
+                var scaler = RobotManager.Instance != null ? RobotManager.Instance.projectionScaler : null;
+                if (scaler != null)
+                {
+                    if (Keyboard.current.leftBracketKey.wasPressedThisFrame)
+                    {
+                        scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale - 0.005f, 0.70f, 1.10f);
+                    }
+                    if (Keyboard.current.rightBracketKey.wasPressedThisFrame)
+                    {
+                        scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale + 0.005f, 0.70f, 1.10f);
+                    }
+                }
             }
 
             // FPS 計測
@@ -308,6 +325,36 @@ namespace Custack.UI
                 }
                 GUILayout.EndVertical();
             }
+
+            GUILayout.Space(6);
+            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.Label("<b><color=#FFFF00>【📐 カメラ視差・ロボット高さ補正】</color></b>");
+
+            var scaler = robotMgr != null ? robotMgr.projectionScaler : null;
+            if (scaler != null)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"<b>視差スケール:</b> <color=#00FF88><b>{scaler.parallaxCorrectionScale:F3}</b></color>", GUILayout.Width(120));
+                if (GUILayout.Button("◀ -0.01", GUILayout.Width(55))) scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale - 0.01f, 0.70f, 1.10f);
+                if (GUILayout.Button("-0.002", GUILayout.Width(50))) scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale - 0.002f, 0.70f, 1.10f);
+                if (GUILayout.Button("+0.002", GUILayout.Width(50))) scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale + 0.002f, 0.70f, 1.10f);
+                if (GUILayout.Button("+0.01 ▶", GUILayout.Width(55))) scaler.parallaxCorrectionScale = Mathf.Clamp(scaler.parallaxCorrectionScale + 0.01f, 0.70f, 1.10f);
+                GUILayout.EndHorizontal();
+
+                // スライダー
+                scaler.parallaxCorrectionScale = GUILayout.HorizontalSlider(scaler.parallaxCorrectionScale, 0.75f, 1.05f);
+
+                // カメラ光軸中心 Y オフセット
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"<b>光軸中心 Y:</b> {scaler.cameraOpticalCenterNorm.y:+0.000;-0.000;0.000}", GUILayout.Width(110));
+                if (GUILayout.Button("▲ 上へ", GUILayout.Width(48))) scaler.cameraOpticalCenterNorm.y = Mathf.Clamp(scaler.cameraOpticalCenterNorm.y - 0.01f, -1.0f, 1.0f);
+                if (GUILayout.Button("▼ 下へ", GUILayout.Width(48))) scaler.cameraOpticalCenterNorm.y = Mathf.Clamp(scaler.cameraOpticalCenterNorm.y + 0.01f, -1.0f, 1.0f);
+                if (GUILayout.Button("リセット", GUILayout.Width(55))) { scaler.cameraOpticalCenterNorm = new Vector2(0f, 0.5f); scaler.parallaxCorrectionScale = 0.95f; }
+                GUILayout.EndHorizontal();
+
+                GUILayout.Label("<color=#888888>ショートカット: [ / ] キーでスケール微調整</color>");
+            }
+            GUILayout.EndVertical();
 
             GUILayout.Space(6);
             GUILayout.Label("<b>▼ プロジェクター床面投影設定:</b>");

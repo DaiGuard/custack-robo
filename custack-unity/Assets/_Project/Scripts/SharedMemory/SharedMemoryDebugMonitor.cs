@@ -11,11 +11,11 @@ namespace Custack.SharedMemory
     public class SharedMemoryDebugMonitor : MonoBehaviour
     {
         [Header("設定")]
-        [Tooltip("画面左上にデバッグオーバーレイを表示するかどうか")]
-        public bool showOverlay = true;
+        [Tooltip("画面左上にデバッグオーバーレイを表示するかどうか (HostDashboardUI との重なり防止のため default: false)")]
+        public bool showOverlay = false;
 
-        [Tooltip("キーボード 'F1' でオーバーレイ表示/非表示を切り替え")]
-        public KeyCode toggleKey = KeyCode.F1;
+        [Tooltip("キーボード 'F3' でオーバーレイ表示/非表示を切り替え")]
+        public KeyCode toggleKey = KeyCode.F3;
 
         [Tooltip("共有メモリパス")]
         public string shmPath = "/dev/shm/custack_robot_poses";
@@ -35,11 +35,11 @@ namespace Custack.SharedMemory
 
         void Update()
         {
-            // F1 キーでオーバーレイ表示切替 (New Input System / Legacy Input 両対応)
+            // F3 キーで個別オーバーレイ表示切替 (F1 は HostDashboardUI 専用)
             bool togglePressed = false;
             if (UnityEngine.InputSystem.Keyboard.current != null)
             {
-                togglePressed = UnityEngine.InputSystem.Keyboard.current.f1Key.wasPressedThisFrame;
+                togglePressed = UnityEngine.InputSystem.Keyboard.current.f3Key.wasPressedThisFrame;
             }
             else
             {
@@ -88,47 +88,56 @@ namespace Custack.SharedMemory
             GUI.skin.label.fontSize = 12;
             GUI.skin.box.fontSize = 12;
 
-            // 背景ボックス
-            GUILayout.BeginArea(new Rect(10, 10, 440, 400), GUI.skin.box);
+            // 背景ボックス (固定サイズ)
+            GUILayout.BeginArea(new Rect(10, 10, 480, 520), GUI.skin.box);
             GUILayout.BeginVertical();
 
-            GUILayout.Label($"<b><color=#00FFFF>【CuStack-Robo 共有メモリ デバイスID モニター】</color></b> (F1:切替 / F2:Pad割当)");
-            GUILayout.Label($"SHM Path: <color=#FFFF00>{shmPath}</color> | Rate: <color=#00FF88>{updateRateHz:F1} Hz</color>");
-            GUILayout.Label($"Seq: {latestData.sequence} | Active Robots: <color=#00FF88>{latestData.count}</color>");
-            GUILayout.Space(2);
+            GUILayout.Label($"<b><color=#00FFFF>【CuStack-Robo 共有メモリ デバイスID モニター】</color></b> (F3:表示切替)");
+            GUILayout.Label($"SHM: <color=#FFFF00>{shmPath}</color> | Rate: <color=#00FF88>{updateRateHz:F1} Hz</color> | 検出中: <color=#00FF88>{latestData.count} 台</color>");
+            GUILayout.Space(4);
 
-            if (!hasValidData)
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(440));
+
+            // 0〜15 (全16スロット) を固定で表示 (行数・サイズがガタつかない)
+            for (int slotId = 0; slotId < 16; slotId++)
             {
-                GUILayout.Label("<color=#FF4444>⚠️ 共有メモリからデータを取得できていません。\ncustack_router が起動しているか確認してください。</color>");
-            }
-            else
-            {
-                int displayCount = Mathf.Min((int)latestData.count, SharedRobotPoseData.MaxRobots);
-                if (displayCount == 0)
+                bool isFound = false;
+                SharedRobotPose p = default;
+
+                if (hasValidData)
                 {
-                    GUILayout.Label("<color=#FFAA00>ロボット未検出 (count: 0)</color>");
+                    for (int k = 0; k < latestData.count && k < SharedRobotPoseData.MaxRobots; k++)
+                    {
+                        SharedRobotPose candidate = latestData.GetPose(k);
+                        if (candidate.id == slotId)
+                        {
+                            isFound = true;
+                            p = candidate;
+                            break;
+                        }
+                    }
+                }
+
+                GUILayout.BeginVertical(GUI.skin.box);
+                if (isFound)
+                {
+                    string legStr = GetLegName(p.legId);
+                    string rArmStr = GetArmName(p.armRightId);
+                    string lArmStr = GetArmName(p.armLeftId);
+                    string statusStr = p.status == 1 ? "<color=#00FF88>OK</color>" : "<color=#FFAA00>NoTLM</color>";
+
+                    GUILayout.Label($"<b>🤖 Slot #{slotId:D2} (Tag ID: {p.id})</b> Status: {statusStr}");
+                    GUILayout.Label($"  📍 X:{p.x:+0.000;-0.000} Y:{p.y:+0.000;-0.000} θ:{p.theta:+0.00;-0.00} rad ({Mathf.Rad2Deg * p.theta:+0.0;-0.0}°)");
+                    GUILayout.Label($"  🦵 Leg: <color=#00FFCC>0x{p.legId:X2}[{legStr}]</color> | ⚔️ R:<color=#FFAA00>0x{p.armRightId:X2}[{rArmStr}]</color> | 🛡️ L:<color=#FF88FF>0x{p.armLeftId:X2}[{lArmStr}]</color>");
                 }
                 else
                 {
-                    scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(300));
-                    for (int i = 0; i < displayCount; i++)
-                    {
-                        SharedRobotPose p = latestData.GetPose(i);
-                        string legStr = GetLegName(p.legId);
-                        string rArmStr = GetArmName(p.armRightId);
-                        string lArmStr = GetArmName(p.armLeftId);
-                        string statusStr = p.status == 1 ? "<color=#00FF88>OK</color>" : "<color=#FF4444>None</color>";
-
-                        GUILayout.BeginVertical(GUI.skin.box);
-                        GUILayout.Label($"<b>🤖 Robot [{p.id}]</b> (Index: {i}) Status: {statusStr}");
-                        GUILayout.Label($"  📍 Pose : X={p.x:F3}, Y={p.y:F3}, θ={p.theta:F2} rad ({Mathf.Rad2Deg * p.theta:F1}°)");
-                        GUILayout.Label($"  🦵 Leg  : <b><color=#00FFCC>0x{p.legId:X2} [{legStr}]</color></b> | ⚔️ R: <b><color=#FFAA00>0x{p.armRightId:X2} [{rArmStr}]</color></b> | 🛡️ L: <b><color=#FF88FF>0x{p.armLeftId:X2} [{lArmStr}]</color></b>");
-                        GUILayout.EndVertical();
-                    }
-                    GUILayout.EndScrollView();
+                    GUILayout.Label($"<color=#555555><b>🤖 Slot #{slotId:D2}</b> (Tag ID: {slotId}) - [未検出 / 待機中]</color>");
                 }
+                GUILayout.EndVertical();
             }
 
+            GUILayout.EndScrollView();
             GUILayout.EndVertical();
             GUILayout.EndArea();
         }

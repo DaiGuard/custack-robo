@@ -107,12 +107,17 @@ namespace Custack.Equipment
                         baseSpeedMultiplier = 1.0f,
                         baseTurnMultiplier = 1.0f,
                         normalSpeedMul = 1.0f,
-                        forestSpeedMul = 0.85f, // 走破性最強: 森でも85%維持
-                        mudSpeedMul = 0.80f,    // 走破性最強: 泥でも80%維持
-                        iceSpeedMul = 0.85f,
-                        lavaSpeedMul = 0.7f,
-                        iceSlipFactor = 0.2f,   // スパイク効果で滑りにくい
-                        lavaDamageReduction = 0.6f // 耐熱キャタピラでダメージ60%カット
+                        normalTurnMul = 1.0f,
+                        forestSpeedMul = 1.0f, // 走破性最強: 地形影響完全無効 (森でも100%走行)
+                        forestTurnMul = 1.0f,
+                        mudSpeedMul = 1.0f,    // 走破性最強: 泥沼でも100%走行・スタックなし
+                        mudTurnMul = 1.0f,
+                        iceSpeedMul = 1.0f,    // 走破性最強: 氷上でも100%グリップ
+                        iceTurnMul = 1.0f,
+                        lavaSpeedMul = 1.0f,   // 溶岩でも100%走行
+                        lavaTurnMul = 1.0f,
+                        iceSlipFactor = 0.0f,  // スパイク履帯でスリップ完全ゼロ
+                        lavaDamageReduction = 0.8f // 耐熱キャタピラで溶岩ダメージ80%カット
                     };
 
                 default:

@@ -348,40 +348,16 @@ void loop() {
 
 #elif DEVICE_ID == 0x02
     //----------------------------------------------------------------------
-    // 差動二輪モード (仮想ステアリング: 前後入力 vx > 0 の時のみ前進・旋回)
-    //  二輪差動はバック不可のため vx <= 0 のときは停止
-    //  omega = 0     -> 右輪(PWM1): 100%, 左輪(PWM3): 100% (直進)
-    //  omega = 1000  -> 右旋回: 左輪(外輪): 80%, 右輪(内輪): 20%
-    //  omega = -1000 -> 左旋回: 右輪(外輪): 80%, 左輪(内輪): 20%
-    // PWM1: 右輪 (正回転 DIR=+1), PWM3: 左輪 (逆回転 DIR=-1)
+    // 差動二輪モード (前後移動軸: vx, 旋回軸: omega)
+    //  バック走行にも完全対応 (vx < 0 で後退・後退旋回)
+    //  PWM1: 右輪 (正回転 DIR=+1), PWM3: 左輪 (逆回転 DIR=-1)
     //----------------------------------------------------------------------
-    int32_t speed_r = 0;
-    int32_t speed_l = 0;
+    int32_t speed_r = (int32_t)(vx - omega);
+    int32_t speed_l = (int32_t)(vx + omega);
 
-    // 前後入力 (vx > 0) がある場合のみ前進・旋回 (vx <= 0 のときはバック不可のため停止)
-    if (vx > 0) {
-        if (omega >= 0) {
-            // 右旋回 (omega: 0 〜 1000):
-            //   外輪(左輪 PWM3): 100% 〜 80%
-            //   内輪(右輪 PWM1): 100% 〜 20%
-            speed_l = ((int32_t)vx * (10000 - 2 * (int32_t)omega)) / 10000;
-            speed_r = ((int32_t)vx * (10000 - 8 * (int32_t)omega)) / 10000;
-        } else {
-            // 左旋回 (omega: 0 〜 -1000):
-            //   外輪(右輪 PWM1): 100% 〜 80%
-            //   内輪(左輪 PWM3): 100% 〜 20%
-            speed_r = ((int32_t)vx * (10000 + 2 * (int32_t)omega)) / 10000;
-            speed_l = ((int32_t)vx * (10000 + 8 * (int32_t)omega)) / 10000;
-        }
-    } else {
-        // vx <= 0 のときは停止
-        speed_r = 0;
-        speed_l = 0;
-    }
-
-    // 各輪の速度を [0, 1000] に制限 (バック不可のため最小値 0)
-    speed_r = clamp_val(speed_r, (int32_t)0, (int32_t)1000);
-    speed_l = clamp_val(speed_l, (int32_t)0, (int32_t)1000);
+    // 規定スケール範囲 [-1000, 1000] にクランプ
+    speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)1000);
+    speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)1000);
 
     // パルス幅換算 (PWM1: 右輪正方向 DIR=+1, PWM3: 左輪逆方向 DIR=-1)
     uint16_t pulse1 = (uint16_t)(SERVO_NEUTRAL_US + offset1 + ((speed_r * (+1) * scale1) / 200));
@@ -399,11 +375,16 @@ void loop() {
 
 #elif DEVICE_ID == 0x03
     //----------------------------------------------------------------------
-    // キャタピラモード (前後移動軸: +vx)
-    // PWM1: 右履帯 (逆回転 DIR=-1), PWM3: 左履帯 (正回転 DIR=+1)
+    // キャタピラモード (前後移動軸: +vx, 旋回軸: omega)
+    //  全地形走破性特化・最大デューティ比 65% 制限で安定低速走行
+    //  PWM1: 右履帯 (逆回転 DIR=-1), PWM3: 左履帯 (正回転 DIR=+1)
     //----------------------------------------------------------------------
-    int32_t speed_r = (int32_t)(vx - omega);
-    int32_t speed_l = (int32_t)(vx + omega);
+    #define CRAWLER_DUTY_LIMIT_PERCENT 65
+    int32_t raw_r = (int32_t)(vx - omega);
+    int32_t raw_l = (int32_t)(vx + omega);
+
+    int32_t speed_r = (raw_r * CRAWLER_DUTY_LIMIT_PERCENT) / 100;
+    int32_t speed_l = (raw_l * CRAWLER_DUTY_LIMIT_PERCENT) / 100;
 
     speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)1000);
     speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)1000);

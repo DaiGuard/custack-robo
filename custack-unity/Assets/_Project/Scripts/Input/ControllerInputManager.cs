@@ -300,49 +300,100 @@ namespace Custack.Input
             return GetInputForRobot(playerIndex);
         }
 
+        public void ResetToDefaultMappings()
+        {
+            robotMappings = new List<RobotGamepadMapping>
+            {
+                new RobotGamepadMapping(0, InputSourceType.Gamepad0),
+                new RobotGamepadMapping(1, InputSourceType.Gamepad1),
+                new RobotGamepadMapping(2, InputSourceType.Gamepad2),
+                new RobotGamepadMapping(3, InputSourceType.Gamepad3),
+            };
+
+            for (int i = 4; i < 16; i++)
+            {
+                robotMappings.Add(new RobotGamepadMapping(i, InputSourceType.None));
+            }
+            Debug.Log("<color=#00FF88>[ControllerInputManager]</color> ✅ ロボットマッピングをデフォルト(P1:Pad0, P2:Pad1...)にリセットしました。");
+        }
+
+        public void EnsureDefaultMappings()
+        {
+            if (robotMappings == null || robotMappings.Count < 2)
+            {
+                ResetToDefaultMappings();
+            }
+        }
+
         void OnGUI()
         {
             if (!showMappingOverlay) return;
 
             GUI.color = Color.white;
-            GUI.skin.label.fontSize = 12;
+            GUI.skin.label.fontSize = 11;
             GUI.skin.button.fontSize = 11;
-            GUI.skin.box.fontSize = 12;
+            GUI.skin.box.fontSize = 11;
 
             // 画面右上にマッピング設定ウィンドウを表示
-            GUILayout.BeginArea(new Rect(Screen.width - 380, 10, 370, 480), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(Screen.width - 430, 10, 420, 560), GUI.skin.box);
             GUILayout.BeginVertical();
 
-            GUILayout.Label("<b><color=#00FFFF>【🎮 コントローラー割り当て設定】</color></b> (F2で切替)");
-            int padCount = Gamepad.all.Count;
-            GUILayout.Label($"接続中ゲームパッド数: <color=#00FF88>{padCount} 台</color> | KB Fallback: {(enableKeyboardFallback ? "<color=#00FF88>ON</color>" : "<color=#888888>OFF</color>")}");
-            GUILayout.Space(4);
+            GUILayout.Label("<b><color=#00FFFF>【🎮 コントローラー & ロボット割り当て設定】</color></b> (F2で切替)");
 
-            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(380));
+            // 接続中ゲームパッドの認識状況表示
+            var allPads = Gamepad.all;
+            GUILayout.Label($"認識中ゲームパッド数: <color={(allPads.Count > 0 ? "#00FF88" : "#FF6666")}><b>{allPads.Count} 台</b></color>");
+
+            for (int p = 0; p < Mathf.Max(allPads.Count, 2); p++)
+            {
+                if (p < allPads.Count && allPads[p] != null)
+                {
+                    var pad = allPads[p];
+                    Vector2 stick = pad.leftStick.ReadValue();
+                    bool btn = pad.rightShoulder.isPressed || pad.buttonEast.isPressed || pad.leftShoulder.isPressed;
+                    GUILayout.Label($"  Pad [{p}]: <color=#00FF88><b>{pad.displayName}</b></color> (Stick: {stick.x:F2}, {stick.y:F2} | Btn: {(btn ? "<color=#FFFF00>ON</color>" : "OFF")})");
+                }
+                else
+                {
+                    GUILayout.Label($"  Pad [{p}]: <color=#888888>未接続 (KB Fallback: {(enableKeyboardFallback ? (p == 0 ? "WASD" : "矢印") : "無効")})</color>");
+                }
+            }
+
+            GUILayout.Space(4);
+            if (GUILayout.Button("🔄 デフォルト割り当てにリセット (P1:Pad0, P2:Pad1...)", GUILayout.Height(24)))
+            {
+                ResetToDefaultMappings();
+            }
+
+            GUILayout.Space(4);
+            GUILayout.Label("<b>▼ 各ロボット (AprilTag ID) への入力割り当て:</b> (クリックで切替)");
+
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(360));
 
             for (int i = 0; i < 16; i++)
             {
                 int robotId = i;
                 InputSourceType currentSrc = GetRobotMapping(robotId);
+                PlayerInputCommand currentInput = GetInputForRobot(robotId);
 
                 GUILayout.BeginHorizontal(GUI.skin.box);
                 Color rColor = Robot.RobotManager.GetRobotColor(robotId);
                 GUI.color = rColor;
-                GUILayout.Label($"<b>🤖 #{robotId}</b>", GUILayout.Width(50));
+                GUILayout.Label($"<b>🤖 #{robotId}</b>", GUILayout.Width(45));
                 GUI.color = Color.white;
 
                 string srcLabel = currentSrc switch
                 {
-                    InputSourceType.Gamepad0 => "🎮 Pad 0 (P1)",
-                    InputSourceType.Gamepad1 => "🎮 Pad 1 (P2)",
+                    InputSourceType.Gamepad0 => "🎮 Pad 0",
+                    InputSourceType.Gamepad1 => "🎮 Pad 1",
                     InputSourceType.Gamepad2 => "🎮 Pad 2",
                     InputSourceType.Gamepad3 => "🎮 Pad 3",
                     InputSourceType.KeyboardP1 => "⌨️ KB (WASD)",
                     InputSourceType.KeyboardP2 => "⌨️ KB (矢印)",
-                    _ => "➖ None"
+                    _ => "➖ なし"
                 };
 
-                if (GUILayout.Button(srcLabel, GUILayout.Height(22)))
+                if (GUILayout.Button(srcLabel, GUILayout.Width(100), GUILayout.Height(22)))
                 {
                     // クリックで次の入力ソースに切り替え
                     InputSourceType nextSrc = currentSrc switch
@@ -358,6 +409,11 @@ namespace Custack.Input
                     };
                     SetRobotMapping(robotId, nextSrc);
                 }
+
+                // リアルタイム入力状況
+                string activeStatus = currentInput.IsConnected ? "<color=#00FF88>●</color>" : "<color=#666666>○</color>";
+                string moveInfo = $"Vx:{currentInput.Move.y:+0.00;-0.00; 0.00} Vy:{currentInput.Move.x:+0.00;-0.00; 0.00} Ω:{currentInput.Omega:+0.00;-0.00; 0.00}";
+                GUILayout.Label($"{activeStatus} {moveInfo}", GUILayout.Width(220));
 
                 GUILayout.EndHorizontal();
             }

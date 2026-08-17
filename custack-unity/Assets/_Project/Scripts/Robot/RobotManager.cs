@@ -299,19 +299,28 @@ namespace Custack.Robot
         {
             if (shmWriter == null) return;
 
-            int activeCount = Mathf.Min(robots.Count, commandOutputBuffer.Length);
-            for (int i = 0; i < activeCount; i++)
+            // バッファを一旦クリア
+            for (int k = 0; k < commandOutputBuffer.Length; k++)
+            {
+                commandOutputBuffer[k] = default;
+            }
+
+            int maxId = 0;
+            for (int i = 0; i < robots.Count; i++)
             {
                 if (robots[i] != null)
                 {
-                    commandOutputBuffer[i] = robots[i].CurrentCommand;
-                }
-                else
-                {
-                    commandOutputBuffer[i] = default;
+                    int tagId = robots[i].RobotId;
+                    if (tagId >= 0 && tagId < commandOutputBuffer.Length)
+                    {
+                        commandOutputBuffer[tagId] = robots[i].CurrentCommand;
+                        if (tagId + 1 > maxId) maxId = tagId + 1;
+                    }
                 }
             }
 
+            // 最低2台分 (P1/P2) はスロットを確保して送信
+            int activeCount = Mathf.Clamp(Mathf.Max(maxId, 2), 2, commandOutputBuffer.Length);
             shmWriter.WriteCommands(commandOutputBuffer, activeCount);
         }
 

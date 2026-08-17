@@ -61,7 +61,8 @@ namespace Custack.Terrain
         }
 
         /// <summary>
-        /// 生の移動・旋回コマンドに対し、現在地の地形と脚ユニット特性を考慮した補正コマンドを計算
+        /// 生の移動・旋回コマンドに対し、現在地の地形と脚ユニット特性に応じた適用比率（0.0〜1.0）のみを計算
+        /// ※ キネマティクス制限（差動二輪の横移動無効化やステアリング動作など）は実機マイコン(robot_leg)側で実行されます。
         /// rawMove.x: 左右入力 (Vy)
         /// rawMove.y: 上下入力 (Vx: 前後)
         /// rawOmega: 旋回入力 (Omega)
@@ -80,21 +81,14 @@ namespace Custack.Terrain
             // 1. 現在地の地形を取得
             TerrainType currentTerrain = GetTerrainAt(worldPos);
 
-            // 2. 脚ユニット固有の地形耐性倍率を取得
-            float speedMul = legConfig.GetSpeedMultiplier(currentTerrain) * legConfig.baseSpeedMultiplier;
-            float turnMul = legConfig.GetTurnMultiplier(currentTerrain) * legConfig.baseTurnMultiplier;
+            // 2. 脚ユニット固有の地形適用比率（平地: 1.0）を取得
+            float speedRatio = legConfig.GetSpeedMultiplier(currentTerrain);
+            float turnRatio = legConfig.GetTurnMultiplier(currentTerrain);
 
-            // 3. タイヤなどの横移動制限 (左右入力に対してのみ制限)
-            float adjustedLateral = rawLateral;
-            if (!legConfig.allowLateralMovement)
-            {
-                adjustedLateral *= 0.15f; // 二輪差動タイヤ等は横移動不可
-            }
-
-            // 4. 最終速度計算 (x: 前後Vx, y: 左右Vy, z: 旋回Omega)
-            float finalVx = rawForward * speedMul;
-            float finalVy = adjustedLateral * speedMul;
-            float finalOmega = rawOmega * turnMul;
+            // 3. 地形適用の比率のみを乗算
+            float finalVx = rawForward * speedRatio;
+            float finalVy = rawLateral * speedRatio;
+            float finalOmega = rawOmega * turnRatio;
 
             return new Vector3(finalVx, finalVy, finalOmega);
         }

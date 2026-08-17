@@ -6,6 +6,8 @@ namespace Custack.Equipment
 {
     /// <summary>
     /// 脚ユニットの移動特性・地形耐性設定クラス
+    /// ※ キネマティクス制限（差動二輪の横移動無効化やステアリング動作など）は実機マイコン(robot_leg)側で実行されるため、
+    ///   Unity側では地形適用の比率（0.0〜1.0）のみを管理します。
     /// </summary>
     [System.Serializable]
     public class LegMovementConfig
@@ -13,19 +15,18 @@ namespace Custack.Equipment
         public LegDeviceType type = LegDeviceType.Omni;
         public string legName = "Omni Wheels";
 
-        [Header("基本運動性能")]
-        public float baseSpeedMultiplier = 1.0f; // 基本速度倍率
-        public float baseTurnMultiplier = 1.0f;  // 基本旋回倍率
-        public bool allowLateralMovement = true; // 横移動 (Vx) が可能か
+        [Header("基本運動比率 (平地 = 1.0)")]
+        public float baseSpeedMultiplier = 1.0f; // 基本速度倍率 (平地: 1.0)
+        public float baseTurnMultiplier = 1.0f;  // 基本旋回倍率 (平地: 1.0)
 
-        [Header("地形ごとの速度倍率 (平地=1.0)")]
+        [Header("地形ごとの速度適用比率 (平地 = 1.0)")]
         public float normalSpeedMul = 1.0f;
         public float forestSpeedMul = 0.5f;
         public float mudSpeedMul = 0.3f;
         public float iceSpeedMul = 1.0f;
         public float lavaSpeedMul = 0.7f;
 
-        [Header("地形ごとの旋回倍率")]
+        [Header("地形ごとの旋回適用比率 (平地 = 1.0)")]
         public float normalTurnMul = 1.0f;
         public float forestTurnMul = 0.7f;
         public float mudTurnMul = 0.4f;
@@ -73,11 +74,11 @@ namespace Custack.Equipment
                         legName = "Omni Wheels (4-Wheel)",
                         baseSpeedMultiplier = 1.0f,
                         baseTurnMultiplier = 1.0f,
-                        allowLateralMovement = true,
                         normalSpeedMul = 1.0f,
                         forestSpeedMul = 0.5f,  // 森で50%減速
                         mudSpeedMul = 0.3f,     // 泥で30%大減速
                         iceSpeedMul = 1.0f,
+                        lavaSpeedMul = 0.7f,
                         iceSlipFactor = 0.85f,  // 氷で大スリップ
                         lavaDamageReduction = 0.0f
                     };
@@ -87,13 +88,13 @@ namespace Custack.Equipment
                     {
                         type = LegDeviceType.Tire,
                         legName = "High-Speed Tires",
-                        baseSpeedMultiplier = 1.25f, // 平地で最速 (125%)
-                        baseTurnMultiplier = 1.3f,  // 鋭い旋回
-                        allowLateralMovement = false, // 横移動は制限
-                        normalSpeedMul = 1.25f,
+                        baseSpeedMultiplier = 1.0f,
+                        baseTurnMultiplier = 1.0f,
+                        normalSpeedMul = 1.0f,
                         forestSpeedMul = 0.4f,  // 木枝で失速 (40%)
                         mudSpeedMul = 0.2f,     // 泥で空転・スタック (20%)
-                        iceSpeedMul = 1.1f,
+                        iceSpeedMul = 1.0f,
+                        lavaSpeedMul = 0.7f,
                         iceSlipFactor = 0.6f,   // ドリフト
                         lavaDamageReduction = 0.0f
                     };
@@ -103,13 +104,13 @@ namespace Custack.Equipment
                     {
                         type = LegDeviceType.Crawler,
                         legName = "Heavy Crawler Tracks",
-                        baseSpeedMultiplier = 0.9f,  // 平地速度はやや控えめ (90%)
-                        baseTurnMultiplier = 1.0f,  // 超信地旋回
-                        allowLateralMovement = false,
-                        normalSpeedMul = 0.9f,
+                        baseSpeedMultiplier = 1.0f,
+                        baseTurnMultiplier = 1.0f,
+                        normalSpeedMul = 1.0f,
                         forestSpeedMul = 0.85f, // 走破性最強: 森でも85%維持
                         mudSpeedMul = 0.80f,    // 走破性最強: 泥でも80%維持
                         iceSpeedMul = 0.85f,
+                        lavaSpeedMul = 0.7f,
                         iceSlipFactor = 0.2f,   // スパイク効果で滑りにくい
                         lavaDamageReduction = 0.6f // 耐熱キャタピラでダメージ60%カット
                     };

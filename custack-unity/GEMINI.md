@@ -171,7 +171,8 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 * **`ArmWeaponConfig.cs`**:
   - 武器パラメータ（ダメージ、弾速、射程/寿命、クールダウン、フルオート可否、拡散角、マテリアル色等）を定義。
 * **`LegMovementConfig.cs`**:
-  - 各脚の基本速度/旋回倍率、横移動許可フラグ、地形別速度・旋回倍率、スリップ慣性係数、溶岩ダメージ軽減率を定義。
+  - 各脚の地形別速度・旋回適用比率（平地: 1.0, 泥: 0.2〜0.8, 森: 0.4〜0.85等）、スリップ慣性係数、溶岩ダメージ軽減率を定義。
+  - ※ 差動二輪の横移動無効化や $V_x$ 連動ステアリング制御等のキネマティクス制限は実機マイコン（`robot_leg`）側で実行されるため、Unity 側では純粋に地形適用比率（0.0〜1.0）のみを管理。
 * **`RobotEquipment.cs`**:
   - `overrideEquipment`: インスペクター手動オーバーライドトグル。実機なしの単体テストが可能。
   - `SetFromHardware`: 実機デバイスID受信時の動的切り替え。
@@ -186,14 +187,14 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
     - **Keyboard P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ロックオン切替 `U`
     - **Keyboard P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ロックオン切替 `Numpad5`/`P`
 * **`PlayerInputCommand.cs`**:
-  - 移動ベクトル、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
+  - 移動ベクトル（x: 左右, y: 上下）、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
 
 ### 3.4 地形効果 (`Custack.Terrain`)
 * **`TerrainType.cs`**: `Normal`, `Forest`, `Mud`, `Ice`, `Lava`
 * **`TerrainData.cs`**: 地形基本パラメータ（速度/旋回倍率、秒間ダメージ、ギズモ色等）
 * **`TerrainZone.cs`**: `Collider2D` (Trigger) によるエリア判定とギズモ描画
 * **`TerrainManager.cs`**:
-  - ロボット現在地の地形と脚ユニット耐性を掛け合わせて移動値 $(V_x, V_y, \Omega)$ を複合補正。
+  - ロボット現在地の地形と脚ユニットの耐性比率（平地: 1.0）を掛け合わせ、実機コマンド（$-1000 \sim 1000$）を計算。キネマティクス制限は実機マイコンに委ね、Unity 側は純粋な地形比率計算に特化。
 
 ### 3.5 戦闘・武器・弾丸システム (`Custack.Combat`)
 * **`Health.cs`**: HP管理（100）、無敵時間（0.4s）、ダメージ・撃破・リスポーンイベント

@@ -44,11 +44,14 @@ flowchart LR
     Atoms -->|TLM (115200bps)| Router
 ```
 
-### 1. ROS 2 トピック一覧
-| トピック名 | メッセージ型 | 送信元 | 受信先 | 説明 |
+### 1. ROS 2 トピック & シリアルブリッジ一覧
+| トピック名 / ポート | メッセージ型 / プロトコル | 送信元 | 受信先 | 説明 |
 | :--- | :--- | :--- | :--- | :--- |
 | `/robot_poses` | `custack_msgs/msg/RobotPoseArray` | `locator_node` | `router_node` | 推定されたロボット群 (AprilTag 0〜15 / 最大32台) の正規化座標 (-1.0〜1.0) と回転角 |
 | `/camera/image_raw` | `sensor_msgs/msg/Image` | `locator_node` | `web_server` | カメラ生画像またはキャリブレーション重畳映像 |
+| `/dev/custack_bridge_1` | 115200bps (SET/STP/TLM) | `router_node` | M5Atom (Bridge #1) | **タグ ID: 1 専用** (Gamepad 0 / `controllers[0]`) |
+| `/dev/custack_bridge_2` | 115200bps (SET/STP/TLM) | `router_node` | M5Atom (Bridge #2) | **タグ ID: 2 専用** (Gamepad 1 / `controllers[1]`) |
+| `/dev/custack_bridge_3` | 115200bps (SET/STP/TLM) | `router_node` | M5Atom (Bridge #3) | **タグ ID: 3 専用** (Gamepad 2 / `controllers[2]`) |
 
 ### 2. POSIX 共有メモリ仕様 (`custack_router`)
 * **共有メモリパス**: `/dev/shm/custack_robot_poses`

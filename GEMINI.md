@@ -105,7 +105,16 @@ flowchart TD
 
 ---
 
-## 5. モジュール間通信プロトコル
+---
+
+## 5. モジュール間通信プロトコル & 機体・コントローラー対応関係
+
+### 5.0 ゲームパッド・機体 (AprilTag)・シリアルブリッジ対応仕様 (3台専用構成)
+| プレイヤー | 入力デバイス | 操作 AprilTag ID | 共有メモリスロット | USB シリアルポート | 無線中継 (M5Atom) | 実機ロボット (M5Stack) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **P1** | **Gamepad 0** (KB: WASD) | **タグ ID: 1** | `controllers[0]` | `/dev/custack_bridge_1` | Bridge #1 | ロボット #1 (Core2) |
+| **P2** | **Gamepad 1** (KB: 矢印) | **タグ ID: 2** | `controllers[1]` | `/dev/custack_bridge_2` | Bridge #2 | ロボット #2 (Core2) |
+| **P3** | **Gamepad 2** (KB: IJKL) | **タグ ID: 3** | `controllers[2]` | `/dev/custack_bridge_3` | Bridge #3 | ロボット #3 (Core2) |
 
 ### 5.1 POSIX 共有メモリ (C++ ↔ Unity 連携)
 - メモリ名: `/custack_robot_poses` (Pose + DeviceID), `/custack_controller_cmd` (Command)

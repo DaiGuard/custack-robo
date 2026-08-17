@@ -305,23 +305,27 @@ namespace Custack.Robot
                 commandOutputBuffer[k] = default;
             }
 
-            int maxId = 0;
+            // AprilTag ID 1~3 を Bridge 1~3 (controllers[0~2]: /dev/custack_bridge_1~3) に専用マッピング
             for (int i = 0; i < robots.Count; i++)
             {
                 if (robots[i] != null)
                 {
                     int tagId = robots[i].RobotId;
-                    if (tagId >= 0 && tagId < commandOutputBuffer.Length)
+                    if (tagId >= 1 && tagId <= 3)
                     {
-                        commandOutputBuffer[tagId] = robots[i].CurrentCommand;
-                        if (tagId + 1 > maxId) maxId = tagId + 1;
+                        int bridgeIdx = tagId - 1; // Tag 1 -> Bridge 1 (Index 0), Tag 2 -> Bridge 2 (Index 1), Tag 3 -> Bridge 3 (Index 2)
+                        commandOutputBuffer[bridgeIdx] = robots[i].CurrentCommand;
+                    }
+                    else if (tagId == 0 && commandOutputBuffer[0].active == 0)
+                    {
+                        // Tag 0 フォールバック (Tag 1 が未接続時のみ Bridge 1 へ)
+                        commandOutputBuffer[0] = robots[i].CurrentCommand;
                     }
                 }
             }
 
-            // 最低2台分 (P1/P2) はスロットを確保して送信
-            int activeCount = Mathf.Clamp(Mathf.Max(maxId, 2), 2, commandOutputBuffer.Length);
-            shmWriter.WriteCommands(commandOutputBuffer, activeCount);
+            // Bridge 1~3 (3台) のスロットを共有メモリへ送信
+            shmWriter.WriteCommands(commandOutputBuffer, 3);
         }
 
         void OnDestroy()

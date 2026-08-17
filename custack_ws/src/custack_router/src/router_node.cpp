@@ -57,7 +57,11 @@ public:
         this->declare_parameter<std::string>("robot_pose_topic", "robot_poses");
         this->declare_parameter<std::string>("shm_robot_poses_name", DEFAULT_SHM_ROBOT_POSES_NAME);
         this->declare_parameter<std::string>("shm_controller_cmd_name", DEFAULT_SHM_CONTROLLER_CMD_NAME);
-        this->declare_parameter<std::vector<std::string>>("serial_ports", {"/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2"});
+        this->declare_parameter<std::vector<std::string>>("serial_ports", {
+            "/dev/custack_bridge_1",
+            "/dev/custack_bridge_2",
+            "/dev/custack_bridge_3"
+        });
         this->declare_parameter<int>("baudrate", 115200);
         this->declare_parameter<double>("send_rate_hz", 50.0);
         this->declare_parameter<int>("cmd_timeout_ms", 1000);
@@ -86,7 +90,7 @@ public:
         RCLCPP_INFO(this->get_logger(), "  - Send Rate             : %.1f Hz", send_rate_hz_);
         RCLCPP_INFO(this->get_logger(), "  - Serial Enabled        : %s", enable_serial_ ? "true" : "false");
         for (size_t i = 0; i < port_names_.size(); ++i) {
-            RCLCPP_INFO(this->get_logger(), "  - Port [%zu]              : %s", i, port_names_[i].c_str());
+            RCLCPP_INFO(this->get_logger(), "  - Bridge [%zu] (Tag ID %zu): %s", i + 1, i + 1, port_names_[i].c_str());
         }
         RCLCPP_INFO(this->get_logger(), "=========================================");
 
@@ -212,9 +216,10 @@ private:
             data.poses[i].y = msg->poses[i].y;
             data.poses[i].theta = msg->poses[i].theta;
 
-            // 該当 ID に対応するテレメトリ情報（ポート0=ID 0, ポート1=ID 1, ポート2=ID 2）をセット
-            if (tag_id >= 0 && static_cast<size_t>(tag_id) < telemetry_.size()) {
-                const auto& tlm = telemetry_[tag_id];
+            // 該当 ID に対応するテレメトリ情報（タグID 1=ポート0, タグID 2=ポート1, タグID 3=ポート2）をセット
+            size_t tlm_idx = (tag_id >= 1 && tag_id <= 3) ? static_cast<size_t>(tag_id - 1) : static_cast<size_t>(tag_id);
+            if (tlm_idx < telemetry_.size() && telemetry_[tlm_idx].valid) {
+                const auto& tlm = telemetry_[tlm_idx];
                 data.poses[i].leg_id = tlm.leg_id;
                 data.poses[i].arm_right_id = tlm.arm_right_id;
                 data.poses[i].arm_left_id = tlm.arm_left_id;

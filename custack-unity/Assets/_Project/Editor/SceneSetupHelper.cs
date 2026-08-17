@@ -149,31 +149,34 @@ namespace Custack.Editor
             for (int i = 0; i < 16; i++)
             {
                 Vector3 pos;
-                if (i == 0) pos = new Vector3(-3.5f, 0, 0);
-                else if (i == 1) pos = new Vector3(3.5f, 0, 0);
+                if (i == 1) pos = new Vector3(-3.5f, 0, 0);       // Tag ID 1: P1 (左) -> Bridge 1
+                else if (i == 2) pos = new Vector3(3.5f, 0, 0);  // Tag ID 2: P2 (右) -> Bridge 2
+                else if (i == 3) pos = new Vector3(0f, 2.5f, 0);  // Tag ID 3: P3 (上中央) -> Bridge 3
+                else if (i == 0) pos = new Vector3(0f, -3.8f, 0); // Tag ID 0: 待機
                 else
                 {
-                    // 待機位置 (アリーナ上下の待機グリッド)
-                    int row = (i - 2) / 7;
-                    int col = (i - 2) % 7;
-                    float px = -4.5f + col * 1.5f;
+                    // 待機位置 (アリーナ外周グリッド)
+                    int idx = (i >= 4) ? (i - 4) : 0;
+                    int row = idx / 6;
+                    int col = idx % 6;
+                    float px = -4.0f + col * 1.6f;
                     float py = (row == 0) ? -3.8f : 3.8f;
                     pos = new Vector3(px, py, 0);
                 }
 
                 Color colVal = RobotManager.GetRobotColor(i);
-                LegDeviceType defaultLeg = (i % 3 == 0) ? LegDeviceType.Omni : (i % 3 == 1) ? LegDeviceType.Tire : LegDeviceType.Crawler;
-                ArmDeviceType defaultR = (i % 3 == 0) ? ArmDeviceType.Gatling : (i % 3 == 1) ? ArmDeviceType.Cannon : ArmDeviceType.Sword;
-                ArmDeviceType defaultL = (i % 3 == 0) ? ArmDeviceType.Sword : (i % 3 == 1) ? ArmDeviceType.Gatling : ArmDeviceType.Cannon;
+                LegDeviceType defaultLeg = (i == 1) ? LegDeviceType.Omni : (i == 2) ? LegDeviceType.Tire : LegDeviceType.Crawler;
+                ArmDeviceType defaultR = (i == 1) ? ArmDeviceType.Gatling : (i == 2) ? ArmDeviceType.Sword : ArmDeviceType.Cannon;
+                ArmDeviceType defaultL = (i == 1) ? ArmDeviceType.Sword : (i == 2) ? ArmDeviceType.Gatling : ArmDeviceType.Sword;
 
-                var robotObj = CreateRobot(i, $"Robot_P{i + 1}", pos, colVal, defaultLeg, defaultR, defaultL);
+                var robotObj = CreateRobot(i, $"Robot_P{i}", pos, colVal, defaultLeg, defaultR, defaultL);
                 robotObj.transform.SetParent(robotsRoot.transform);
                 robotEntities.Add(robotObj.GetComponent<RobotEntity>());
             }
 
             robotMgr.robots = robotEntities;
-            gameMgr.player1 = robotEntities[0];
-            gameMgr.player2 = robotEntities[1];
+            gameMgr.player1 = robotEntities[1]; // Tag ID 1 (Bridge 1)
+            gameMgr.player2 = robotEntities[2]; // Tag ID 2 (Bridge 2)
 
             // 6. Battle HUD (Canvas & UI)
             CreateBattleHUD(managersRoot.transform);

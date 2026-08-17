@@ -155,6 +155,7 @@ namespace Custack.Robot
             }
 
             // 4. 実機向け最終コマンド構造体の構築
+            // modifiedMove.x: 前後移動 (Vx: スティック上下), modifiedMove.y: 左右移動 (Vy: スティック左右), modifiedMove.z: 旋回 (Omega)
             currentCommand.vx = (short)Mathf.Clamp(modifiedMove.x * maxSpeed, -1000f, 1000f);
             currentCommand.vy = (short)Mathf.Clamp(modifiedMove.y * maxSpeed, -1000f, 1000f);
             currentCommand.omega = (short)Mathf.Clamp(modifiedMove.z * maxOmega, -1000f, 1000f);

@@ -62,12 +62,19 @@ namespace Custack.Terrain
 
         /// <summary>
         /// 生の移動・旋回コマンドに対し、現在地の地形と脚ユニット特性を考慮した補正コマンドを計算
+        /// rawMove.x: 左右入力 (Vy)
+        /// rawMove.y: 上下入力 (Vx: 前後)
+        /// rawOmega: 旋回入力 (Omega)
+        /// 戻り値: Vector3(finalVx: 前後, finalVy: 左右, finalOmega: 旋回)
         /// </summary>
         public Vector3 CalculateModifiedMovement(Vector2 worldPos, Vector2 rawMove, float rawOmega, LegMovementConfig legConfig)
         {
+            float rawLateral = rawMove.x;  // スティック左右 (Vy)
+            float rawForward = rawMove.y;  // スティック上下 (Vx: 前後)
+
             if (legConfig == null)
             {
-                return new Vector3(rawMove.x, rawMove.y, rawOmega);
+                return new Vector3(rawForward, rawLateral, rawOmega);
             }
 
             // 1. 現在地の地形を取得
@@ -77,16 +84,16 @@ namespace Custack.Terrain
             float speedMul = legConfig.GetSpeedMultiplier(currentTerrain) * legConfig.baseSpeedMultiplier;
             float turnMul = legConfig.GetTurnMultiplier(currentTerrain) * legConfig.baseTurnMultiplier;
 
-            // 3. タイヤなどの横移動制限
-            Vector2 adjustedMove = rawMove;
+            // 3. タイヤなどの横移動制限 (左右入力に対してのみ制限)
+            float adjustedLateral = rawLateral;
             if (!legConfig.allowLateralMovement)
             {
-                adjustedMove.x *= 0.15f; // 横移動を大幅制限
+                adjustedLateral *= 0.15f; // 二輪差動タイヤ等は横移動不可
             }
 
-            // 4. 最終速度計算
-            float finalVx = adjustedMove.x * speedMul;
-            float finalVy = adjustedMove.y * speedMul;
+            // 4. 最終速度計算 (x: 前後Vx, y: 左右Vy, z: 旋回Omega)
+            float finalVx = rawForward * speedMul;
+            float finalVy = adjustedLateral * speedMul;
             float finalOmega = rawOmega * turnMul;
 
             return new Vector3(finalVx, finalVy, finalOmega);

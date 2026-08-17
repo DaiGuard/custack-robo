@@ -12,6 +12,11 @@ namespace Custack.Robot
         public Color playerColor = Color.cyan;
         public Color hitFlashColor = Color.white;
 
+        [Header("AprilTag 番号表示")]
+        public TextMesh tagIdTextMesh;
+        [Tooltip("機体が回転しても番号は常に正位置（上向き）を保つ")]
+        public bool keepTextUpright = true;
+
         [Header("ロックオン表示")]
         [SerializeField]
         private bool isLockedOn = false;
@@ -35,6 +40,11 @@ namespace Custack.Robot
                 meshOrGeneralRenderer = spriteRenderer;
             }
 
+            if (tagIdTextMesh == null)
+            {
+                tagIdTextMesh = GetComponentInChildren<TextMesh>();
+            }
+
             health = GetComponent<Health>();
 
             if (health != null)
@@ -48,6 +58,11 @@ namespace Custack.Robot
         {
             playerColor = color;
             ApplyColor(playerColor);
+
+            if (tagIdTextMesh != null)
+            {
+                tagIdTextMesh.text = playerId.ToString();
+            }
         }
 
         public void SetLockOnStatus(bool locked)
@@ -97,6 +112,15 @@ namespace Custack.Robot
             else
             {
                 ApplyColor(playerColor);
+            }
+        }
+
+        void LateUpdate()
+        {
+            // 機体が回転しても番号は常に正位置（上向き）を保つ
+            if (keepTextUpright && tagIdTextMesh != null)
+            {
+                tagIdTextMesh.transform.rotation = Quaternion.identity;
             }
         }
 

@@ -179,11 +179,12 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 
 ### 3.3 入力管理 (`Custack.Input`)
 * **`ControllerInputManager.cs`**:
-  - 2 台の PS5 Gamepad を自動認識して P1/P2 に割り当て。
+  - **任意のロボット ID (AprilTag ID: 0〜15+) に対する入力ソース（Gamepad 0〜3, Keyboard P1/P2, None）の自由なマッピング・割り当て**に対応。
+  - インスペクターおよび画面上 GUI（`F2` キーでトグル表示）から直感的に各ロボットの操作コントローラーを切り替え可能。
   - スティックのデッドゾーン補正（`0.15`）、L2/R2 によるアナログ旋回補助。
   - キーボードフォールバック:
-    - **P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ロックオン切替 `U`
-    - **P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ロックオン切替 `Numpad5`/`P`
+    - **Keyboard P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ロックオン切替 `U`
+    - **Keyboard P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ロックオン切替 `Numpad5`/`P`
 * **`PlayerInputCommand.cs`**:
   - 移動ベクトル、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
 
@@ -211,9 +212,10 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
   - 入力 ➔ ターゲット選択 ➔ 地形補正 ➔ 左右武器発射 ➔ 実機コマンド構築を一括処理。
   - △ボタンでの相手機体ロックオン巡回切替。
 * **`RobotVisual.cs`**:
+  - **AprilTag 番号（0〜15+）の機体中央テキスト描画**（機体回転時でも正位置上向きを維持）。
   - アバター描画、頭上 HP バー、被弾白点滅（0.1s）、ロックオンレティクル表示。
 * **`RobotManager.cs`**:
-  - 全機体の座標同期、入力配信、50Hz 周期での共有メモリ書き込みを統括。
+  - 0〜15（最大32台）の全機体の座標同期、動的スロット確保・ランタイム自動生成 (`EnsureRobotSlot`)、入力配信、50Hz 周期での共有メモリ書き込みを統括。
 
 ### 3.7 ゲーム進行 & UI (`Custack.Core`, `Custack.UI`)
 * **`BattleHUD.cs`**: P1/P2 HPゲージ、装備構成、勝利アナウンス表示。

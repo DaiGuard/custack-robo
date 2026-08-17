@@ -92,7 +92,7 @@ namespace Custack.SharedMemory
             GUILayout.BeginArea(new Rect(10, 10, 440, 400), GUI.skin.box);
             GUILayout.BeginVertical();
 
-            GUILayout.Label($"<b><color=#00FFFF>【CuStack-Robo 共有メモリ デバイスID モニター】</color></b> (F1で切替)");
+            GUILayout.Label($"<b><color=#00FFFF>【CuStack-Robo 共有メモリ デバイスID モニター】</color></b> (F1:切替 / F2:Pad割当)");
             GUILayout.Label($"SHM Path: <color=#FFFF00>{shmPath}</color> | Rate: <color=#00FF88>{updateRateHz:F1} Hz</color>");
             GUILayout.Label($"Seq: {latestData.sequence} | Active Robots: <color=#00FF88>{latestData.count}</color>");
             GUILayout.Space(2);

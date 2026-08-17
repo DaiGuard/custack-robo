@@ -296,6 +296,20 @@ namespace Custack.Editor
             if (hpFillCol != null) Object.DestroyImmediate(hpFillCol);
             hpFill.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateMaterial("Mat_HpFill", new Color(0.2f, 1.0f, 0.3f, 1f));
 
+            // 4. AprilTag 番号テキスト (機体中央に大きな太字数字を描画)
+            var textObj = new GameObject("TagIdText");
+            textObj.transform.SetParent(robotObj.transform);
+            textObj.transform.localPosition = new Vector3(0, -0.05f, -0.05f);
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = id.ToString();
+            textMesh.characterSize = 0.14f;
+            textMesh.fontSize = 64;
+            textMesh.fontStyle = FontStyle.Bold;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.color = Color.white;
+
+            visual.tagIdTextMesh = textMesh;
             visual.hpBarFillTransform = hpFill.transform;
             visual.Initialize(id, color);
 

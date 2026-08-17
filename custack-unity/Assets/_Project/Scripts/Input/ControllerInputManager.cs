@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -5,9 +6,41 @@ using UnityEngine.InputSystem;
 namespace Custack.Input
 {
     /// <summary>
-    /// 最大2台の PS5 / Gamepad コントローラーを個別検知・管理し、
-    /// 各プレイヤーに割り当てて入力を提供するマネージャー。
-    /// （コントローラーがない場合はキーボード操作もサポート）
+    /// 各ロボットに割り当てる入力ソース種別
+    /// </summary>
+    public enum InputSourceType
+    {
+        None = 0,
+        Gamepad0 = 1,     // 1台目のゲームパッド (PS5 / Xbox等)
+        Gamepad1 = 2,     // 2台目のゲームパッド
+        Gamepad2 = 3,     // 3台目のゲームパッド
+        Gamepad3 = 4,     // 4台目のゲームパッド
+        KeyboardP1 = 10,  // WASD + J/K/U
+        KeyboardP2 = 11,  // 矢印キー + Numpad1/2/5 / L/;/P
+    }
+
+    /// <summary>
+    /// ロボット ID とゲームパッド入力の割り当て設定
+    /// </summary>
+    [Serializable]
+    public class RobotGamepadMapping
+    {
+        [Tooltip("操作対象のロボットID (AprilTag ID)")]
+        public int robotId;
+
+        [Tooltip("割り当てる入力ソース (Gamepad0~3, KeyboardP1/P2, None)")]
+        public InputSourceType inputSource;
+
+        public RobotGamepadMapping(int id, InputSourceType source)
+        {
+            robotId = id;
+            inputSource = source;
+        }
+    }
+
+    /// <summary>
+    /// 複数台のゲームパッド・キーボード入力を管理し、
+    /// 任意のロボット ID (AprilTag ID: 0~15+) に自由にマッピング・割り当てを行う入力マネージャー。
     /// </summary>
     public class ControllerInputManager : MonoBehaviour
     {
@@ -18,11 +51,21 @@ namespace Custack.Input
         public float deadzone = 0.15f;
 
         [Header("キーボードフォールバック設定")]
+        [Tooltip("ゲームパッドが未接続の場合にキーボード(WASD / 矢印)で操作を代替する")]
         public bool enableKeyboardFallback = true;
 
-        [Header("デバッグモニター")]
-        [SerializeField]
-        private PlayerInputCommand[] playerInputs = new PlayerInputCommand[2];
+        [Header("ロボット・ゲームパッド割り当てマッピング")]
+        [Tooltip("各ロボットID (AprilTag ID) に対する入力ソース割り当てリスト")]
+        public List<RobotGamepadMapping> robotMappings = new List<RobotGamepadMapping>();
+
+        [Header("デバッグ設定")]
+        [Tooltip("画面上にコントローラー割り当て変更GUIを表示 (F2キーで切替)")]
+        public bool showMappingOverlay = false;
+
+        private PlayerInputCommand[] rawGamepadInputs = new PlayerInputCommand[4];
+        private PlayerInputCommand keyboardP1Input;
+        private PlayerInputCommand keyboardP2Input;
+        private Vector2 scrollPos;
 
         void Awake()
         {
@@ -32,36 +75,61 @@ namespace Custack.Input
                 return;
             }
             Instance = this;
+
+            EnsureDefaultMappings();
+        }
+
+        public void EnsureDefaultMappings()
+        {
+            if (robotMappings == null || robotMappings.Count == 0)
+            {
+                robotMappings = new List<RobotGamepadMapping>
+                {
+                    new RobotGamepadMapping(0, InputSourceType.Gamepad0),
+                    new RobotGamepadMapping(1, InputSourceType.Gamepad1),
+                    new RobotGamepadMapping(2, InputSourceType.Gamepad2),
+                    new RobotGamepadMapping(3, InputSourceType.Gamepad3),
+                };
+
+                for (int i = 4; i < 16; i++)
+                {
+                    robotMappings.Add(new RobotGamepadMapping(i, InputSourceType.None));
+                }
+            }
         }
 
         void Update()
         {
-            UpdateInputs();
+            // F2 キーでコントローラー割り当てオーバーレイ表示切替
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.f2Key.wasPressedThisFrame)
+            {
+                showMappingOverlay = !showMappingOverlay;
+            }
+
+            UpdateRawInputs();
         }
 
-        private void UpdateInputs()
+        private void UpdateRawInputs()
         {
             var gamepads = Gamepad.all;
 
-            // Player 1 (Index 0) の入力更新
-            playerInputs[0] = ReadGamepadInput(0, gamepads);
-            // Player 2 (Index 1) の入力更新
-            playerInputs[1] = ReadGamepadInput(1, gamepads);
-
-            // キーボードフォールバック
-            if (enableKeyboardFallback)
+            // 1. 各ゲームパッドの入力を取得 (最大4台)
+            for (int i = 0; i < 4; i++)
             {
-                ApplyKeyboardFallback();
+                rawGamepadInputs[i] = ReadGamepadInput(i, gamepads);
             }
+
+            // 2. キーボード入力を取得
+            ReadKeyboardInputs();
         }
 
-        private PlayerInputCommand ReadGamepadInput(int playerIndex, IReadOnlyList<Gamepad> gamepads)
+        private PlayerInputCommand ReadGamepadInput(int padIndex, IReadOnlyList<Gamepad> gamepads)
         {
             PlayerInputCommand cmd = default;
 
-            if (playerIndex < gamepads.Count && gamepads[playerIndex] != null)
+            if (padIndex < gamepads.Count && gamepads[padIndex] != null)
             {
-                var pad = gamepads[playerIndex];
+                var pad = gamepads[padIndex];
                 cmd.IsConnected = true;
 
                 // 左スティック: 移動 (Vx, Vy)
@@ -71,7 +139,6 @@ namespace Custack.Input
                 // 右スティック: 旋回 (Omega)
                 Vector2 rawLook = pad.rightStick.ReadValue();
                 float omega = rawLook.x;
-                // L2/R2 による旋回補助 (L2: 左旋回, R2: 右旋回)
                 if (pad.leftTrigger.isPressed || pad.rightTrigger.isPressed)
                 {
                     omega += pad.rightTrigger.ReadValue() - pad.leftTrigger.ReadValue();
@@ -97,55 +164,53 @@ namespace Custack.Input
             return cmd;
         }
 
-        private void ApplyKeyboardFallback()
+        private void ReadKeyboardInputs()
         {
             var kb = Keyboard.current;
             if (kb == null) return;
 
-            // コントローラー1が未接続の場合、WASD + J/K/U を Player 1 に割り当て
-            if (!playerInputs[0].IsConnected)
+            // Keyboard P1 (WASD + J/K/U)
             {
                 Vector2 move = Vector2.zero;
                 if (kb.wKey.isPressed) move.y += 1f;
                 if (kb.sKey.isPressed) move.y -= 1f;
                 if (kb.aKey.isPressed) move.x -= 1f;
                 if (kb.dKey.isPressed) move.x += 1f;
-                playerInputs[0].Move = move.normalized;
+                keyboardP1Input.Move = move.normalized;
 
                 float omega = 0f;
                 if (kb.qKey.isPressed) omega -= 1f;
                 if (kb.eKey.isPressed) omega += 1f;
-                playerInputs[0].Omega = omega;
+                keyboardP1Input.Omega = omega;
 
-                playerInputs[0].ArmRightPressed = kb.jKey.wasPressedThisFrame;
-                playerInputs[0].ArmRightHeld = kb.jKey.isPressed;
-                playerInputs[0].ArmLeftPressed = kb.kKey.wasPressedThisFrame;
-                playerInputs[0].ArmLeftHeld = kb.kKey.isPressed;
-                playerInputs[0].TargetSwitchPressed = kb.uKey.wasPressedThisFrame; // △相当
-                playerInputs[0].IsConnected = true;
+                keyboardP1Input.ArmRightPressed = kb.jKey.wasPressedThisFrame;
+                keyboardP1Input.ArmRightHeld = kb.jKey.isPressed;
+                keyboardP1Input.ArmLeftPressed = kb.kKey.wasPressedThisFrame;
+                keyboardP1Input.ArmLeftHeld = kb.kKey.isPressed;
+                keyboardP1Input.TargetSwitchPressed = kb.uKey.wasPressedThisFrame;
+                keyboardP1Input.IsConnected = true;
             }
 
-            // コントローラー2が未接続の場合、矢印キー + テンキー 1/2/5 を Player 2 に割り当て
-            if (!playerInputs[1].IsConnected)
+            // Keyboard P2 (矢印 + Numpad1/2/5 または L/;/P)
             {
                 Vector2 move = Vector2.zero;
                 if (kb.upArrowKey.isPressed) move.y += 1f;
                 if (kb.downArrowKey.isPressed) move.y -= 1f;
                 if (kb.leftArrowKey.isPressed) move.x -= 1f;
                 if (kb.rightArrowKey.isPressed) move.x += 1f;
-                playerInputs[1].Move = move.normalized;
+                keyboardP2Input.Move = move.normalized;
 
                 float omega = 0f;
                 if (kb.commaKey.isPressed) omega -= 1f;
                 if (kb.periodKey.isPressed) omega += 1f;
-                playerInputs[1].Omega = omega;
+                keyboardP2Input.Omega = omega;
 
-                playerInputs[1].ArmRightPressed = kb.numpad1Key.wasPressedThisFrame || kb.lKey.wasPressedThisFrame;
-                playerInputs[1].ArmRightHeld = kb.numpad1Key.isPressed || kb.lKey.isPressed;
-                playerInputs[1].ArmLeftPressed = kb.numpad2Key.wasPressedThisFrame || kb.semicolonKey.wasPressedThisFrame;
-                playerInputs[1].ArmLeftHeld = kb.numpad2Key.isPressed || kb.semicolonKey.isPressed;
-                playerInputs[1].TargetSwitchPressed = kb.numpad5Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame;
-                playerInputs[1].IsConnected = true;
+                keyboardP2Input.ArmRightPressed = kb.numpad1Key.wasPressedThisFrame || kb.lKey.wasPressedThisFrame;
+                keyboardP2Input.ArmRightHeld = kb.numpad1Key.isPressed || kb.lKey.isPressed;
+                keyboardP2Input.ArmLeftPressed = kb.numpad2Key.wasPressedThisFrame || kb.semicolonKey.wasPressedThisFrame;
+                keyboardP2Input.ArmLeftHeld = kb.numpad2Key.isPressed || kb.semicolonKey.isPressed;
+                keyboardP2Input.TargetSwitchPressed = kb.numpad5Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame;
+                keyboardP2Input.IsConnected = true;
             }
         }
 
@@ -155,13 +220,151 @@ namespace Custack.Input
             return input.normalized * ((input.magnitude - deadzone) / (1f - deadzone));
         }
 
+        /// <summary>
+        /// 指定したロボットID (AprilTag ID) に割り当てられた入力を取得
+        /// </summary>
+        public PlayerInputCommand GetInputForRobot(int robotId)
+        {
+            InputSourceType src = GetRobotMapping(robotId);
+
+            switch (src)
+            {
+                case InputSourceType.Gamepad0:
+                    if (rawGamepadInputs[0].IsConnected) return rawGamepadInputs[0];
+                    if (enableKeyboardFallback) return keyboardP1Input;
+                    return default;
+
+                case InputSourceType.Gamepad1:
+                    if (rawGamepadInputs[1].IsConnected) return rawGamepadInputs[1];
+                    if (enableKeyboardFallback) return keyboardP2Input;
+                    return default;
+
+                case InputSourceType.Gamepad2:
+                    return rawGamepadInputs[2];
+
+                case InputSourceType.Gamepad3:
+                    return rawGamepadInputs[3];
+
+                case InputSourceType.KeyboardP1:
+                    return keyboardP1Input;
+
+                case InputSourceType.KeyboardP2:
+                    return keyboardP2Input;
+
+                case InputSourceType.None:
+                default:
+                    return default;
+            }
+        }
+
+        /// <summary>
+        /// ロボットIDに対する現在の割り当て入力ソースを取得
+        /// </summary>
+        public InputSourceType GetRobotMapping(int robotId)
+        {
+            for (int i = 0; i < robotMappings.Count; i++)
+            {
+                if (robotMappings[i].robotId == robotId)
+                {
+                    return robotMappings[i].inputSource;
+                }
+            }
+
+            // 未登録の場合のデフォルト
+            if (robotId == 0) return InputSourceType.Gamepad0;
+            if (robotId == 1) return InputSourceType.Gamepad1;
+            return InputSourceType.None;
+        }
+
+        /// <summary>
+        /// ロボットIDに対する入力ソース割り当てを変更
+        /// </summary>
+        public void SetRobotMapping(int robotId, InputSourceType source)
+        {
+            for (int i = 0; i < robotMappings.Count; i++)
+            {
+                if (robotMappings[i].robotId == robotId)
+                {
+                    robotMappings[i].inputSource = source;
+                    return;
+                }
+            }
+            robotMappings.Add(new RobotGamepadMapping(robotId, source));
+        }
+
+        /// <summary>
+        /// 互換用旧メソッド
+        /// </summary>
         public PlayerInputCommand GetPlayerInput(int playerIndex)
         {
-            if (playerIndex >= 0 && playerIndex < playerInputs.Length)
+            return GetInputForRobot(playerIndex);
+        }
+
+        void OnGUI()
+        {
+            if (!showMappingOverlay) return;
+
+            GUI.color = Color.white;
+            GUI.skin.label.fontSize = 12;
+            GUI.skin.button.fontSize = 11;
+            GUI.skin.box.fontSize = 12;
+
+            // 画面右上にマッピング設定ウィンドウを表示
+            GUILayout.BeginArea(new Rect(Screen.width - 380, 10, 370, 480), GUI.skin.box);
+            GUILayout.BeginVertical();
+
+            GUILayout.Label("<b><color=#00FFFF>【🎮 コントローラー割り当て設定】</color></b> (F2で切替)");
+            int padCount = Gamepad.all.Count;
+            GUILayout.Label($"接続中ゲームパッド数: <color=#00FF88>{padCount} 台</color> | KB Fallback: {(enableKeyboardFallback ? "<color=#00FF88>ON</color>" : "<color=#888888>OFF</color>")}");
+            GUILayout.Space(4);
+
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(380));
+
+            for (int i = 0; i < 16; i++)
             {
-                return playerInputs[playerIndex];
+                int robotId = i;
+                InputSourceType currentSrc = GetRobotMapping(robotId);
+
+                GUILayout.BeginHorizontal(GUI.skin.box);
+                Color rColor = Robot.RobotManager.GetRobotColor(robotId);
+                GUI.color = rColor;
+                GUILayout.Label($"<b>🤖 #{robotId}</b>", GUILayout.Width(50));
+                GUI.color = Color.white;
+
+                string srcLabel = currentSrc switch
+                {
+                    InputSourceType.Gamepad0 => "🎮 Pad 0 (P1)",
+                    InputSourceType.Gamepad1 => "🎮 Pad 1 (P2)",
+                    InputSourceType.Gamepad2 => "🎮 Pad 2",
+                    InputSourceType.Gamepad3 => "🎮 Pad 3",
+                    InputSourceType.KeyboardP1 => "⌨️ KB (WASD)",
+                    InputSourceType.KeyboardP2 => "⌨️ KB (矢印)",
+                    _ => "➖ None"
+                };
+
+                if (GUILayout.Button(srcLabel, GUILayout.Height(22)))
+                {
+                    // クリックで次の入力ソースに切り替え
+                    InputSourceType nextSrc = currentSrc switch
+                    {
+                        InputSourceType.None => InputSourceType.Gamepad0,
+                        InputSourceType.Gamepad0 => InputSourceType.Gamepad1,
+                        InputSourceType.Gamepad1 => InputSourceType.Gamepad2,
+                        InputSourceType.Gamepad2 => InputSourceType.Gamepad3,
+                        InputSourceType.Gamepad3 => InputSourceType.KeyboardP1,
+                        InputSourceType.KeyboardP1 => InputSourceType.KeyboardP2,
+                        InputSourceType.KeyboardP2 => InputSourceType.None,
+                        _ => InputSourceType.None
+                    };
+                    SetRobotMapping(robotId, nextSrc);
+                }
+
+                GUILayout.EndHorizontal();
             }
-            return default;
+
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
         }
     }
 }

@@ -213,6 +213,20 @@ namespace Custack.Robot
             if (hpFillCol != null) Destroy(hpFillCol);
             hpFill.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = new Color(0.2f, 1.0f, 0.3f, 1f) };
 
+            // 4. AprilTag 番号テキスト (機体中央に大きな太字数字を描画)
+            var textObj = new GameObject("TagIdText");
+            textObj.transform.SetParent(robotObj.transform);
+            textObj.transform.localPosition = new Vector3(0, -0.05f, -0.05f);
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = id.ToString();
+            textMesh.characterSize = 0.14f;
+            textMesh.fontSize = 64;
+            textMesh.fontStyle = FontStyle.Bold;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.color = Color.white;
+
+            visual.tagIdTextMesh = textMesh;
             visual.hpBarFillTransform = hpFill.transform;
             visual.Initialize(id, robotColor);
 
@@ -275,7 +289,8 @@ namespace Custack.Robot
             {
                 if (robots[i] == null) continue;
 
-                PlayerInputCommand input = inputMgr.GetPlayerInput(i);
+                // 各機体の RobotId (AprilTag ID) に紐付けられたコントローラー入力を取得
+                PlayerInputCommand input = inputMgr.GetInputForRobot(robots[i].RobotId);
                 robots[i].ProcessFrame(input, terrainManager);
             }
         }

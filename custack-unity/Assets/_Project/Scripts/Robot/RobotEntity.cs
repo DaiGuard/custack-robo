@@ -208,13 +208,90 @@ namespace Custack.Robot
             return null;
         }
 
+        [Header("トラッキング & 速度予測 (見失い補間)")]
+        [Tooltip("最後にマーカを受信した時刻")]
+        public float lastDetectedTime = -1f;
+        [Tooltip("現在の推定ワールド移動速度 (m/s)")]
+        public Vector3 estimatedVelocity = Vector3.zero;
+        [Tooltip("現在の推定角速度 (deg/s)")]
+        public float estimatedAngularVelocity = 0f;
+        [Tooltip("一時的な未検出時に慣性移動を継続する最大秒数 (default: 0.35s)")]
+        public float maxExtrapolationDuration = 0.35f;
+        [Tooltip("速度フィードフォワード先回り時間 (秒) (プロジェクター遅延相殺 default: 0.035s = 35ms)")]
+        public float leadTimeSeconds = 0.035f;
+
+        private Vector3 lastRawWorldPos;
+        private float lastRawRotDeg;
+        private float lastRawPoseTime;
+        private bool hasReceivedPose = false;
+
         /// <summary>
-        /// 共有メモリから受信した位置姿勢を反映
+        /// 共有メモリから受信した位置姿勢を反映 (速度推定 & スムージング & 遅延先回り補正)
         /// </summary>
         public void ApplyPose(Vector3 worldPos, float unityRotDeg)
         {
-            transform.position = worldPos;
-            transform.rotation = Quaternion.Euler(0, 0, unityRotDeg);
+            float now = Time.time;
+            if (hasReceivedPose)
+            {
+                float dt = now - lastRawPoseTime;
+                if (dt > 0.001f && dt < 0.2f)
+                {
+                    // 瞬間速度と角速度を計算
+                    Vector3 instantVel = (worldPos - lastRawWorldPos) / dt;
+                    float instantAngVel = Mathf.DeltaAngle(lastRawRotDeg, unityRotDeg) / dt;
+
+                    // 急激なワープ・ノイズを弾く (速度が 8m/s 以上の異常値は無視)
+                    if (instantVel.magnitude < 8.0f)
+                    {
+                        // 指数移動平均 (EMA) で速度を滑らかに更新
+                        estimatedVelocity = Vector3.Lerp(estimatedVelocity, instantVel, 0.4f);
+                        estimatedAngularVelocity = Mathf.Lerp(estimatedAngularVelocity, instantAngVel, 0.4f);
+                    }
+                }
+            }
+
+            lastRawWorldPos = worldPos;
+            lastRawRotDeg = unityRotDeg;
+            lastRawPoseTime = now;
+            lastDetectedTime = now;
+            hasReceivedPose = true;
+
+            // プロジェクターの描画遅延（約35ms）を相殺するため、速度ベクトル分だけわずかに先回り（Lead）して投影
+            Vector3 leadPos = worldPos + estimatedVelocity * leadTimeSeconds;
+            float leadDeg = unityRotDeg + estimatedAngularVelocity * leadTimeSeconds;
+
+            transform.position = leadPos;
+            transform.rotation = Quaternion.Euler(0, 0, leadDeg);
+        }
+
+        /// <summary>
+        /// 未検出フレームでの慣性予測移動 (Update から毎フレーム呼び出し)
+        /// </summary>
+        public void UpdateExtrapolation()
+        {
+            if (!hasReceivedPose || lastDetectedTime < 0) return;
+
+            float timeSinceDetection = Time.time - lastDetectedTime;
+
+            // 受信直後のフレーム (dt <= 0.02s) は ApplyPose で更新済みなのでスキップ
+            if (timeSinceDetection <= 0.02f) return;
+
+            // 一時的な見失い期間中 (0.02s < t <= maxExtrapolationDuration) は直前速度で先回り補間
+            if (timeSinceDetection <= maxExtrapolationDuration)
+            {
+                // 緩やかに減速 (空気抵抗・摩擦シミュレーション)
+                estimatedVelocity *= Mathf.Clamp01(1.0f - Time.deltaTime * 2.5f);
+                estimatedAngularVelocity *= Mathf.Clamp01(1.0f - Time.deltaTime * 2.5f);
+
+                transform.position += estimatedVelocity * Time.deltaTime;
+                transform.rotation = Quaternion.Euler(0, 0, transform.eulerAngles.z + estimatedAngularVelocity * Time.deltaTime);
+            }
+            else
+            {
+                // 長時間ロスト時は静止
+                estimatedVelocity = Vector3.zero;
+                estimatedAngularVelocity = 0f;
+            }
         }
     }
 }

@@ -133,10 +133,19 @@ namespace Custack.Robot
             // 1. 共有メモリからロボット位置姿勢 & デバイスIDを読み出し & 反映
             ReadAndApplyPoses();
 
-            // 2. コントローラー入力の取得 & 各ロボットのフレーム処理 (武器発射・地形補正)
+            // 2. 見失いフレームでの慣性予測補間 (各機体の先回り追従を継続)
+            for (int i = 0; i < robots.Count; i++)
+            {
+                if (robots[i] != null && IsRobotEnabled(robots[i].RobotId))
+                {
+                    robots[i].UpdateExtrapolation();
+                }
+            }
+
+            // 3. コントローラー入力の取得 & 各ロボットのフレーム処理 (武器発射・地形補正)
             ProcessRobotInputs();
 
-            // 3. 補正後コマンドを共有メモリへ 50Hz 周期で送信
+            // 4. 補正後コマンドを共有メモリへ 50Hz 周期で送信
             sendTimer += Time.deltaTime;
             if (sendTimer >= 1.0f / sendRateHz)
             {

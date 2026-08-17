@@ -232,37 +232,29 @@ namespace Custack.Robot
 
             var avatarShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
 
-            // 1. 中央白色円形パッチ (天頂カメラの AprilTag 認識向上のため常時白色)
-            var centerChild = new GameObject("CenterWhite");
-            centerChild.transform.SetParent(robotObj.transform);
-            centerChild.transform.localPosition = Vector3.zero;
-            centerChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.28f);
-            var mrCenter = centerChild.AddComponent<MeshRenderer>();
-            mrCenter.material = new Material(avatarShader) { color = Color.white };
-
-            // 2. 外周ドーナツ型リング (プレイヤーカラー領域: 内径 0.28m, 外径 0.48m)
+            // 1. 外周ドーナツ型リング (内径 0.35m, 外径 0.55m: ロボット本体には光を当てず外側のみ投影)
             var donutChild = new GameObject("DonutRing");
             donutChild.transform.SetParent(robotObj.transform);
             donutChild.transform.localPosition = Vector3.zero;
-            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.28f, 0.48f);
+            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.35f, 0.55f);
             var mrDonut = donutChild.AddComponent<MeshRenderer>();
             mrDonut.material = new Material(avatarShader) { color = robotColor };
 
-            visual.centerWhiteRenderer = mrCenter;
+            visual.centerWhiteRenderer = null;
             visual.donutRenderer = mrDonut;
 
-            // 3. 進行方向インジケーター (外周リング前方に配置: ダイヤ型)
+            // 2. 進行方向インジケーター (外周リング外側前方に配置: ダイヤ型)
             var arrowChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
             arrowChild.name = "DirectionArrow";
             arrowChild.transform.SetParent(robotObj.transform);
-            arrowChild.transform.localPosition = new Vector3(0, 0.55f, -0.01f);
-            arrowChild.transform.localScale = new Vector3(0.25f, 0.25f, 1f);
+            arrowChild.transform.localPosition = new Vector3(0, 0.65f, -0.01f);
+            arrowChild.transform.localScale = new Vector3(0.20f, 0.20f, 1f);
             arrowChild.transform.localRotation = Quaternion.Euler(0, 0, 45f);
             var arrowCol = arrowChild.GetComponent<Collider>();
             if (arrowCol != null) Destroy(arrowCol);
             arrowChild.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = Color.white };
 
-            // 4. ビジュアル初期化
+            // 3. ビジュアル初期化
             visual.Initialize(id, robotColor);
 
             // 4. マズルポイント

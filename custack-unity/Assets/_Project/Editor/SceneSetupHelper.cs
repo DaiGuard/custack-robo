@@ -290,33 +290,25 @@ namespace Custack.Editor
 
             equip.SetEquipment(leg, rArm, lArm);
 
-            // 1. 中央白色円形パッチ (天頂カメラの AprilTag 認識向上のため、ロボット本体と重なる領域を白色投光)
-            var centerChild = new GameObject("CenterWhite");
-            centerChild.transform.SetParent(robotObj.transform);
-            centerChild.transform.localPosition = Vector3.zero;
-            var mfCenter = centerChild.AddComponent<MeshFilter>();
-            mfCenter.sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.28f);
-            var mrCenter = centerChild.AddComponent<MeshRenderer>();
-            mrCenter.sharedMaterial = GetOrCreateMaterial("Mat_Robot_CenterWhite", Color.white);
-
-            // 2. 外周ドーナツ型リング (プレイヤーカラー・被弾点滅・オーラ演出領域: 内径 0.28m, 外径 0.48m)
+            // 1. 外周ドーナツ型リング (ロボット本体・マーカ天面には光を当てず、外側の床面にのみプレイヤーカラー・被弾点滅を投影)
+            // 内径 0.35m (直径70cm: ロボット本体を完全クリア), 外径 0.55m (直径110cm)
             var donutChild = new GameObject("DonutRing");
             donutChild.transform.SetParent(robotObj.transform);
             donutChild.transform.localPosition = Vector3.zero;
             var mfDonut = donutChild.AddComponent<MeshFilter>();
-            mfDonut.sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.28f, 0.48f);
+            mfDonut.sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.35f, 0.55f);
             var mrDonut = donutChild.AddComponent<MeshRenderer>();
             mrDonut.sharedMaterial = GetOrCreateMaterial($"Mat_Robot_{name}", color);
 
-            visual.centerWhiteRenderer = mrCenter;
+            visual.centerWhiteRenderer = null;
             visual.donutRenderer = mrDonut;
 
-            // 3. 進行方向・マズル向きインジケーター (外周リング前方に配置: ダイヤ型 Quad)
+            // 2. 進行方向・マズル向きインジケーター (外周リング外側前方に配置: ダイヤ型 Quad)
             var arrowChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
             arrowChild.name = "DirectionArrow";
             arrowChild.transform.SetParent(robotObj.transform);
-            arrowChild.transform.localPosition = new Vector3(0, 0.55f, -0.01f);
-            arrowChild.transform.localScale = new Vector3(0.25f, 0.25f, 1f);
+            arrowChild.transform.localPosition = new Vector3(0, 0.65f, -0.01f);
+            arrowChild.transform.localScale = new Vector3(0.20f, 0.20f, 1f);
             arrowChild.transform.localRotation = Quaternion.Euler(0, 0, 45f); // ダイヤ型
 
             var arrowCol = arrowChild.GetComponent<Collider>();
@@ -325,7 +317,7 @@ namespace Custack.Editor
             var arrowMr = arrowChild.GetComponent<MeshRenderer>();
             arrowMr.sharedMaterial = GetOrCreateMaterial("Mat_DirectionArrow", Color.white);
 
-            // 4. ビジュアル初期化 (余計な数字やHPバーを排除し、純白円+カラーリングのみで構成)
+            // 3. ビジュアル初期化
             visual.Initialize(id, color);
 
             // 4. 左右マズルポイント
@@ -443,6 +435,10 @@ namespace Custack.Editor
             hud.p2HpBarFill = p2HpFill;
             hud.p2HpText = p2HpText;
             hud.p2EquipmentText = p2EquipText;
+
+            // プロジェクター床面への光漏れを防ぐため、P1/P2 パネルは非表示 (ホストPC管理画面で一括確認可能)
+            p1Panel.SetActive(false);
+            p2Panel.SetActive(false);
 
             // Winner Banner (中央)
             var winnerBanner = CreateUIPanel("WinnerBanner", canvasObj.transform, Vector2.zero, new Vector2(450, 100), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));

@@ -36,6 +36,9 @@ namespace Custack.Robot
         private SpriteRenderer spriteRenderer;
         private Health health;
         private float flashEndTime = 0f;
+        private MaterialPropertyBlock propertyBlock;
+        private static readonly int ColorPropId = Shader.PropertyToID("_Color");
+        private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
 
         void Awake()
         {
@@ -43,12 +46,6 @@ namespace Custack.Robot
             {
                 var donutObj = transform.Find("DonutRing") ?? transform.Find("Avatar");
                 if (donutObj != null) donutRenderer = donutObj.GetComponent<Renderer>();
-            }
-
-            if (centerWhiteRenderer == null)
-            {
-                var centerObj = transform.Find("CenterWhite");
-                if (centerObj != null) centerWhiteRenderer = centerObj.GetComponent<Renderer>();
             }
 
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -66,11 +63,7 @@ namespace Custack.Robot
                 health.OnHealthChanged += UpdateHpBar;
             }
 
-            // 中央パッチは常に白色を維持
-            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
-            {
-                centerWhiteRenderer.material.color = Color.white;
-            }
+            ApplyColor(playerColor);
         }
 
         public void Initialize(int playerId, Color color)
@@ -81,11 +74,6 @@ namespace Custack.Robot
             if (tagIdTextMesh != null)
             {
                 tagIdTextMesh.text = playerId.ToString();
-            }
-
-            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
-            {
-                centerWhiteRenderer.material.color = Color.white;
             }
         }
 
@@ -116,19 +104,17 @@ namespace Custack.Robot
 
         private void ApplyColor(Color col)
         {
-            if (donutRenderer != null && donutRenderer.material != null)
+            if (donutRenderer != null)
             {
-                donutRenderer.material.color = col;
+                if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+                donutRenderer.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetColor(ColorPropId, col);
+                propertyBlock.SetColor(BaseColorPropId, col);
+                donutRenderer.SetPropertyBlock(propertyBlock);
             }
             else if (spriteRenderer != null)
             {
                 spriteRenderer.color = col;
-            }
-
-            // 中央白色パッチは常に純白を維持 (AprilTag 投光用)
-            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
-            {
-                centerWhiteRenderer.material.color = Color.white;
             }
         }
 

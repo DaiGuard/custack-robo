@@ -47,7 +47,7 @@ flowchart LR
 ### 1. ROS 2 トピック一覧
 | トピック名 | メッセージ型 | 送信元 | 受信先 | 説明 |
 | :--- | :--- | :--- | :--- | :--- |
-| `/robot_poses` | `custack_msgs/msg/RobotPoseArray` | `locator_node` | `router_node` | 推定されたロボット 3 台分の正規化座標 (-1.0〜1.0) と回転角 |
+| `/robot_poses` | `custack_msgs/msg/RobotPoseArray` | `locator_node` | `router_node` | 推定されたロボット群 (AprilTag 0〜15 / 最大32台) の正規化座標 (-1.0〜1.0) と回転角 |
 | `/camera/image_raw` | `sensor_msgs/msg/Image` | `locator_node` | `web_server` | カメラ生画像またはキャリブレーション重畳映像 |
 
 ### 2. POSIX 共有メモリ仕様 (`custack_router`)
@@ -76,13 +76,34 @@ flowchart LR
 
 ---
 
+## ⚙️ locator_node パラメータ & 起動引数仕様
+
+`custack_locator_cpp` は AprilTag (16H5) の動的フィルタリング、最大検出数の設定、およびリアルタイムの性能プロファイリングログ出力に対応しています。
+
+| パラメータ名 / CLI引数 | 型 / フラグ | デフォルト値 | 説明 |
+| :--- | :---: | :---: | :--- |
+| `--max-detections` / `max_detections` | `int` | `16` | 最大同時検出数 (1〜32) |
+| `tag_id_min` | `int` | `0` | 検出対象の最小タグID |
+| `tag_id_max` | `int` | `15` | 検出対象の最大タグID |
+| `filter_tag_ids` | `bool` | `true` | タグID範囲フィルタの有効/無効 (`false` で全IDデコード) |
+| `--headless` | フラグ | `false` | ヘッドレスモード起動 (GUIプレビュー非表示) |
+| `camera_index` | `int` | `0` | V4L2 カメラデバイス番号 (`/dev/video0`) |
+
+### 📊 1秒ごとの処理速度・レイテンシ統計ログ
+`locator_node` は 1 秒ごとに以下の性能統計ログを出力します：
+```text
+📊 [速度・認識統計 1s] Cap: 60.0 fps | Proc: 59.8 fps | VPI遅延: avg 8.45 ms (min: 7.12, max: 10.30) | 検出タグ(15台): [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+```
+
+---
+
 ## 🔨 クリーン＆ビルド手順
 
 ```bash
-# Jetson 環境
+# Jetson 環境 (位置推定・カメラ認識 & Web UI)
 cd custack_ws && ./build_jetson.sh
 
-# ホストPC環境
+# ホストPC環境 (ルーターノード)
 cd custack_ws && ./build_host.sh
 ```
 
@@ -91,8 +112,14 @@ cd custack_ws && ./build_host.sh
 ## 🚀 起動方法
 
 ```bash
-# Jetson: 位置推定ノード起動
+# Jetson: デフォルト起動 (ID 0〜15 / 最大16台)
 ./run_locator.sh
+
+# Jetson: 最大検出数を指定して起動 (例: 16台)
+./run_locator.sh --max-detections 16
+
+# Jetson: 全タグID無制限デコードで起動
+./run_locator.sh --ros-args -p filter_tag_ids:=false
 
 # Jetson: Web UI 起動
 ./run_web.sh

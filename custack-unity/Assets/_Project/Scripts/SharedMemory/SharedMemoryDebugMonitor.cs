@@ -78,22 +78,24 @@ namespace Custack.SharedMemory
             reader?.Dispose();
         }
 
+        private Vector2 scrollPos;
+
         void OnGUI()
         {
             if (!showOverlay) return;
 
             GUI.color = Color.white;
-            GUI.skin.label.fontSize = 13;
-            GUI.skin.box.fontSize = 13;
+            GUI.skin.label.fontSize = 12;
+            GUI.skin.box.fontSize = 12;
 
             // 背景ボックス
-            GUILayout.BeginArea(new Rect(10, 10, 420, 320), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 10, 440, 400), GUI.skin.box);
             GUILayout.BeginVertical();
 
             GUILayout.Label($"<b><color=#00FFFF>【CuStack-Robo 共有メモリ デバイスID モニター】</color></b> (F1で切替)");
             GUILayout.Label($"SHM Path: <color=#FFFF00>{shmPath}</color> | Rate: <color=#00FF88>{updateRateHz:F1} Hz</color>");
             GUILayout.Label($"Seq: {latestData.sequence} | Active Robots: <color=#00FF88>{latestData.count}</color>");
-            GUILayout.Space(4);
+            GUILayout.Space(2);
 
             if (!hasValidData)
             {
@@ -101,27 +103,29 @@ namespace Custack.SharedMemory
             }
             else
             {
-                int displayCount = Mathf.Min((int)latestData.count, 4);
+                int displayCount = Mathf.Min((int)latestData.count, SharedRobotPoseData.MaxRobots);
                 if (displayCount == 0)
                 {
                     GUILayout.Label("<color=#FFAA00>ロボット未検出 (count: 0)</color>");
                 }
-
-                for (int i = 0; i < displayCount; i++)
+                else
                 {
-                    SharedRobotPose p = latestData.GetPose(i);
-                    string legStr = GetLegName(p.legId);
-                    string rArmStr = GetArmName(p.armRightId);
-                    string lArmStr = GetArmName(p.armLeftId);
-                    string statusStr = p.status == 1 ? "<color=#00FF88>OK</color>" : "<color=#FF4444>None</color>";
+                    scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(300));
+                    for (int i = 0; i < displayCount; i++)
+                    {
+                        SharedRobotPose p = latestData.GetPose(i);
+                        string legStr = GetLegName(p.legId);
+                        string rArmStr = GetArmName(p.armRightId);
+                        string lArmStr = GetArmName(p.armLeftId);
+                        string statusStr = p.status == 1 ? "<color=#00FF88>OK</color>" : "<color=#FF4444>None</color>";
 
-                    GUILayout.BeginVertical(GUI.skin.box);
-                    GUILayout.Label($"<b>🤖 Robot [{p.id}]</b> (Index: {i}) Status: {statusStr}");
-                    GUILayout.Label($"  📍 Pose : X={p.x:F3}, Y={p.y:F3}, θ={p.theta:F2} rad ({Mathf.Rad2Deg * p.theta:F1}°)");
-                    GUILayout.Label($"  🦵 Leg  : <b><color=#00FFCC>0x{p.legId:X2} [{legStr}]</color></b>");
-                    GUILayout.Label($"  ⚔️ Arm-R: <b><color=#FFAA00>0x{p.armRightId:X2} [{rArmStr}]</color></b>");
-                    GUILayout.Label($"  🛡️ Arm-L: <b><color=#FF88FF>0x{p.armLeftId:X2} [{lArmStr}]</color></b>");
-                    GUILayout.EndVertical();
+                        GUILayout.BeginVertical(GUI.skin.box);
+                        GUILayout.Label($"<b>🤖 Robot [{p.id}]</b> (Index: {i}) Status: {statusStr}");
+                        GUILayout.Label($"  📍 Pose : X={p.x:F3}, Y={p.y:F3}, θ={p.theta:F2} rad ({Mathf.Rad2Deg * p.theta:F1}°)");
+                        GUILayout.Label($"  🦵 Leg  : <b><color=#00FFCC>0x{p.legId:X2} [{legStr}]</color></b> | ⚔️ R: <b><color=#FFAA00>0x{p.armRightId:X2} [{rArmStr}]</color></b> | 🛡️ L: <b><color=#FF88FF>0x{p.armLeftId:X2} [{lArmStr}]</color></b>");
+                        GUILayout.EndVertical();
+                    }
+                    GUILayout.EndScrollView();
                 }
             }
 

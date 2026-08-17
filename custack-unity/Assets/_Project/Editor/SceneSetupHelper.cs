@@ -58,22 +58,33 @@ namespace Custack.Editor
             monitor.shmPath = "/dev/shm/custack_robot_poses";
             monitor.showOverlay = true;
 
-            // 4. Robots
+            // 4. Robots (IDs 0 ~ 15)
             var robotsRoot = new GameObject("--- ROBOTS ---");
+            var robotEntities = new List<RobotEntity>();
 
-            var p1 = CreateRobot(0, "Robot_P1", new Vector3(-2.5f, 0, 0), new Color(0.1f, 0.8f, 1f),
-                                LegDeviceType.Omni, ArmDeviceType.Gatling, ArmDeviceType.Sword);
-            p1.transform.SetParent(robotsRoot.transform);
-
-            var p2 = CreateRobot(1, "Robot_P2", new Vector3(2.5f, 0, 0), new Color(1f, 0.35f, 0.35f),
-                                LegDeviceType.Tire, ArmDeviceType.Cannon, ArmDeviceType.Gatling);
-            p2.transform.SetParent(robotsRoot.transform);
-
-            robotMgr.robots = new List<RobotEntity>
+            for (int i = 0; i < 16; i++)
             {
-                p1.GetComponent<RobotEntity>(),
-                p2.GetComponent<RobotEntity>()
-            };
+                Vector3 pos;
+                if (i == 0) pos = new Vector3(-2.5f, 0, 0);
+                else if (i == 1) pos = new Vector3(2.5f, 0, 0);
+                else
+                {
+                    // 待機位置 (グリッド状に配置)
+                    int row = (i - 2) / 7;
+                    int col = (i - 2) % 7;
+                    float px = -4.5f + col * 1.5f;
+                    float py = (row == 0) ? -3.0f : 3.0f;
+                    pos = new Vector3(px, py, 0);
+                }
+
+                Color colVal = RobotManager.GetRobotColor(i);
+                var robotObj = CreateRobot(i, $"Robot_P{i + 1}", pos, colVal,
+                                           LegDeviceType.Omni, ArmDeviceType.Gatling, ArmDeviceType.Sword);
+                robotObj.transform.SetParent(robotsRoot.transform);
+                robotEntities.Add(robotObj.GetComponent<RobotEntity>());
+            }
+
+            robotMgr.robots = robotEntities;
 
             // 5. シーン保存
             string scenePath = "Assets/_Project/Scenes/Sandbox/SharedMemorySandbox.unity";
@@ -81,7 +92,7 @@ namespace Custack.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！");
+            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！ (16台のロボット P1~P16 を配置)");
         }
 
         [MenuItem("CuStack/2. Setup Main Battle Scene (本番対戦 & プロジェクション環境構築)", priority = 2)]
@@ -131,23 +142,38 @@ namespace Custack.Editor
             CreateTerrainZone("LavaZone", new Vector3(0f, 0f, 0), new Vector2(2.5f, 2.5f), TerrainType.Lava, terrainsRoot.transform);
             CreateTerrainZone("ForestZone", new Vector3(3.5f, -2.2f, 0), new Vector2(3f, 2.5f), TerrainType.Forest, terrainsRoot.transform);
 
-            // 5. Robots
+            // 5. Robots (IDs 0 ~ 15)
             var robotsRoot = new GameObject("--- ROBOTS ---");
+            var robotEntities = new List<RobotEntity>();
 
-            var p1 = CreateRobot(0, "Robot_P1", new Vector3(-3.5f, 0, 0), new Color(0.1f, 0.85f, 1f),
-                                LegDeviceType.Omni, ArmDeviceType.Gatling, ArmDeviceType.Sword);
-            p1.transform.SetParent(robotsRoot.transform);
+            for (int i = 0; i < 16; i++)
+            {
+                Vector3 pos;
+                if (i == 0) pos = new Vector3(-3.5f, 0, 0);
+                else if (i == 1) pos = new Vector3(3.5f, 0, 0);
+                else
+                {
+                    // 待機位置 (アリーナ上下の待機グリッド)
+                    int row = (i - 2) / 7;
+                    int col = (i - 2) % 7;
+                    float px = -4.5f + col * 1.5f;
+                    float py = (row == 0) ? -3.8f : 3.8f;
+                    pos = new Vector3(px, py, 0);
+                }
 
-            var p2 = CreateRobot(1, "Robot_P2", new Vector3(3.5f, 0, 0), new Color(1f, 0.35f, 0.35f),
-                                LegDeviceType.Tire, ArmDeviceType.Cannon, ArmDeviceType.Gatling);
-            p2.transform.SetParent(robotsRoot.transform);
+                Color colVal = RobotManager.GetRobotColor(i);
+                LegDeviceType defaultLeg = (i % 3 == 0) ? LegDeviceType.Omni : (i % 3 == 1) ? LegDeviceType.Tire : LegDeviceType.Crawler;
+                ArmDeviceType defaultR = (i % 3 == 0) ? ArmDeviceType.Gatling : (i % 3 == 1) ? ArmDeviceType.Cannon : ArmDeviceType.Sword;
+                ArmDeviceType defaultL = (i % 3 == 0) ? ArmDeviceType.Sword : (i % 3 == 1) ? ArmDeviceType.Gatling : ArmDeviceType.Cannon;
 
-            var p1Entity = p1.GetComponent<RobotEntity>();
-            var p2Entity = p2.GetComponent<RobotEntity>();
+                var robotObj = CreateRobot(i, $"Robot_P{i + 1}", pos, colVal, defaultLeg, defaultR, defaultL);
+                robotObj.transform.SetParent(robotsRoot.transform);
+                robotEntities.Add(robotObj.GetComponent<RobotEntity>());
+            }
 
-            robotMgr.robots = new List<RobotEntity> { p1Entity, p2Entity };
-            gameMgr.player1 = p1Entity;
-            gameMgr.player2 = p2Entity;
+            robotMgr.robots = robotEntities;
+            gameMgr.player1 = robotEntities[0];
+            gameMgr.player2 = robotEntities[1];
 
             // 6. Battle HUD (Canvas & UI)
             CreateBattleHUD(managersRoot.transform);
@@ -158,7 +184,7 @@ namespace Custack.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！");
+            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！ (16台のロボット P1~P16 を配置)");
         }
 
         private static void SetupCameraAndLighting()

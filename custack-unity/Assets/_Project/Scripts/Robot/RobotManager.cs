@@ -3,6 +3,8 @@ using UnityEngine;
 using Custack.Input;
 using Custack.SharedMemory;
 using Custack.Terrain;
+using Custack.Equipment;
+using Custack.Combat;
 
 namespace Custack.Robot
 {

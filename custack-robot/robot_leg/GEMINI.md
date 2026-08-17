@@ -63,10 +63,11 @@
     * **FR (PWM2)**: $\text{clamp}(-Vx + Vy + Omega)$
     * **RL (PWM3)**: $\text{clamp}(+Vx - Vy + Omega)$
     * **RR (PWM1)**: $\text{clamp}(-Vx - Vy + Omega)$
-  * **二輪差動 (`0x02`: Tire - 前進・後退・差動旋回対応 / 前後軸: $Vx$)**:
-    * 前進・バック走行・後退旋回に完全対応
-    * **右輪 (PWM1)**: $\text{clamp}(Vx - Omega)$ （正回転 `DIR = +1`）
-    * **左輪 (PWM3)**: $\text{clamp}(Vx + Omega)$ （逆回転 `DIR = -1`）
+  * **二輪差動 (`0x02`: Tire - 前進・後退・乗算ステアリング操舵 / 前後軸: $Vx$)**:
+    * 前進・バック走行・乗算ステアリング旋回（内輪減衰）に対応
+    * $Vx \ge 0$ のときは常に $\text{speed}_r \ge 0, \text{speed}_l \ge 0$ を完全保証（逆回転ゼロ・$Vx=0$時は停止）
+    * **右旋回 ($\Omega > 0$)**: $\text{speed}_l = Vx$, $\text{speed}_r = Vx \times (1000 - \Omega) / 1000$
+    * **左旋回 ($\Omega < 0$)**: $\text{speed}_r = Vx$, $\text{speed}_l = Vx \times (1000 - |\Omega|) / 1000$
   * **キャタピラ (`0x03`: Crawler - 全地形走破・超信地旋回対応 / 前後軸: $Vx$)**:
     * 最大デューティ比を 65% に制限し、強力なトルクで安定した低速悪路走破性を発揮
     * **右履帯 (PWM1)**: $\text{clamp}((Vx - Omega) \times 0.65)$ （逆回転 `DIR = -1`）

@@ -348,16 +348,58 @@ void loop() {
 
 #elif DEVICE_ID == 0x02
     //----------------------------------------------------------------------
-    // 差動二輪モード (前後移動軸: vx, 旋回軸: omega)
-    //  バック走行にも完全対応 (vx < 0 で後退・後退旋回)
+    // 差動二輪モード (前後移動軸: vx, 旋回操舵: omega)
+    //  乗算ステアリング比率方式
+    //  - vx >= 0 (前進/停止時): speed_r >= 0, speed_l >= 0 を完全保証 (逆回転ゼロ)
+    //  - vx < 0  (後退時): speed_r <= 0, speed_l <= 0 を完全保証
+    //  - vx == 0 (停止時): speed_r = 0, speed_l = 0 (omega 単独では回転しない)
     //  PWM1: 右輪 (正回転 DIR=+1), PWM3: 左輪 (逆回転 DIR=-1)
     //----------------------------------------------------------------------
-    int32_t speed_r = (int32_t)(vx - omega);
-    int32_t speed_l = (int32_t)(vx + omega);
+    int32_t speed_r = 0;
+    int32_t speed_l = 0;
 
-    // 規定スケール範囲 [-1000, 1000] にクランプ
-    speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)1000);
-    speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)1000);
+    if (vx > 0) {
+        if (omega > 0) {
+            // 右旋回: 左輪(外輪)全速, 右輪(内輪)減速
+            speed_l = vx;
+            speed_r = ((int32_t)vx * (1000 - omega)) / 1000;
+        } else if (omega < 0) {
+            // 左旋回: 右輪(外輪)全速, 左輪(内輪)減速
+            speed_r = vx;
+            speed_l = ((int32_t)vx * (1000 - (-omega))) / 1000;
+        } else {
+            // 直進
+            speed_r = vx;
+            speed_l = vx;
+        }
+    } else if (vx < 0) {
+        if (omega > 0) {
+            // 後退右旋回
+            speed_l = vx;
+            speed_r = ((int32_t)vx * (1000 - omega)) / 1000;
+        } else if (omega < 0) {
+            // 後退左旋回
+            speed_r = vx;
+            speed_l = ((int32_t)vx * (1000 - (-omega))) / 1000;
+        } else {
+            // 直進後退
+            speed_r = vx;
+            speed_l = vx;
+        }
+    } else {
+        // vx == 0 (停止時): タイヤ回転なし
+        speed_r = 0;
+        speed_l = 0;
+    }
+
+    // 規定スケール範囲クランプ (vx >= 0 なら [0, 1000], vx < 0 なら [-1000, 0])
+    if (vx >= 0) {
+        speed_r = clamp_val(speed_r, (int32_t)0, (int32_t)1000);
+        speed_l = clamp_val(speed_l, (int32_t)0, (int32_t)1000);
+    } else {
+        speed_r = clamp_val(speed_r, (int32_t)-1000, (int32_t)0);
+        speed_l = clamp_val(speed_l, (int32_t)-1000, (int32_t)0);
+    }
 
     // パルス幅換算 (PWM1: 右輪正方向 DIR=+1, PWM3: 左輪逆方向 DIR=-1)
     uint16_t pulse1 = (uint16_t)(SERVO_NEUTRAL_US + offset1 + ((speed_r * (+1) * scale1) / 200));

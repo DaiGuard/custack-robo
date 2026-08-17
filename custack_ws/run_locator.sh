@@ -5,31 +5,44 @@ set -e
 WS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$WS_DIR"
 
-# オプション解析（--build でビルド後に実行、--help でヘルプ表示）
+# オプション解析（--build でビルド後に実行、--help でヘルプ表示、-t / --tag-ids でIDリスト指定）
 BUILD_FIRST=false
 ARGS=()
 
-for arg in "$@"; do
-    case "$arg" in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --build|-b)
             BUILD_FIRST=true
+            shift
+            ;;
+        --tag-ids|--tag_ids|--ids|-t)
+            if [[ -n "$2" && "$2" != -* ]]; then
+                ARGS+=("--tag-ids" "$2")
+                shift 2
+            else
+                echo "❌ エラー: $1 には ID リスト (例: 1,2,3) を指定してください" >&2
+                exit 1
+            fi
             ;;
         --help|-h)
             echo "使用方法: ./run_locator.sh [オプション] [ノード引数...]"
             echo ""
             echo "スクリプトオプション:"
-            echo "  -b, --build       実行前に colcon build を実行する"
-            echo "  -h, --help        このヘルプを表示する"
+            echo "  -t, --tag-ids <ids>  特定のタグIDリストのみ検出 (例: -t 1,2,3 または --tag-ids 1,2,3)"
+            echo "  -b, --build          実行前に colcon build を実行する"
+            echo "  -h, --help           このヘルプを表示する"
             echo ""
             echo "ノード引数の例:"
+            echo "  -t 1,2,3                       Tag ID 1, 2, 3 のみ検出 (ノイズ完全遮断)"
             echo "  --headless                     ヘッドレスモードで起動"
-            echo "  --max-detections 16            最大検出数を16に設定 (Tag ID: 0~15)"
+            echo "  --max-detections 16            最大検出数を16に設定"
             echo "  --ros-args -p camera_index:=0  カメラ番号指定"
-            echo "  --ros-args -p max_detections:=16 -p filter_tag_ids:=true"
+            echo "  --ros-args -p filter_tag_ids:=false 全タグID無制限デコード"
             exit 0
             ;;
         *)
-            ARGS+=("$arg")
+            ARGS+=("$1")
+            shift
             ;;
     esac
 done

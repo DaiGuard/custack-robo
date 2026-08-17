@@ -26,19 +26,32 @@ namespace Custack.Robot
         public Transform hpBarFillTransform;
         public Vector3 hpBarOffset = new Vector3(0, 0.8f, 0);
 
+        [Header("レンダラー参照")]
+        [Tooltip("外周ドーナツ型リングの Renderer (プレイヤーカラー・被弾点滅を適用)")]
+        public Renderer donutRenderer;
+
+        [Tooltip("中央白色円形パッチの Renderer (天頂カメラの AprilTag 認識向上のため常時白色)")]
+        public Renderer centerWhiteRenderer;
+
         private SpriteRenderer spriteRenderer;
-        private Renderer meshOrGeneralRenderer;
         private Health health;
         private float flashEndTime = 0f;
 
         void Awake()
         {
-            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-            meshOrGeneralRenderer = GetComponentInChildren<MeshRenderer>();
-            if (meshOrGeneralRenderer == null && spriteRenderer != null)
+            if (donutRenderer == null)
             {
-                meshOrGeneralRenderer = spriteRenderer;
+                var donutObj = transform.Find("DonutRing") ?? transform.Find("Avatar");
+                if (donutObj != null) donutRenderer = donutObj.GetComponent<Renderer>();
             }
+
+            if (centerWhiteRenderer == null)
+            {
+                var centerObj = transform.Find("CenterWhite");
+                if (centerObj != null) centerWhiteRenderer = centerObj.GetComponent<Renderer>();
+            }
+
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
             if (tagIdTextMesh == null)
             {
@@ -52,6 +65,12 @@ namespace Custack.Robot
                 health.OnDamaged += OnDamaged;
                 health.OnHealthChanged += UpdateHpBar;
             }
+
+            // 中央パッチは常に白色を維持
+            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
+            {
+                centerWhiteRenderer.material.color = Color.white;
+            }
         }
 
         public void Initialize(int playerId, Color color)
@@ -62,6 +81,11 @@ namespace Custack.Robot
             if (tagIdTextMesh != null)
             {
                 tagIdTextMesh.text = playerId.ToString();
+            }
+
+            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
+            {
+                centerWhiteRenderer.material.color = Color.white;
             }
         }
 
@@ -92,13 +116,19 @@ namespace Custack.Robot
 
         private void ApplyColor(Color col)
         {
-            if (spriteRenderer != null)
+            if (donutRenderer != null && donutRenderer.material != null)
+            {
+                donutRenderer.material.color = col;
+            }
+            else if (spriteRenderer != null)
             {
                 spriteRenderer.color = col;
             }
-            else if (meshOrGeneralRenderer != null && meshOrGeneralRenderer.material != null)
+
+            // 中央白色パッチは常に純白を維持 (AprilTag 投光用)
+            if (centerWhiteRenderer != null && centerWhiteRenderer.material != null)
             {
-                meshOrGeneralRenderer.material.color = col;
+                centerWhiteRenderer.material.color = Color.white;
             }
         }
 

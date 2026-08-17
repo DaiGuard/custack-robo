@@ -27,7 +27,7 @@ struct InfoData {
 
 class LocatorNode : public rclcpp::Node {
     public:
-        explicit LocatorNode(bool headless = false, int cli_max_detections = -1);
+        explicit LocatorNode(bool headless = false, int cli_max_detections = -1, const std::string &cli_tag_ids = "");
         ~LocatorNode();
     private:
         std::string cache_path_str_;
@@ -80,6 +80,7 @@ class LocatorNode : public rclcpp::Node {
         int tag_id_min_ = 0;
         int tag_id_max_ = 15;
         bool filter_tag_ids_ = true;
+        std::vector<uint16_t> custom_tag_ids_;
         std::vector<uint16_t> tag_ids_filter_;
 
         VPIArray apriltag_detections_ = nullptr;

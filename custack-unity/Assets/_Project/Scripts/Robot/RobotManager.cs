@@ -230,64 +230,39 @@ namespace Custack.Robot
             Color robotColor = GetRobotColor(id);
             equip.SetEquipment(LegDeviceType.Omni, ArmDeviceType.Gatling, ArmDeviceType.Sword);
 
-            // 1. 機体本体 (メイン Quad)
-            var avatarChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            avatarChild.name = "Avatar";
-            avatarChild.transform.SetParent(robotObj.transform);
-            avatarChild.transform.localPosition = Vector3.zero;
-            avatarChild.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
-            var avatarCol = avatarChild.GetComponent<Collider>();
-            if (avatarCol != null) Destroy(avatarCol);
-
             var avatarShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
-            var mat = new Material(avatarShader) { color = robotColor };
-            avatarChild.GetComponent<MeshRenderer>().material = mat;
 
-            // 2. 進行方向インジケーター (上方向矢印)
+            // 1. 中央白色円形パッチ (天頂カメラの AprilTag 認識向上のため常時白色)
+            var centerChild = new GameObject("CenterWhite");
+            centerChild.transform.SetParent(robotObj.transform);
+            centerChild.transform.localPosition = Vector3.zero;
+            centerChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.28f);
+            var mrCenter = centerChild.AddComponent<MeshRenderer>();
+            mrCenter.material = new Material(avatarShader) { color = Color.white };
+
+            // 2. 外周ドーナツ型リング (プレイヤーカラー領域: 内径 0.28m, 外径 0.48m)
+            var donutChild = new GameObject("DonutRing");
+            donutChild.transform.SetParent(robotObj.transform);
+            donutChild.transform.localPosition = Vector3.zero;
+            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.28f, 0.48f);
+            var mrDonut = donutChild.AddComponent<MeshRenderer>();
+            mrDonut.material = new Material(avatarShader) { color = robotColor };
+
+            visual.centerWhiteRenderer = mrCenter;
+            visual.donutRenderer = mrDonut;
+
+            // 3. 進行方向インジケーター (外周リング前方に配置: ダイヤ型)
             var arrowChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
             arrowChild.name = "DirectionArrow";
             arrowChild.transform.SetParent(robotObj.transform);
-            arrowChild.transform.localPosition = new Vector3(0, 0.35f, -0.01f);
-            arrowChild.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+            arrowChild.transform.localPosition = new Vector3(0, 0.55f, -0.01f);
+            arrowChild.transform.localScale = new Vector3(0.25f, 0.25f, 1f);
             arrowChild.transform.localRotation = Quaternion.Euler(0, 0, 45f);
             var arrowCol = arrowChild.GetComponent<Collider>();
             if (arrowCol != null) Destroy(arrowCol);
             arrowChild.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = Color.white };
 
-            // 3. 頭上 HP バー
-            var hpBg = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            hpBg.name = "HpBar_Bg";
-            hpBg.transform.SetParent(robotObj.transform);
-            hpBg.transform.localPosition = new Vector3(0, 0.75f, -0.01f);
-            hpBg.transform.localScale = new Vector3(1.0f, 0.15f, 1f);
-            var hpBgCol = hpBg.GetComponent<Collider>();
-            if (hpBgCol != null) Destroy(hpBgCol);
-            hpBg.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = new Color(0.1f, 0.1f, 0.1f, 0.8f) };
-
-            var hpFill = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            hpFill.name = "HpBar_Fill";
-            hpFill.transform.SetParent(hpBg.transform);
-            hpFill.transform.localPosition = Vector3.zero;
-            hpFill.transform.localScale = new Vector3(0.95f, 0.8f, 1f);
-            var hpFillCol = hpFill.GetComponent<Collider>();
-            if (hpFillCol != null) Destroy(hpFillCol);
-            hpFill.GetComponent<MeshRenderer>().material = new Material(avatarShader) { color = new Color(0.2f, 1.0f, 0.3f, 1f) };
-
-            // 4. AprilTag 番号テキスト (機体中央に大きな太字数字を描画)
-            var textObj = new GameObject("TagIdText");
-            textObj.transform.SetParent(robotObj.transform);
-            textObj.transform.localPosition = new Vector3(0, -0.05f, -0.05f);
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = id.ToString();
-            textMesh.characterSize = 0.14f;
-            textMesh.fontSize = 64;
-            textMesh.fontStyle = FontStyle.Bold;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.color = Color.white;
-
-            visual.tagIdTextMesh = textMesh;
-            visual.hpBarFillTransform = hpFill.transform;
+            // 4. ビジュアル初期化
             visual.Initialize(id, robotColor);
 
             // 4. マズルポイント

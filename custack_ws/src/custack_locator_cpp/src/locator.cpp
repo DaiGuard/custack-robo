@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
 
     bool headless = false;
     int max_detections = -1;
+    std::string tag_ids = "";
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -22,9 +23,13 @@ int main(int argc, char **argv) {
                     RCLCPP_WARN(rclcpp::get_logger("locator_node"), "⚠️: --max-detections の値が無効です");
                 }
             }
+        } else if (arg == "--tag-ids" || arg == "--tag_ids" || arg == "--ids" || arg == "-t") {
+            if (i + 1 < argc) {
+                tag_ids = argv[++i];
+            }
         }
     }
-    auto node = std::make_shared<LocatorNode>(headless, max_detections);
+    auto node = std::make_shared<LocatorNode>(headless, max_detections, tag_ids);
 
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 4);
     executor.add_node(node);

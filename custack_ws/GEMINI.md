@@ -85,6 +85,7 @@ flowchart LR
 
 | パラメータ名 / CLI引数 | 型 / フラグ | デフォルト値 | 説明 |
 | :--- | :---: | :---: | :--- |
+| `-t`, `--tag-ids` / `tag_ids` | `string` | `""` | **特定の検出対象タグIDリスト (例: `-t 1,2,3`)** |
 | `--max-detections` / `max_detections` | `int` | `16` | 最大同時検出数 (1〜32) |
 | `tag_id_min` | `int` | `0` | 検出対象の最小タグID |
 | `tag_id_max` | `int` | `15` | 検出対象の最大タグID |
@@ -95,7 +96,7 @@ flowchart LR
 ### 📊 1秒ごとの処理速度・レイテンシ統計ログ
 `locator_node` は 1 秒ごとに以下の性能統計ログを出力します：
 ```text
-📊 [速度・認識統計 1s] Cap: 60.0 fps | Proc: 59.8 fps | VPI遅延: avg 8.45 ms (min: 7.12, max: 10.30) | 検出タグ(15台): [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+📊 [速度・認識統計 1s] Cap: 60.0 fps | Proc: 59.8 fps | VPI遅延: avg 8.45 ms (min: 7.12, max: 10.30) | 検出タグ(3台): [1, 2, 3]
 ```
 
 ---
@@ -115,6 +116,9 @@ cd custack_ws && ./build_host.sh
 ## 🚀 起動方法
 
 ```bash
+# Jetson: 特定のタグIDのみ検出 (例: Tag ID 1, 2, 3 のみ検出してノイズ完全遮断)
+./run_locator.sh -t 1,2,3
+
 # Jetson: デフォルト起動 (ID 0〜15 / 最大16台)
 ./run_locator.sh
 

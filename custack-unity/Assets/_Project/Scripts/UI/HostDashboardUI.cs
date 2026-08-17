@@ -136,6 +136,13 @@ namespace Custack.UI
                 showDashboard = false;
             }
 
+            GUI.backgroundColor = new Color(1f, 0.35f, 0.35f);
+            if (GUILayout.Button("🚪 終了", GUILayout.Width(70), GUILayout.Height(22)))
+            {
+                QuitApplication();
+            }
+            GUI.backgroundColor = Color.white;
+
             GUILayout.EndHorizontal();
         }
 
@@ -324,7 +331,25 @@ namespace Custack.UI
                 Debug.Log("<color=#00FF88>[HostDashboardUI]</color> ✅ 全機体の HP を全回復しました。");
             }
 
+            GUILayout.Space(6);
+            GUI.backgroundColor = new Color(1f, 0.35f, 0.35f);
+            if (GUILayout.Button("🚪 システム終了 (Quit Application)", GUILayout.Height(28)))
+            {
+                QuitApplication();
+            }
+            GUI.backgroundColor = Color.white;
+
             GUILayout.EndVertical();
+        }
+
+        public void QuitApplication()
+        {
+            Debug.Log("<color=#FF6666>[HostDashboardUI]</color> 🚪 システムを終了します...");
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private string GetHpAsciiBar(float ratio, int length)

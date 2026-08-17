@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
         }                                                                \
     } while (0)
 
-LocatorNode::LocatorNode(bool headless, int cli_max_detections) : rclcpp::Node("locator_node"), headless_(headless) {
+LocatorNode::LocatorNode(bool headless, int cli_max_detections, const std::string &cli_tag_ids) : rclcpp::Node("locator_node"), headless_(headless) {
     RCLCPP_INFO(this->get_logger(), "ℹ️: OpenCV %s", CV_VERSION);
 
     // デフォルトファイルパスを設定する
@@ -51,6 +51,7 @@ LocatorNode::LocatorNode(bool headless, int cli_max_detections) : rclcpp::Node("
     this->declare_parameter<int>("max_detections", 16);
     this->declare_parameter<int>("tag_id_min", 0);
     this->declare_parameter<int>("tag_id_max", 15);
+    this->declare_parameter<std::string>("tag_ids", "");
     this->declare_parameter<bool>("filter_tag_ids", true);
 
     // ROSパラメータを取得する
@@ -74,8 +75,47 @@ LocatorNode::LocatorNode(bool headless, int cli_max_detections) : rclcpp::Node("
     }
     filter_tag_ids_ = this->get_parameter("filter_tag_ids").as_bool();
 
-    RCLCPP_INFO(this->get_logger(), "🔧: AprilTag設定 - 最大検出数: %d | ID範囲: [%d ~ %d] (フィルタ: %s)",
-        max_detections_, tag_id_min_, tag_id_max_, filter_tag_ids_ ? "ON" : "OFF(全IDデコード)");
+    // 指定されたタグIDリストの解析 (CLI引数またはROSパラメータ "tag_ids")
+    std::string raw_tag_ids = cli_tag_ids;
+    if (raw_tag_ids.empty()) {
+        raw_tag_ids = this->get_parameter("tag_ids").as_string();
+    }
+    custom_tag_ids_.clear();
+    if (!raw_tag_ids.empty()) {
+        std::stringstream ss(raw_tag_ids);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            std::stringstream ss2(item);
+            std::string subitem;
+            while (ss2 >> subitem) {
+                try {
+                    int val = std::stoi(subitem);
+                    if (val >= 0 && val <= 65535) {
+                        custom_tag_ids_.push_back(static_cast<uint16_t>(val));
+                    }
+                } catch (...) {}
+            }
+        }
+        if (!custom_tag_ids_.empty()) {
+            filter_tag_ids_ = true;
+            if (cli_max_detections <= 0) {
+                max_detections_ = std::max(max_detections_, static_cast<int>(custom_tag_ids_.size()));
+            }
+        }
+    }
+
+    if (!custom_tag_ids_.empty()) {
+        std::ostringstream ss;
+        for (size_t i = 0; i < custom_tag_ids_.size(); ++i) {
+            if (i > 0) ss << ", ";
+            ss << custom_tag_ids_[i];
+        }
+        RCLCPP_INFO(this->get_logger(), "🔧: AprilTag設定 - 特定検出IDリスト(%zu台): [%s] | 最大検出数: %d (フィルタ: ON)",
+            custom_tag_ids_.size(), ss.str().c_str(), max_detections_);
+    } else {
+        RCLCPP_INFO(this->get_logger(), "🔧: AprilTag設定 - 最大検出数: %d | ID範囲: [%d ~ %d] (フィルタ: %s)",
+            max_detections_, tag_id_min_, tag_id_max_, filter_tag_ids_ ? "ON" : "OFF(全IDデコード)");
+    }
 
     if (headless_) {
         RCLCPP_INFO(this->get_logger(), "👻: ヘッドレスモードで起動します。UIは表示されません。");
@@ -364,9 +404,13 @@ void LocatorNode::setupVPI(int width, int height, float scale) {
     VPIAprilTagDecodeParams params;
     tag_ids_filter_.clear();
     if (filter_tag_ids_) {
-        for (int id = tag_id_min_; id <= tag_id_max_; ++id) {
-            if (id >= 0 && id <= 65535) {
-                tag_ids_filter_.push_back(static_cast<uint16_t>(id));
+        if (!custom_tag_ids_.empty()) {
+            tag_ids_filter_ = custom_tag_ids_;
+        } else {
+            for (int id = tag_id_min_; id <= tag_id_max_; ++id) {
+                if (id >= 0 && id <= 65535) {
+                    tag_ids_filter_.push_back(static_cast<uint16_t>(id));
+                }
             }
         }
         params.tagIdFilter = tag_ids_filter_.data();

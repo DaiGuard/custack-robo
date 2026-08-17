@@ -22,8 +22,10 @@ for arg in "$@"; do
             echo "  -h, --help        このヘルプを表示する"
             echo ""
             echo "ノード引数の例:"
-            echo "  --headless        ヘッドレスモードで起動"
-            echo "  --ros-args -p camera_index:=0"
+            echo "  --headless                     ヘッドレスモードで起動"
+            echo "  --max-detections 16            最大検出数を16に設定 (Tag ID: 0~15)"
+            echo "  --ros-args -p camera_index:=0  カメラ番号指定"
+            echo "  --ros-args -p max_detections:=16 -p filter_tag_ids:=true"
             exit 0
             ;;
         *)

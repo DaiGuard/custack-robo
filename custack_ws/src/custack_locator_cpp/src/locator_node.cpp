@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
         }                                                                \
     } while (0)
 
-LocatorNode::LocatorNode(bool headless) : rclcpp::Node("locator_node"), headless_(headless) {
+LocatorNode::LocatorNode(bool headless, int cli_max_detections) : rclcpp::Node("locator_node"), headless_(headless) {
     RCLCPP_INFO(this->get_logger(), "ℹ️: OpenCV %s", CV_VERSION);
 
     // デフォルトファイルパスを設定する
@@ -48,6 +48,10 @@ LocatorNode::LocatorNode(bool headless) : rclcpp::Node("locator_node"), headless
     this->declare_parameter<std::string>("robot_pose_topic", "robot_poses");
     this->declare_parameter<std::string>("calib_path", calib_save_path_str);
     this->declare_parameter<std::string>("homography_path", homography_save_path_str);
+    this->declare_parameter<int>("max_detections", 16);
+    this->declare_parameter<int>("tag_id_min", 0);
+    this->declare_parameter<int>("tag_id_max", 15);
+    this->declare_parameter<bool>("filter_tag_ids", true);
 
     // ROSパラメータを取得する
     int camera_index = this->get_parameter("camera_index").as_int();
@@ -59,6 +63,20 @@ LocatorNode::LocatorNode(bool headless) : rclcpp::Node("locator_node"), headless
     calib_save_path_str = this->get_parameter("calib_path").as_string();
     homography_save_path_str = this->get_parameter("homography_path").as_string();
     
+    max_detections_ = this->get_parameter("max_detections").as_int();
+    if (cli_max_detections > 0) {
+        max_detections_ = cli_max_detections;
+    }
+    tag_id_min_ = this->get_parameter("tag_id_min").as_int();
+    tag_id_max_ = this->get_parameter("tag_id_max").as_int();
+    if (cli_max_detections > 0 && tag_id_max_ < max_detections_ - 1) {
+        tag_id_max_ = max_detections_ - 1;
+    }
+    filter_tag_ids_ = this->get_parameter("filter_tag_ids").as_bool();
+
+    RCLCPP_INFO(this->get_logger(), "🔧: AprilTag設定 - 最大検出数: %d | ID範囲: [%d ~ %d] (フィルタ: %s)",
+        max_detections_, tag_id_min_, tag_id_max_, filter_tag_ids_ ? "ON" : "OFF(全IDデコード)");
+
     if (headless_) {
         RCLCPP_INFO(this->get_logger(), "👻: ヘッドレスモードで起動します。UIは表示されません。");
     }
@@ -344,9 +362,19 @@ void LocatorNode::setupVPI(int width, int height, float scale) {
 
     // AprilTagsペイロードの作成
     VPIAprilTagDecodeParams params;
-    static uint16_t tag_ids[] = {0, 1, 2};
-    params.tagIdFilter = tag_ids;
-    params.tagIdFilterSize = sizeof(tag_ids) / sizeof(tag_ids[0]);
+    tag_ids_filter_.clear();
+    if (filter_tag_ids_) {
+        for (int id = tag_id_min_; id <= tag_id_max_; ++id) {
+            if (id >= 0 && id <= 65535) {
+                tag_ids_filter_.push_back(static_cast<uint16_t>(id));
+            }
+        }
+        params.tagIdFilter = tag_ids_filter_.data();
+        params.tagIdFilterSize = tag_ids_filter_.size();
+    } else {
+        params.tagIdFilter = nullptr;
+        params.tagIdFilterSize = 0;
+    }
     params.maxBitsCorrected = 1;
     // params.family = VPI_APRILTAG_36H11;
     // params.family = VPI_APRILTAG_25H9;
@@ -362,7 +390,8 @@ void LocatorNode::setupVPI(int width, int height, float scale) {
     CHECK_VPI_STATUS(vpiArrayCreate(
         max_detections_, VPI_ARRAY_TYPE_POSE, VPI_BACKEND_CPU,
         &apriltag_poses_));
-    RCLCPP_INFO(this->get_logger(), "✅: VPIのセットアップが完了しました");
+    RCLCPP_INFO(this->get_logger(), "✅: VPIのセットアップが完了しました (最大検出数: %d, タグフィルタ数: %zu)",
+        max_detections_, tag_ids_filter_.size());
 }
 
 void LocatorNode::processWithVPI(cv::Mat &src, cv::Mat&dst,
@@ -442,33 +471,38 @@ void LocatorNode::processLoop() {
 }
 
 void LocatorNode::processCallback() {
-    // メイン処理フレームカウントを更新
-    {
-        std::lock_guard<std::mutex> lock(info_mutex_);
-        info_data_.process_framecount++;
-    }
-
-    // cv::Mat current_frame;
     {
         std::lock_guard<std::mutex> lock(frame_mutex_);
         if(latest_frame_.empty()) return;
-        // current_frame = latest_frame_.clone();
-        // current_frame = latest_frame_;
         latest_frame_.copyTo(current_frame_);
     }
 
+    auto t_start = std::chrono::steady_clock::now();
+
     // VPIで処理
     std::vector<VPIAprilTagDetection> detected;
-    // processWithVPI(gray_frame, processed_frame);
     processWithVPI(current_frame_, processed_frame_, detected);
 
-    // RCLCPP_INFO(this->get_logger(), "🔍: 検出されたAprilTagsの数: %ld", detected.size());
-    // for(int i=0; i<detected.size(); ++i) {
-    //     const auto &dct = detected[i];
-    //     RCLCPP_INFO(this->get_logger(),
-    //         "  - タグID: %d, 中心座標: (%.2f, %.2f)",
-    //         dct.id, dct.center.x, dct.center.y);
-    // }
+    auto t_end = std::chrono::steady_clock::now();
+    double process_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+
+    // メイン処理フレームカウント & 統計情報更新
+    {
+        std::lock_guard<std::mutex> lock(info_mutex_);
+        info_data_.process_framecount++;
+        info_data_.total_process_time_ms += process_time_ms;
+        if (process_time_ms > info_data_.max_process_time_ms) {
+            info_data_.max_process_time_ms = process_time_ms;
+        }
+        if (process_time_ms < info_data_.min_process_time_ms) {
+            info_data_.min_process_time_ms = process_time_ms;
+        }
+        info_data_.last_detected_count = detected.size();
+        info_data_.last_detected_ids.clear();
+        for (const auto &dct : detected) {
+            info_data_.last_detected_ids.push_back(dct.id);
+        }
+    }
 
     for (const auto &dct : detected) {
         cv::Point2f center(dct.center.x / detect_scale_,
@@ -509,22 +543,46 @@ void LocatorNode::infoCallback() {
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_info_time_);
     if (elapsed.count() >= 1000) {
-        float count = static_cast<float>(elapsed.count()/1000.0f);
+        float count = static_cast<float>(elapsed.count() / 1000.0f);
         uint32_t cap_framecount = 0u;
         uint32_t process_framecount = 0u;
+        double total_time = 0.0;
+        double max_time = 0.0;
+        double min_time = 0.0;
+        size_t det_count = 0;
+        std::vector<int> det_ids;
+
         {
             std::lock_guard<std::mutex> lock(info_mutex_);
             cap_framecount = info_data_.cap_framecount;
             process_framecount = info_data_.process_framecount;
+            total_time = info_data_.total_process_time_ms;
+            max_time = info_data_.max_process_time_ms;
+            min_time = (process_framecount > 0) ? info_data_.min_process_time_ms : 0.0;
+            det_count = info_data_.last_detected_count;
+            det_ids = info_data_.last_detected_ids;
+
             info_data_.cap_framecount = 0;
             info_data_.process_framecount = 0;
+            info_data_.total_process_time_ms = 0.0;
+            info_data_.max_process_time_ms = 0.0;
+            info_data_.min_process_time_ms = 9999.0;
         }
 
+        float cap_fps = cap_framecount / count;
+        float proc_fps = process_framecount / count;
+        double avg_time = (process_framecount > 0) ? (total_time / process_framecount) : 0.0;
+
+        std::sort(det_ids.begin(), det_ids.end());
+        std::ostringstream ids_ss;
+        for (size_t i = 0; i < det_ids.size(); ++i) {
+            if (i > 0) ids_ss << ", ";
+            ids_ss << det_ids[i];
+        }
 
         RCLCPP_INFO(this->get_logger(),
-            "📊: キャプチャーフレーム数: %d, 処理フレーム数: %d",
-            static_cast<int>(cap_framecount/count),
-            static_cast<int>(process_framecount/count));
+            "📊 [速度・認識統計 1s] Cap: %.1f fps | Proc: %.1f fps | VPI遅延: avg %.2f ms (min: %.2f, max: %.2f) | 検出タグ(%zu台): [%s]",
+            cap_fps, proc_fps, avg_time, min_time, max_time, det_count, ids_ss.str().c_str());
         last_info_time_ = now;
     }
 

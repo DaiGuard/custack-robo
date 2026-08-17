@@ -15,14 +15,19 @@
 #include <vpi/algo/ConvertImageFormat.h>
 
 struct InfoData {
-    uint32_t cap_framecount;
-    uint32_t process_framecount;
+    uint32_t cap_framecount = 0;
+    uint32_t process_framecount = 0;
+    double total_process_time_ms = 0.0;
+    double max_process_time_ms = 0.0;
+    double min_process_time_ms = 9999.0;
+    size_t last_detected_count = 0;
+    std::vector<int> last_detected_ids;
 };
 
 
 class LocatorNode : public rclcpp::Node {
     public:
-        explicit LocatorNode(bool headless = false);
+        explicit LocatorNode(bool headless = false, int cli_max_detections = -1);
         ~LocatorNode();
     private:
         std::string cache_path_str_;
@@ -71,7 +76,12 @@ class LocatorNode : public rclcpp::Node {
         VPIConvertImageFormatParams convert_params_;
 
         VPIPayload apriltags_payload_ = nullptr;
-        const int max_detections_ = 16;
+        int max_detections_ = 16;
+        int tag_id_min_ = 0;
+        int tag_id_max_ = 15;
+        bool filter_tag_ids_ = true;
+        std::vector<uint16_t> tag_ids_filter_;
+
         VPIArray apriltag_detections_ = nullptr;
         VPIArray apriltag_poses_ = nullptr;
 

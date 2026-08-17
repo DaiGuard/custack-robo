@@ -257,7 +257,8 @@ namespace Custack.Editor
             if (col != null) Object.DestroyImmediate(col);
 
             var mr = floorObj.GetComponent<MeshRenderer>();
-            mr.sharedMaterial = GetOrCreateMaterial("Mat_ArenaFloor", new Color(0.12f, 0.14f, 0.18f, 1f));
+            // 床面は完全な黒 (プロジェクター光を照射せず、AprilTag のコントラストを最大化)
+            mr.sharedMaterial = GetOrCreateMaterial("Mat_ArenaFloor", Color.black);
         }
 
         private static T GetOrAddComponent<T>(GameObject obj) where T : Component
@@ -362,27 +363,44 @@ namespace Custack.Editor
             var zone = GetOrAddComponent<TerrainZone>(zoneObj);
             zone.terrainType = type;
 
-            // 視覚化用 Quad (Z=0.5: 床面とロボットの中間)
-            var visual = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            visual.name = "Visual";
-            visual.transform.SetParent(zoneObj.transform);
-            visual.transform.localPosition = new Vector3(0, 0, 0.5f);
-            visual.transform.localScale = new Vector3(size.x, size.y, 1f);
-
-            var quadCol = visual.GetComponent<Collider>();
-            if (quadCol != null) Object.DestroyImmediate(quadCol);
-
             Color zoneColor = type switch
             {
-                TerrainType.Mud => new Color(0.50f, 0.32f, 0.15f, 0.6f),
-                TerrainType.Ice => new Color(0.35f, 0.75f, 1.0f, 0.6f),
-                TerrainType.Lava => new Color(1.0f, 0.25f, 0.08f, 0.7f),
-                TerrainType.Forest => new Color(0.12f, 0.65f, 0.22f, 0.6f),
+                TerrainType.Mud => new Color(0.90f, 0.55f, 0.15f, 1.0f),      // 泥沼: オレンジブラウン枠線
+                TerrainType.Ice => new Color(0.20f, 0.85f, 1.0f, 1.0f),       // 氷上: ネオンシアン枠線
+                TerrainType.Lava => new Color(1.0f, 0.25f, 0.10f, 1.0f),      // 溶岩: 鮮烈レッド枠線
+                TerrainType.Forest => new Color(0.15f, 1.0f, 0.35f, 1.0f),    // 森林: ネオングリーン枠線
                 _ => Color.white
             };
 
-            var mr = visual.GetComponent<MeshRenderer>();
-            mr.sharedMaterial = GetOrCreateMaterial($"Mat_Terrain_{type}", zoneColor, true);
+            // ベタ塗り Quad を廃止し、スタイリッシュな外枠境界線 (Line Quads: 幅 5cm) を描画
+            // 内側は完全な黒 (光照射ゼロ) となり、ロボットがゾーン内に入っても AprilTag の黒が絶対に白浮きしない
+            var borderRoot = new GameObject("BorderLines");
+            borderRoot.transform.SetParent(zoneObj.transform, false);
+            borderRoot.transform.localPosition = new Vector3(0, 0, 0.5f);
+
+            float lineWidth = 0.05f; // 幅 5cm の枠線
+            var lineMat = GetOrCreateMaterial($"Mat_Terrain_Border_{type}", zoneColor, false);
+
+            // 上枠
+            CreateLineQuad("TopLine", borderRoot.transform, new Vector3(0, size.y / 2f, 0), new Vector3(size.x, lineWidth, 1f), lineMat);
+            // 下枠
+            CreateLineQuad("BottomLine", borderRoot.transform, new Vector3(0, -size.y / 2f, 0), new Vector3(size.x, lineWidth, 1f), lineMat);
+            // 左枠
+            CreateLineQuad("LeftLine", borderRoot.transform, new Vector3(-size.x / 2f, 0, 0), new Vector3(lineWidth, size.y, 1f), lineMat);
+            // 右枠
+            CreateLineQuad("RightLine", borderRoot.transform, new Vector3(size.x / 2f, 0, 0), new Vector3(lineWidth, size.y, 1f), lineMat);
+        }
+
+        private static void CreateLineQuad(string name, Transform parent, Vector3 localPos, Vector3 scale, Material mat)
+        {
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = name;
+            quad.transform.SetParent(parent, false);
+            quad.transform.localPosition = localPos;
+            quad.transform.localScale = scale;
+            var col = quad.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            quad.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
 
         private static void CreateBattleHUD(Transform parent)

@@ -41,9 +41,10 @@ namespace Custack.Robot
 
             for (int i = 0; i < segments; i++)
             {
+                // 時計回り (Clockwise: 前面描画)
                 triangles[i * 3] = 0;
-                triangles[i * 3 + 1] = i + 1;
-                triangles[i * 3 + 2] = (i + 1 == segments) ? 1 : i + 2;
+                triangles[i * 3 + 1] = (i + 1 == segments) ? 1 : i + 2;
+                triangles[i * 3 + 2] = i + 1;
             }
 
             mesh.vertices = vertices;
@@ -57,9 +58,9 @@ namespace Custack.Robot
         }
 
         /// <summary>
-        /// 外周ドーナツ型リングメッシュ（内径 default: 0.28m, 外径 default: 0.48m）
+        /// 外周ドーナツ型リングメッシュ（内径 default: 0.30m, 外径 default: 0.52m）
         /// </summary>
-        public static Mesh GetOrCreateDonutMesh(float innerRadius = 0.28f, float outerRadius = 0.48f, int segments = 36)
+        public static Mesh GetOrCreateDonutMesh(float innerRadius = 0.30f, float outerRadius = 0.52f, int segments = 36)
         {
             if (cachedDonutMesh != null) return cachedDonutMesh;
 
@@ -88,20 +89,21 @@ namespace Custack.Robot
             for (int i = 0; i < segments; i++)
             {
                 int next = (i + 1) % segments;
-                int i0 = i * 2;
-                int i1 = i * 2 + 1;
-                int i2 = next * 2;
-                int i3 = next * 2 + 1;
+                int i0 = i * 2;         // 現在の内周
+                int i1 = i * 2 + 1;     // 現在の外周
+                int i2 = next * 2;     // 次の内周
+                int i3 = next * 2 + 1; // 次の外周
 
-                // Triangle 1
+                // 時計回り (Clockwise: 前面描画)
+                // Triangle 1: i0 -> i3 -> i1
                 triangles[i * 6] = i0;
-                triangles[i * 6 + 1] = i1;
-                triangles[i * 6 + 2] = i3;
+                triangles[i * 6 + 1] = i3;
+                triangles[i * 6 + 2] = i1;
 
-                // Triangle 2
+                // Triangle 2: i0 -> i2 -> i3
                 triangles[i * 6 + 3] = i0;
-                triangles[i * 6 + 4] = i3;
-                triangles[i * 6 + 5] = i2;
+                triangles[i * 6 + 4] = i2;
+                triangles[i * 6 + 5] = i3;
             }
 
             mesh.vertices = vertices;

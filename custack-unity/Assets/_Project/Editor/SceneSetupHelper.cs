@@ -505,6 +505,9 @@ namespace Custack.Editor
             }
 
             mat.color = color;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Cull")) mat.SetFloat("_Cull", 0); // 両面描画で確実に表示
+
             if (isTransparent)
             {
                 if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1);

@@ -32,6 +32,48 @@ namespace Custack.Robot
         private SingleControllerCommand[] commandOutputBuffer = new SingleControllerCommand[8];
         private float sendTimer = 0f;
 
+        [Header("機体レンダリング・有効化管理")]
+        [Tooltip("各ロボット (Tag ID: 0~15) のレンダリング表示・位置同期の有効フラグ")]
+        [SerializeField]
+        private bool[] robotEnabledFlags = new bool[32];
+
+        public bool IsRobotEnabled(int id)
+        {
+            if (id < 0 || id >= robotEnabledFlags.Length) return false;
+            return robotEnabledFlags[id];
+        }
+
+        public void SetRobotEnabled(int id, bool enabled)
+        {
+            if (id < 0 || id >= robotEnabledFlags.Length) return;
+            robotEnabledFlags[id] = enabled;
+
+            if (id < robots.Count && robots[id] != null)
+            {
+                robots[id].gameObject.SetActive(enabled);
+            }
+        }
+
+        public void SetOnlyPrimaryRobotsEnabled()
+        {
+            for (int i = 0; i < robotEnabledFlags.Length; i++)
+            {
+                // Tag ID 1, 2, 3 のみ有効化 (ノイズ・誤検出完全遮断)
+                bool isPrimary = (i >= 1 && i <= 3);
+                SetRobotEnabled(i, isPrimary);
+            }
+            Debug.Log("<color=#00FF88>[RobotManager]</color> 🎯 対戦3機体 (Tag ID 1~3) のみ表示に設定しました。");
+        }
+
+        public void SetAllRobotsEnabled(bool enabled)
+        {
+            for (int i = 0; i < robotEnabledFlags.Length; i++)
+            {
+                SetRobotEnabled(i, enabled);
+            }
+            Debug.Log($"<color=#00FF88>[RobotManager]</color> 🌐 全機体表示を {(enabled ? "有効" : "無効")} に設定しました。");
+        }
+
         void Awake()
         {
             if (Instance != null && Instance != this)
@@ -44,12 +86,27 @@ namespace Custack.Robot
             if (projectionScaler == null) projectionScaler = GetComponent<ProjectionScaler>();
             if (projectionScaler == null) projectionScaler = gameObject.AddComponent<ProjectionScaler>();
             if (terrainManager == null) terrainManager = TerrainManager.Instance;
+
+            // デフォルトは Tag ID 1, 2, 3 のみ有効化
+            for (int i = 0; i < robotEnabledFlags.Length; i++)
+            {
+                robotEnabledFlags[i] = (i >= 1 && i <= 3);
+            }
         }
 
         void Start()
         {
             shmReader = new SharedMemoryReader(poseShmPath);
             shmWriter = new SharedMemoryWriter(cmdShmPath);
+
+            // 初期配置ロボットの表示状態をフラグに合わせて更新
+            for (int i = 0; i < robots.Count; i++)
+            {
+                if (robots[i] != null)
+                {
+                    robots[i].gameObject.SetActive(IsRobotEnabled(robots[i].RobotId));
+                }
+            }
 
             SetupTargetLists();
         }
@@ -98,6 +155,9 @@ namespace Custack.Robot
                 int id = pose.id;
 
                 if (id < 0 || id >= SharedRobotPoseData.MaxRobots) continue;
+
+                // レンダリングが無効な機体は位置同期・表示をスキップ (ノイズによる吹き飛び・誤出現を完全遮断)
+                if (!IsRobotEnabled(id)) continue;
 
                 EnsureRobotSlot(id);
 
@@ -287,7 +347,7 @@ namespace Custack.Robot
 
             for (int i = 0; i < robots.Count; i++)
             {
-                if (robots[i] == null) continue;
+                if (robots[i] == null || !IsRobotEnabled(robots[i].RobotId)) continue;
 
                 // 各機体の RobotId (AprilTag ID) に紐付けられたコントローラー入力を取得
                 PlayerInputCommand input = inputMgr.GetInputForRobot(robots[i].RobotId);
@@ -311,6 +371,8 @@ namespace Custack.Robot
                 if (robots[i] != null)
                 {
                     int tagId = robots[i].RobotId;
+                    if (!IsRobotEnabled(tagId)) continue; // 非表示・無効化機体はコマンド送信を停止
+
                     if (tagId >= 1 && tagId <= 3)
                     {
                         int bridgeIdx = tagId - 1; // Tag 1 -> Bridge 1 (Index 0), Tag 2 -> Bridge 2 (Index 1), Tag 3 -> Bridge 3 (Index 2)

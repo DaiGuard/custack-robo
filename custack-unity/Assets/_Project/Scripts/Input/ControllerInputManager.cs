@@ -343,7 +343,7 @@ namespace Custack.Input
             GUI.skin.box.fontSize = 11;
 
             // 画面右上にマッピング設定ウィンドウを表示
-            GUILayout.BeginArea(new Rect(Screen.width - 450, 10, 440, 560), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(Screen.width - 480, 10, 470, 560), GUI.skin.box);
             GUILayout.BeginVertical();
 
             GUILayout.Label("<b><color=#00FFFF>【🎮 コントローラー & ロボット専用割り当て】</color></b> (F2で切替)");
@@ -370,13 +370,24 @@ namespace Custack.Input
             }
 
             GUILayout.Space(4);
-            if (GUILayout.Button("🔄 デフォルト割り当てにリセット (Tag 1:Pad0, Tag 2:Pad1, Tag 3:Pad2)", GUILayout.Height(24)))
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("🔄 デフォルト設定にリセット", GUILayout.Height(24)))
             {
                 ResetToDefaultMappings();
+                Robot.RobotManager.Instance?.SetOnlyPrimaryRobotsEnabled();
             }
+            if (GUILayout.Button("🎯 1~3のみ表示 (ノイズ遮断)", GUILayout.Height(24)))
+            {
+                Robot.RobotManager.Instance?.SetOnlyPrimaryRobotsEnabled();
+            }
+            if (GUILayout.Button("🌐 全機体表示", GUILayout.Height(24)))
+            {
+                Robot.RobotManager.Instance?.SetAllRobotsEnabled(true);
+            }
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
-            GUILayout.Label("<b>▼ 各ロボット (AprilTag ID) への入力割り当て:</b> (クリックで切替)");
+            GUILayout.Label("<b>▼ 各ロボット (AprilTag ID) の表示 & 入力割り当て:</b>");
 
             scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(360));
 
@@ -385,12 +396,23 @@ namespace Custack.Input
                 int robotId = i;
                 InputSourceType currentSrc = GetRobotMapping(robotId);
                 PlayerInputCommand currentInput = GetInputForRobot(robotId);
+                bool isRenderOn = Robot.RobotManager.Instance != null && Robot.RobotManager.Instance.IsRobotEnabled(robotId);
 
                 GUILayout.BeginHorizontal(GUI.skin.box);
                 Color rColor = Robot.RobotManager.GetRobotColor(robotId);
-                GUI.color = rColor;
+                GUI.color = isRenderOn ? rColor : new Color(0.4f, 0.4f, 0.4f, 0.6f);
                 GUILayout.Label($"<b>🤖 #{robotId}</b>", GUILayout.Width(45));
                 GUI.color = Color.white;
+
+                // レンダリング表示 ON / OFF 切り替えトグル
+                string renderLabel = isRenderOn ? "<color=#00FF88>👁️ ON</color>" : "<color=#888888>🚫 OFF</color>";
+                if (GUILayout.Button(renderLabel, GUILayout.Width(62), GUILayout.Height(22)))
+                {
+                    if (Robot.RobotManager.Instance != null)
+                    {
+                        Robot.RobotManager.Instance.SetRobotEnabled(robotId, !isRenderOn);
+                    }
+                }
 
                 string srcLabel = currentSrc switch
                 {
@@ -403,7 +425,7 @@ namespace Custack.Input
                     _ => "➖ なし"
                 };
 
-                if (GUILayout.Button(srcLabel, GUILayout.Width(110), GUILayout.Height(22)))
+                if (GUILayout.Button(srcLabel, GUILayout.Width(105), GUILayout.Height(22)))
                 {
                     // クリックで次の入力ソースに切り替え
                     InputSourceType nextSrc = currentSrc switch
@@ -422,8 +444,10 @@ namespace Custack.Input
 
                 // リアルタイム入力状況
                 string activeStatus = currentInput.IsConnected ? "<color=#00FF88>●</color>" : "<color=#666666>○</color>";
-                string moveInfo = $"Vx:{currentInput.Move.y:+0.00;-0.00; 0.00} Vy:{currentInput.Move.x:+0.00;-0.00; 0.00} Ω:{currentInput.Omega:+0.00;-0.00; 0.00}";
-                GUILayout.Label($"{activeStatus} {moveInfo}", GUILayout.Width(220));
+                string moveInfo = isRenderOn
+                    ? $"Vx:{currentInput.Move.y:+0.00;-0.00; 0.00} Vy:{currentInput.Move.x:+0.00;-0.00; 0.00} Ω:{currentInput.Omega:+0.00;-0.00; 0.00}"
+                    : "<color=#777777>(非表示・同期停止中)</color>";
+                GUILayout.Label($"{activeStatus} {moveInfo}", GUILayout.Width(200));
 
                 GUILayout.EndHorizontal();
             }

@@ -30,8 +30,8 @@ namespace Custack.Robot
         [Tooltip("外周ドーナツ型リングの Renderer (プレイヤーカラー・被弾点滅を適用)")]
         public Renderer donutRenderer;
 
-        [Tooltip("中央白色円形パッチの Renderer (天頂カメラの AprilTag 認識向上のため常時白色)")]
-        public Renderer centerWhiteRenderer;
+        [Tooltip("中央完全黒マスクの Renderer (地形線やエフェクトを遮蔽しプロジェクター光を100%消灯)")]
+        public Renderer blackMaskRenderer;
 
         private SpriteRenderer spriteRenderer;
         private Health health;

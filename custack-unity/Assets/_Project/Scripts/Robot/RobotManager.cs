@@ -232,18 +232,26 @@ namespace Custack.Robot
 
             var avatarShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
 
-            // 1. 外周ドーナツ型リング (内径 0.35m, 外径 0.55m: ロボット本体には光を当てず外側のみ投影)
+            // 1. 中央完全黒マスク円 (BlackMask: 半径 0.30m, Z=-0.05: 地形線やエフェクトを手前で遮蔽しプロジェクター消灯)
+            var blackMaskChild = new GameObject("BlackMask");
+            blackMaskChild.transform.SetParent(robotObj.transform);
+            blackMaskChild.transform.localPosition = new Vector3(0, 0, -0.05f);
+            blackMaskChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.30f);
+            var mrMask = blackMaskChild.AddComponent<MeshRenderer>();
+            mrMask.material = new Material(avatarShader) { color = Color.black };
+
+            // 2. 外周ドーナツ型リング (DonutRing: 内径 0.30m, 外径 0.52m, Z=-0.05: ロボット外側床面にプレイヤーカラー投影)
             var donutChild = new GameObject("DonutRing");
             donutChild.transform.SetParent(robotObj.transform);
-            donutChild.transform.localPosition = Vector3.zero;
-            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.35f, 0.55f);
+            donutChild.transform.localPosition = new Vector3(0, 0, -0.05f);
+            donutChild.AddComponent<MeshFilter>().sharedMesh = RobotMeshHelper.GetOrCreateDonutMesh(0.30f, 0.52f);
             var mrDonut = donutChild.AddComponent<MeshRenderer>();
             mrDonut.material = new Material(avatarShader) { color = robotColor };
 
-            visual.centerWhiteRenderer = null;
+            visual.blackMaskRenderer = mrMask;
             visual.donutRenderer = mrDonut;
 
-            // 2. ビジュアル初期化
+            // 3. ビジュアル初期化
             visual.Initialize(id, robotColor);
 
             // 4. マズルポイント

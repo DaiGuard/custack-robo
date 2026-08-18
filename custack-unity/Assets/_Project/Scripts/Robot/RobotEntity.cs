@@ -112,13 +112,25 @@ namespace Custack.Robot
                 return;
             }
 
-            // 1. △ボタンによるホーミングターゲット切り替え
+            // 1. スタン状態チェック (指示: スタン中は移動速度を0とする)
+            if (HealthComponent != null && HealthComponent.IsStunned)
+            {
+                currentCommand.vx = 0;
+                currentCommand.vy = 0;
+                currentCommand.omega = 0;
+                currentCommand.armRight = 0;
+                currentCommand.armLeft = 0;
+                currentCommand.active = (byte)(input.IsConnected ? 1 : 0);
+                return;
+            }
+
+            // 2. △ボタンによるホーミングターゲット切り替え
             if (input.TargetSwitchPressed)
             {
                 CycleTarget();
             }
 
-            // 2. 地形特性 × 脚ユニットによる移動値補正
+            // 3. 地形特性 × 脚ユニットによる移動値補正
             Vector2 rawMove = input.Move;
             float rawOmega = input.Omega;
 
@@ -130,7 +142,7 @@ namespace Custack.Robot
                 );
             }
 
-            // 3. 武器発射判定
+            // 4. 武器発射判定
             Transform targetTransform = GetCurrentTargetTransform();
             Vector2 forwardDir = transform.up; // 2D 前方 (上方向)
 
@@ -154,7 +166,7 @@ namespace Custack.Robot
                 }
             }
 
-            // 4. 実機向け最終コマンド構造体の構築 (-1000 〜 1000)
+            // 5. 実機向け最終コマンド構造体の構築 (-1000 〜 1000)
             // modifiedMove.x: 前後移動 (Vx: スティック上下), modifiedMove.y: 左右移動 (Vy: スティック左右), modifiedMove.z: 旋回 (Omega)
             currentCommand.vx = (short)Mathf.Clamp(Mathf.RoundToInt(modifiedMove.x * maxSpeed), -1000, 1000);
             currentCommand.vy = (short)Mathf.Clamp(Mathf.RoundToInt(modifiedMove.y * maxSpeed), -1000, 1000);

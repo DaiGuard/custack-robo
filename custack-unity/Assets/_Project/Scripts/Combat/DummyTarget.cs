@@ -5,7 +5,7 @@ namespace Custack.Combat
 {
     /// <summary>
     /// 武器エフェクトテスト用のダミーターゲット。
-    /// 被弾時に発光点滅し、頭上にHPゲージを表示します。
+    /// 被弾時に発光点滅し、スタン中の移動停止、無敵時間中の円点滅、頭上HPゲージを表示します。
     /// </summary>
     public class DummyTarget : MonoBehaviour
     {
@@ -24,6 +24,8 @@ namespace Custack.Combat
             health = GetComponent<Health>();
             if (health == null) health = gameObject.AddComponent<Health>();
 
+            health.maxHp = 1000f;
+            health.currentHp = 1000f;
             startPos = transform.position;
 
             health.OnDamaged += OnDamaged;
@@ -114,19 +116,31 @@ namespace Custack.Combat
 
         void Update()
         {
-            // 往復移動
-            if (moveDistance > 0f)
+            // スタン中は移動停止 (指示: スタン中は移動速度を0とする)
+            if (health != null && !health.IsStunned && moveDistance > 0f)
             {
                 float offset = Mathf.Sin(Time.time * moveSpeed) * moveDistance;
                 transform.position = startPos + new Vector3(offset, 0, 0);
             }
 
-            // 被弾点滅
+            // 視覚状態 (被弾白点滅 / スタン黄色点滅 / 無敵時間点滅 / 通常)
             if (meshRenderer != null)
             {
                 if (Time.time < flashEndTime)
                 {
                     meshRenderer.material.color = Color.white;
+                }
+                else if (health != null && health.IsStunned)
+                {
+                    bool blink = (Mathf.FloorToInt(Time.time * 10f) % 2) == 0;
+                    meshRenderer.material.color = blink ? new Color(1f, 0.9f, 0.1f) : targetColor * 0.4f;
+                }
+                else if (health != null && health.IsInvincible)
+                {
+                    bool blink = (Mathf.FloorToInt(Time.time * 8f) % 2) == 0;
+                    Color c = targetColor;
+                    c.a = blink ? 1.0f : 0.2f;
+                    meshRenderer.material.color = c;
                 }
                 else
                 {

@@ -4,7 +4,7 @@ using Custack.Combat;
 namespace Custack.Robot
 {
     /// <summary>
-    /// ロボットの視覚表現（アバター、HPバー、被弾点滅、向き矢印、ロックオンレティクル）を制御するコンポーネント。
+    /// ロボットの視覚表現（アバター、HPバー、被弾点滅、スタン放電、無敵時間点滅、向き矢印、ロックオンレティクル）を制御するコンポーネント。
     /// </summary>
     public class RobotVisual : MonoBehaviour
     {
@@ -27,7 +27,7 @@ namespace Custack.Robot
         public Vector3 hpBarOffset = new Vector3(0, 0.8f, 0);
 
         [Header("レンダラー参照")]
-        [Tooltip("外周ドーナツ型リングの Renderer (プレイヤーカラー・被弾点滅を適用)")]
+        [Tooltip("外周ドーナツ型リングの Renderer (プレイヤーカラー・被弾点滅・無敵点滅を適用)")]
         public Renderer donutRenderer;
 
         [Tooltip("中央完全黒マスクの Renderer (地形線やエフェクトを遮蔽しプロジェクター光を100%消灯)")]
@@ -102,7 +102,7 @@ namespace Custack.Robot
             }
         }
 
-        private void ApplyColor(Color col)
+        public void ApplyColor(Color col)
         {
             if (donutRenderer != null)
             {
@@ -120,11 +120,32 @@ namespace Custack.Robot
 
         void Update()
         {
-            // 被弾点滅処理
+            if (health != null && health.IsDead)
+            {
+                ApplyColor(new Color(0.2f, 0.2f, 0.2f, 0.25f)); // 撃破時消灯
+                return;
+            }
+
+            // 1. 被弾直後の白点滅 (0.1s)
             if (Time.time < flashEndTime)
             {
                 ApplyColor(hitFlashColor);
             }
+            // 2. スタン中の黄色放電点滅
+            else if (health != null && health.IsStunned)
+            {
+                bool blink = (Mathf.FloorToInt(Time.time * 10f) % 2) == 0;
+                ApplyColor(blink ? new Color(1f, 0.9f, 0.1f) : playerColor * 0.4f);
+            }
+            // 3. 無敵時間中の外周円点滅 (指示: 無敵時間中はロボット周辺の円を点滅)
+            else if (health != null && health.IsInvincible)
+            {
+                bool blink = (Mathf.FloorToInt(Time.time * 8f) % 2) == 0;
+                Color invincibleColor = playerColor;
+                invincibleColor.a = blink ? 1.0f : 0.15f;
+                ApplyColor(invincibleColor);
+            }
+            // 4. 通常表示
             else
             {
                 ApplyColor(playerColor);

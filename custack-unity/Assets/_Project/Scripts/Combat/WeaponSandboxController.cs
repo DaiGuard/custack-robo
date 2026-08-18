@@ -7,9 +7,8 @@ using Custack.Robot;
 namespace Custack.Combat
 {
     /// <summary>
-    /// 実機・共有メモリ不要で、武器エフェクト（ガトリング、ソード、キャノン、爆発、スパーク等）を
+    /// 実機・共有メモリ不要で、武器エフェクトおよびダメージ計算・スタン・無敵時間・移動停止を
     /// 単体で視覚確認・テストするためのサンドボックスコントローラー。
-    /// Unity Input System (com.unity.inputsystem) に完全対応。
     /// </summary>
     public class WeaponSandboxController : MonoBehaviour
     {
@@ -22,6 +21,7 @@ namespace Custack.Combat
         public ArmDeviceType currentWeaponType = ArmDeviceType.Gatling;
         private WeaponBase activeWeapon;
         private ArmWeaponConfig currentConfig;
+        private Health playerHealth;
 
         [Header("ダミーターゲット")]
         public List<Health> dummyTargets = new List<Health>();
@@ -39,6 +39,9 @@ namespace Custack.Combat
             {
                 playerRobotTransform = transform;
             }
+
+            playerHealth = playerRobotTransform.GetComponent<Health>();
+            if (playerHealth == null) playerHealth = playerRobotTransform.gameObject.AddComponent<Health>();
 
             SetupWeapon(currentWeaponType);
             SetupDummyTargets();
@@ -81,9 +84,9 @@ namespace Custack.Combat
                 {
                     dummy.OnDeath += () =>
                     {
-                        // 撃破時に大爆発エフェクトを再生し、1秒後にリスポーン
+                        // 撃破時に大爆発エフェクトを再生し、1.5秒後にリスポーン
                         EffectFactory.PlayExplosion(dummy.transform.position, Color.red, 1.5f, 30);
-                        Invoke(nameof(ResetAllDummies), 1.0f);
+                        Invoke(nameof(ResetAllDummies), 1.5f);
                     };
                 }
             }
@@ -95,7 +98,7 @@ namespace Custack.Combat
             {
                 if (dummy != null)
                 {
-                    dummy.Respawn(100f);
+                    dummy.Respawn(1000f);
                 }
             }
         }
@@ -110,6 +113,12 @@ namespace Custack.Combat
         private void HandlePlayerMovement()
         {
             if (playerRobotTransform == null) return;
+
+            // スタン中は移動速度を 0 とする
+            if (playerHealth != null && playerHealth.IsStunned)
+            {
+                return;
+            }
 
             var kb = Keyboard.current;
             var mouse = Mouse.current;
@@ -148,6 +157,12 @@ namespace Custack.Combat
         private void HandleWeaponInput()
         {
             if (activeWeapon == null || currentConfig == null) return;
+
+            // スタン中は武器発射不可
+            if (playerHealth != null && playerHealth.IsStunned)
+            {
+                return;
+            }
 
             var kb = Keyboard.current;
             var mouse = Mouse.current;
@@ -189,7 +204,7 @@ namespace Custack.Combat
         void OnGUI()
         {
             // サンドボックス操作パネル
-            GUILayout.BeginArea(new Rect(20, 20, 360, 480), "【武器エフェクト テストツール】", GUI.skin.window);
+            GUILayout.BeginArea(new Rect(20, 20, 380, 520), "【バトル・エフェクト テストツール】", GUI.skin.window);
             GUILayout.Space(8);
 
             GUILayout.Label("🎮 <b>操作方法</b>");
@@ -197,24 +212,48 @@ namespace Custack.Combat
             GUILayout.Label("・照準: <b>マウスカーソル</b>");
             GUILayout.Label("・発射: <b>左クリック / Space / J</b>");
             GUILayout.Label("・切替: <b>[1] ガトリング / [2] ソード / [3] キャノン</b>");
-            GUILayout.Space(10);
+            GUILayout.Space(8);
 
             GUILayout.Label($"<b>現在の武器:</b> <color=yellow>{currentConfig?.weaponName ?? "None"}</color>");
-            GUILayout.Label($"<b>基礎威力:</b> {currentConfig?.damage ?? 0}  |  <b>弾速:</b> {currentConfig?.projectileSpeed ?? 0}");
-            GUILayout.Space(6);
+            GUILayout.Label($"<b>基礎威力:</b> {currentConfig?.damage ?? 0} (ガトリング8/ソード40/キャノン30) | <b>弾速:</b> {currentConfig?.projectileSpeed ?? 0}");
+            GUILayout.Space(4);
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("1. ガトリング (連射)", GUILayout.Height(32))) SetupWeapon(ArmDeviceType.Gatling);
-            if (GUILayout.Button("2. ソード (斬撃)", GUILayout.Height(32))) SetupWeapon(ArmDeviceType.Sword);
-            if (GUILayout.Button("3. キャノン (ビーム)", GUILayout.Height(32))) SetupWeapon(ArmDeviceType.Cannon);
+            if (GUILayout.Button("1. ガトリング", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Gatling);
+            if (GUILayout.Button("2. ソード", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Sword);
+            if (GUILayout.Button("3. キャノン", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Cannon);
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(12);
+            GUILayout.Space(10);
+            GUILayout.Label("⚡ <b>スタン & 無敵時間ステータス</b>");
+            if (playerHealth != null)
+            {
+                string stunStatus = playerHealth.IsStunned ? $"<color=red>STUNNED! (残 {playerHealth.StunRemaining:F1}s)</color>" : "<color=green>NORMAL</color>";
+                string invStatus = playerHealth.IsInvincible ? $"<color=cyan>INVINCIBLE (残 {playerHealth.InvincibleRemaining:F1}s)</color>" : "<color=gray>None</color>";
+                GUILayout.Label($"プレイヤーHP: <b>{playerHealth.currentHp:F0} / {playerHealth.maxHp:F0}</b>");
+                GUILayout.Label($"状態: {stunStatus} | {invStatus}");
+            }
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("⚡ 自機スタン検証 (1.5秒停止+無敵)"))
+            {
+                playerHealth?.TriggerStun();
+            }
+            if (GUILayout.Button("💥 ダミーへ100ダメ (スタン発動)"))
+            {
+                foreach (var dummy in dummyTargets)
+                {
+                    if (dummy != null) dummy.TakeDamage(100f, dummy.transform.position);
+                }
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(10);
             GUILayout.Label("✨ <b>エフェクト直接プレビュー</b>");
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("火花スパーク (黄)")) EffectFactory.PlayHitSparks(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, Color.yellow);
-            if (GUILayout.Button("切断光 (緑)")) EffectFactory.PlaySlashImpact(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, new Color(0.2f, 1f, 0.4f));
+            if (GUILayout.Button("火花スパーク")) EffectFactory.PlayHitSparks(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, Color.yellow);
+            if (GUILayout.Button("切断光")) EffectFactory.PlaySlashImpact(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, new Color(0.2f, 1f, 0.4f));
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -222,8 +261,8 @@ namespace Custack.Combat
             if (GUILayout.Button("衝撃波リング")) EffectFactory.CreateShockwave(playerRobotTransform.position, Color.cyan, 0.2f, 2.0f, 0.35f);
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(12);
-            if (GUILayout.Button("🔄 ダミーターゲット全リセット (Rキー)", GUILayout.Height(30)))
+            GUILayout.Space(10);
+            if (GUILayout.Button("🔄 ダミーターゲット全リセット (Rキー)", GUILayout.Height(28)))
             {
                 ResetAllDummies();
             }

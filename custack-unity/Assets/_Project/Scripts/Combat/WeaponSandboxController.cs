@@ -76,6 +76,8 @@ namespace Custack.Combat
             }
         }
 
+        private GameObject playerWreckageSmokeObj;
+
         private void SetupDummyTargets()
         {
             foreach (var dummy in dummyTargets)
@@ -84,16 +86,43 @@ namespace Custack.Combat
                 {
                     dummy.OnDeath += () =>
                     {
-                        // 撃破時に大爆発エフェクトを再生し、1.5秒後にリスポーン
-                        EffectFactory.PlayExplosion(dummy.transform.position, Color.red, 1.5f, 30);
-                        Invoke(nameof(ResetAllDummies), 1.5f);
+                        // 撃破時に大爆発エフェクトを再生し、2.0秒後にリスポーン
+                        EffectFactory.PlayRobotDestructionExplosion(dummy.transform.position, Color.red);
+                        Invoke(nameof(ResetAllDummies), 2.0f);
                     };
                 }
+            }
+
+            if (playerHealth != null)
+            {
+                playerHealth.OnDeath += () =>
+                {
+                    // 自機撃破時: 大爆発 + 黒煙アタッチ
+                    EffectFactory.PlayRobotDestructionExplosion(playerRobotTransform.position, new Color(0.2f, 0.8f, 1f));
+                    if (playerWreckageSmokeObj == null)
+                    {
+                        playerWreckageSmokeObj = EffectFactory.AttachWreckageSmokeAndSparks(playerRobotTransform);
+                    }
+                };
+
+                playerHealth.OnRespawn += () =>
+                {
+                    if (playerWreckageSmokeObj != null)
+                    {
+                        Destroy(playerWreckageSmokeObj);
+                        playerWreckageSmokeObj = null;
+                    }
+                };
             }
         }
 
         public void ResetAllDummies()
         {
+            if (playerHealth != null)
+            {
+                playerHealth.Respawn(1000f);
+            }
+
             foreach (var dummy in dummyTargets)
             {
                 if (dummy != null)
@@ -114,8 +143,8 @@ namespace Custack.Combat
         {
             if (playerRobotTransform == null) return;
 
-            // スタン中は移動速度を 0 とする
-            if (playerHealth != null && playerHealth.IsStunned)
+            // HP 0 (撃破) または スタン中は移動・旋回を完全停止
+            if (playerHealth != null && (playerHealth.IsDead || playerHealth.IsStunned))
             {
                 return;
             }
@@ -158,8 +187,8 @@ namespace Custack.Combat
         {
             if (activeWeapon == null || currentConfig == null) return;
 
-            // スタン中は武器発射不可
-            if (playerHealth != null && playerHealth.IsStunned)
+            // HP 0 (撃破) または スタン中は武器発射を完全遮断
+            if (playerHealth != null && (playerHealth.IsDead || playerHealth.IsStunned))
             {
                 return;
             }
@@ -194,6 +223,13 @@ namespace Custack.Combat
         {
             var kb = Keyboard.current;
             if (kb == null) return;
+
+            // HP 0 (撃破) の場合は武器切り替えも不可 (Rキーでのリスポーンのみ許可)
+            if (playerHealth != null && playerHealth.IsDead)
+            {
+                if (kb.rKey.wasPressedThisFrame) ResetAllDummies();
+                return;
+            }
 
             if (kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) SetupWeapon(ArmDeviceType.Gatling);
             if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) SetupWeapon(ArmDeviceType.Sword);
@@ -239,12 +275,19 @@ namespace Custack.Combat
             {
                 playerHealth?.TriggerStun();
             }
-            if (GUILayout.Button("💥 ダミーへ100ダメ (スタン発動)"))
+            if (GUILayout.Button("💥 ダミーへ100ダメ (スタン)"))
             {
                 foreach (var dummy in dummyTargets)
                 {
                     if (dummy != null) dummy.TakeDamage(100f, dummy.transform.position);
                 }
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("💀 自機HP 0 撃破テスト (大破爆発+黒煙+操作不能)"))
+            {
+                playerHealth?.TakeDamage(1000f);
             }
             GUILayout.EndHorizontal();
 

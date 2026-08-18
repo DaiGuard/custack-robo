@@ -265,5 +265,69 @@ namespace Custack.Combat
             var waveComp = ringObj.AddComponent<ShockwaveEffect>();
             waveComp.Initialize(color, startRadius, maxRadius, duration);
         }
+
+        /// <summary>
+        /// 機体撃破時の連続大爆発エフェクト
+        /// </summary>
+        public static void PlayRobotDestructionExplosion(Vector3 position, Color color)
+        {
+            // 中心大爆発
+            PlayExplosion(position, color, 1.8f, 36);
+
+            // 周囲の追従小爆発
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = i * 90f * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Cos(angle) * 0.45f, Mathf.Sin(angle) * 0.45f, 0);
+                PlayExplosion(position + offset, new Color(1f, 0.5f, 0.1f), 1.0f, 16);
+            }
+        }
+
+        /// <summary>
+        /// 撃破された機体への黒煙 & 放電スパークエフェクトのアタッチ
+        /// </summary>
+        public static GameObject AttachWreckageSmokeAndSparks(Transform target)
+        {
+            if (target == null) return null;
+
+            GameObject root = new GameObject("WreckageSmoke_FX");
+            root.transform.SetParent(target);
+            root.transform.localPosition = Vector3.zero;
+
+            // 黒煙パーティクル
+            var ps = root.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var psr = root.GetComponent<ParticleSystemRenderer>();
+            psr.material = GetParticleAdditiveMaterial();
+
+            var main = ps.main;
+            main.playOnAwake = false;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.5f, 1.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.3f, 0.7f);
+            main.startColor = new Color(0.15f, 0.15f, 0.15f, 0.6f); // 暗い煙
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 12;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 0.35f;
+
+            var colOverLife = ps.colorOverLifetime;
+            colOverLife.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(0.3f, 0.3f, 0.3f), 0f), new GradientColorKey(Color.black, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0.6f, 0f), new GradientAlphaKey(0.0f, 1f) }
+            );
+            colOverLife.color = grad;
+
+            ps.Play();
+            return root;
+        }
     }
 }

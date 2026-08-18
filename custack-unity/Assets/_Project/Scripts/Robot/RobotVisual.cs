@@ -4,7 +4,7 @@ using Custack.Combat;
 namespace Custack.Robot
 {
     /// <summary>
-    /// ロボットの視覚表現（アバター、HPバー、被弾点滅、スタン放電、無敵時間点滅、向き矢印、ロックオンレティクル）を制御するコンポーネント。
+    /// ロボットの視覚表現（アバター、HPバー、被弾点滅、スタン放電、無敵時間点滅、大破爆発・煙、向き矢印、ロックオンレティクル）を制御するコンポーネント。
     /// </summary>
     public class RobotVisual : MonoBehaviour
     {
@@ -37,6 +37,7 @@ namespace Custack.Robot
         private Health health;
         private float flashEndTime = 0f;
         private MaterialPropertyBlock propertyBlock;
+        private GameObject wreckageSmokeObj;
         private static readonly int ColorPropId = Shader.PropertyToID("_Color");
         private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
 
@@ -61,6 +62,8 @@ namespace Custack.Robot
             {
                 health.OnDamaged += OnDamaged;
                 health.OnHealthChanged += UpdateHpBar;
+                health.OnDeath += OnDeath;
+                health.OnRespawn += OnRespawn;
             }
 
             ApplyColor(playerColor);
@@ -89,6 +92,40 @@ namespace Custack.Robot
         private void OnDamaged(float damage, Vector2 hitPoint)
         {
             flashEndTime = Time.time + 0.1f;
+        }
+
+        private void OnDeath()
+        {
+            // 大破時の大爆発パーティクル再生
+            EffectFactory.PlayRobotDestructionExplosion(transform.position, playerColor);
+
+            // 黒煙 & 放電スパークエフェクトのアタッチ
+            if (wreckageSmokeObj == null)
+            {
+                wreckageSmokeObj = EffectFactory.AttachWreckageSmokeAndSparks(transform);
+            }
+
+            if (tagIdTextMesh != null)
+            {
+                tagIdTextMesh.color = Color.red;
+            }
+        }
+
+        private void OnRespawn()
+        {
+            // 煙エフェクトの破棄
+            if (wreckageSmokeObj != null)
+            {
+                Destroy(wreckageSmokeObj);
+                wreckageSmokeObj = null;
+            }
+
+            if (tagIdTextMesh != null)
+            {
+                tagIdTextMesh.color = Color.white;
+            }
+
+            ApplyColor(playerColor);
         }
 
         private void UpdateHpBar(float current, float max)
@@ -122,7 +159,9 @@ namespace Custack.Robot
         {
             if (health != null && health.IsDead)
             {
-                ApplyColor(new Color(0.2f, 0.2f, 0.2f, 0.25f)); // 撃破時消灯
+                // 撃破時は暗赤色の低輝度点滅 (プロジェクター光を落とし大破を演出)
+                bool blink = (Mathf.FloorToInt(Time.time * 3f) % 2) == 0;
+                ApplyColor(blink ? new Color(0.35f, 0.05f, 0.05f, 0.4f) : new Color(0.1f, 0.02f, 0.02f, 0.2f));
                 return;
             }
 

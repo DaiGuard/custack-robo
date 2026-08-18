@@ -90,12 +90,36 @@ namespace Custack.Core
 
             if (player1 != null && player1.HealthComponent != null) player1.HealthComponent.Respawn();
             if (player2 != null && player2.HealthComponent != null) player2.HealthComponent.Respawn();
+
+            // RobotManager の全管理機体をリスポーン
+            if (RobotManager.Instance != null && RobotManager.Instance.robots != null)
+            {
+                foreach (var robot in RobotManager.Instance.robots)
+                {
+                    if (robot != null && robot.HealthComponent != null)
+                    {
+                        robot.HealthComponent.Respawn();
+                    }
+                }
+            }
+
+            Debug.Log("<color=#00FF88>[GameManager]</color> 🔄 ゲームを再戦リセットしました！ (全機体 HP 1000 回復)");
         }
 
         void Update()
         {
-            // Rキーでリスタート
-            if (isGameOver && UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
+            if (!isGameOver) return;
+
+            // Rキー または ゲームパッドの △ / Y ボタンでリスタート
+            bool keyboardRestart = UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame;
+            bool gamepadRestart = false;
+
+            if (UnityEngine.InputSystem.Gamepad.current != null)
+            {
+                gamepadRestart = UnityEngine.InputSystem.Gamepad.current.buttonNorth.wasPressedThisFrame || UnityEngine.InputSystem.Gamepad.current.startButton.wasPressedThisFrame;
+            }
+
+            if (keyboardRestart || gamepadRestart)
             {
                 RestartGame();
             }

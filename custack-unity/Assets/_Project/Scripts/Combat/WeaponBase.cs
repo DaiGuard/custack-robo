@@ -6,7 +6,7 @@ namespace Custack.Combat
 {
     /// <summary>
     /// アーム武器の基底コンポーネント。
-    /// 発射クールダウン、実機アーム連動フラグ、Prefab生成を管理。
+    /// 発射クールダウン、実機アーム連動フラグ、Prefab生成、撃破時/スタン時の発射遮断を管理。
     /// </summary>
     public abstract class WeaponBase : MonoBehaviour
     {
@@ -26,6 +26,7 @@ namespace Custack.Combat
 
         protected float nextFireTime = 0f;
         protected float armActiveEndTime = 0f;
+        protected Health ownerHealth;
 
         public virtual void Initialize(int ownerId, bool isRight, ArmWeaponConfig cfg, Transform muzzlePoint)
         {
@@ -34,6 +35,7 @@ namespace Custack.Combat
             config = cfg;
             firePoint = muzzlePoint != null ? muzzlePoint : transform;
             weaponType = cfg != null ? cfg.type : ArmDeviceType.None;
+            ownerHealth = GetComponent<Health>() ?? GetComponentInParent<Health>();
         }
 
         protected virtual void Update()
@@ -47,10 +49,19 @@ namespace Custack.Combat
 
         /// <summary>
         /// 発射トリガー（単発・連射共通）
+        /// HP 0 (撃破) または スタン中は発射を完全遮断。
         /// </summary>
         public bool TryFire(Vector2 forwardDir, Transform targetTransform = null)
         {
             if (!CanFire) return false;
+
+            // オーナーの Health が撃破済み (HP 0) またはスタン中の場合は発射不可
+            if (ownerHealth == null) ownerHealth = GetComponent<Health>() ?? GetComponentInParent<Health>();
+            if (ownerHealth != null && (ownerHealth.IsDead || ownerHealth.IsStunned))
+            {
+                HardwareArmFlag = 0;
+                return false;
+            }
 
             nextFireTime = Time.time + (config != null ? config.cooldown : 0.3f);
             

@@ -106,6 +106,100 @@ namespace Custack.Editor
             Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> のセットアップが完了しました！ (16台のロボット P1~P16 を配置)");
         }
 
+        [MenuItem("CuStack/3. Setup Weapon Effect Sandbox (武器エフェクト単体テストシーン構築)", priority = 3)]
+        public static void SetupWeaponEffectSandboxScene()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // 1. Camera
+            var camObj = new GameObject("MainCamera");
+            camObj.tag = "MainCamera";
+            var cam = camObj.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 5.0f;
+            cam.transform.position = new Vector3(0, 0, -10f);
+            cam.backgroundColor = new Color(0.04f, 0.05f, 0.08f, 1f); // 暗い背景
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            camObj.AddComponent<AudioListener>();
+
+            // 2. Arena Floor
+            CreateArenaFloor(12f, 8f);
+
+            // 3. Player Test Robot
+            var playerObj = new GameObject("PlayerRobot");
+            playerObj.transform.position = new Vector3(-2.5f, 0, 0);
+
+            var mf = playerObj.AddComponent<MeshFilter>();
+            mf.sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.45f);
+            var mr = playerObj.AddComponent<MeshRenderer>();
+            mr.material = EffectFactory.GetParticleAdditiveMaterial();
+            mr.material.color = new Color(0.2f, 0.8f, 1f); // シアン
+
+            // マズルポイント (前方)
+            var muzzleObj = new GameObject("MuzzlePoint");
+            muzzleObj.transform.SetParent(playerObj.transform);
+            muzzleObj.transform.localPosition = new Vector3(0, 0.5f, 0);
+
+            // 向きを示す矢印
+            var arrowObj = new GameObject("DirectionIndicator");
+            arrowObj.transform.SetParent(playerObj.transform);
+            arrowObj.transform.localPosition = new Vector3(0, 0.3f, -0.05f);
+            arrowObj.transform.localScale = new Vector3(0.12f, 0.3f, 1f);
+            var arrowMf = arrowObj.AddComponent<MeshFilter>();
+            arrowMf.sharedMesh = RobotMeshHelper.GetOrCreateQuadMesh();
+            var arrowMr = arrowObj.AddComponent<MeshRenderer>();
+            arrowMr.material = EffectFactory.GetParticleAdditiveMaterial();
+            arrowMr.material.color = Color.yellow;
+
+            var playerHealth = playerObj.AddComponent<Health>();
+
+            // 4. Dummy Targets
+            var targetsRoot = new GameObject("--- DUMMY TARGETS ---");
+            var dummyList = new List<Health>();
+
+            // ダミー 1: 上部固定
+            var d1 = CreateDummyTarget("Dummy_Static_Top", new Vector3(2.5f, 2.0f, 0), 0f, targetsRoot.transform);
+            dummyList.Add(d1);
+
+            // ダミー 2: 下部固定
+            var d2 = CreateDummyTarget("Dummy_Static_Bottom", new Vector3(2.5f, -2.0f, 0), 0f, targetsRoot.transform);
+            dummyList.Add(d2);
+
+            // ダミー 3: 中央移動
+            var d3 = CreateDummyTarget("Dummy_Moving_Center", new Vector3(3.5f, 0f, 0), 1.8f, targetsRoot.transform);
+            dummyList.Add(d3);
+
+            // 5. Sandbox Controller
+            var controllerObj = new GameObject("WeaponSandboxController");
+            var controller = controllerObj.AddComponent<WeaponSandboxController>();
+            controller.playerRobotTransform = playerObj.transform;
+            controller.dummyTargets = dummyList;
+
+            // 6. シーン保存
+            string scenePath = "Assets/_Project/Scenes/Sandbox/WeaponEffectSandbox.unity";
+            EnsureDirectory("Assets/_Project/Scenes/Sandbox");
+            EditorSceneManager.SaveScene(scene, scenePath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> の武器エフェクトテストシーンが完成しました！");
+        }
+
+        private static Health CreateDummyTarget(string name, Vector3 pos, float moveDist, Transform parent)
+        {
+            var obj = new GameObject(name);
+            obj.transform.position = pos;
+            obj.transform.SetParent(parent);
+
+            var health = obj.AddComponent<Health>();
+            health.maxHp = 100f;
+            health.currentHp = 100f;
+
+            var dummy = obj.AddComponent<DummyTarget>();
+            dummy.moveDistance = moveDist;
+
+            return health;
+        }
+
         [MenuItem("CuStack/2. Setup Main Battle Scene (本番対戦 & プロジェクション環境構築)", priority = 2)]
         public static void SetupMainBattleScene()
         {

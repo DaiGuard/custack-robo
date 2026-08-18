@@ -3,6 +3,7 @@ name: agent-unity
 description: custack-unity ディレクトリ専任の Unity シミュレータ・仮想空間開発エージェント
 tools:
   - file_read
+  - generate_image
   - file_write
   - terminal_execute
 workspace: inherit
@@ -50,4 +51,3 @@ workspace: inherit
 
 - 今後対応が必要な項目
 ```
-

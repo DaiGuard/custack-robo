@@ -192,12 +192,17 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 * **`PlayerInputCommand.cs`**:
   - 移動ベクトル（x: 左右, y: 上下）、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
 
-### 3.4 地形効果 (`Custack.Terrain`)
-* **`TerrainType.cs`**: `Normal`, `Forest`, `Mud`, `Ice`, `Lava`
+### 3.4 地形効果 & 4大アリーナマップ (`Custack.Terrain`)
+* **`TerrainType.cs`**: `Normal` (平地), `Forest` (森林/瓦礫 減速), `Mud` (泥沼/深雪/火山灰 大減速・足取られ), `Ice` (氷原 スリップ・低摩擦), `Lava` (溶岩/高圧電磁サージ スリップダメージ)
+* **`TerrainMapManager.cs`**:
+  - 4種類のプロジェクションマップ（🌲 森、🌋 火山、🏙️ 市街地、❄️ 雪山・氷山）の動的切替マネージャー（キーボード `1`〜`4` / `F5`〜`F8` キー）。
+  - 各マップの背景テクスチャ（3:2 / 12m × 8m）および専用の当たり判定ポリゴンコライダー群を一括制御。
 * **`TerrainData.cs`**: 地形基本パラメータ（速度/旋回倍率、秒間ダメージ、ギズモ色等）
-* **`TerrainZone.cs`**: `Collider2D` (Trigger) によるエリア判定とギズモ描画
+* **`TerrainZone.cs`**: `PolygonCollider2D` / `BoxCollider2D` (Trigger) による精密なエリア侵入判定とギズモ描画
 * **`TerrainManager.cs`**:
   - ロボット現在地の地形と脚ユニットの耐性比率（平地: 1.0）を掛け合わせ、実機コマンド（$-1000 \sim 1000$）を計算。キネマティクス制限は実機マイコンに委ね、Unity 側は純粋な地形比率計算に特化。
+* **`TerrainSandboxController.cs`**:
+  - サンドボックス環境でのリアルタイム走行物理・スリップ・ダメージ検証、脚ユニット（Omni / Tire / Crawler）即時切替、および **`[X] 当たり判定ポリゴン枠線を表示 (Collider Overlay)`** 機能。
 
 ### 3.5 戦闘・武器・弾丸システム (`Custack.Combat`)
 * **`Health.cs`**: HP管理（最大 1000）、スタン蓄積（100ダメで1.5s移動停止）、無敵時間（2.0s / 外周円点滅）、撃破・リスポーンイベント
@@ -249,11 +254,13 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 ## 5. 🖥️ シーン構成
 
 1. **`Assets/_Project/Scenes/Main/Main.unity`**:
-   - 本番対戦シーン（正視投影カメラ、P1/P2 ロボット、地形ゾーン、BattleHUD、全マネージャー完備）。
-2. **`Assets/_Project/Scenes/Sandbox/SharedMemorySandbox.unity`**:
-   - 共有メモリ送受信の単体デバッグ、インスペクター装備切替テスト用シーン。
+   - 本番対戦シーン（正視投影カメラ、P1/P2 ロボット、4大マップ切替、地形ゾーン、BattleHUD、全マネージャー完備）。
+2. **`Assets/_Project/Scenes/Sandbox/TerrainEffectSandbox.unity`**:
+   - 地形効果・4大マップ（森・火山・市街地・雪山）単体テストシーン（ポリゴンコライダー可視化、脚ユニット切替、走行テレメトリ計測）。
 3. **`Assets/_Project/Scenes/Sandbox/WeaponEffectSandbox.unity`**:
-   - 武器エフェクト・ダメージ計算・スタン・無敵点滅・HP0大破停止の単体テストシーン（実機・共有メモリ不要）。
+   - 武器エフェクト・ダメージ計算・スタン・無敵点滅・HP0大破停止の単体テストシーン（ダミーターゲット完備）。
+4. **`Assets/_Project/Scenes/Sandbox/SharedMemorySandbox.unity`**:
+   - 共有メモリ送受信の単体デバッグ、インスペクター装備切替テスト用シーン。
 
 ---
 

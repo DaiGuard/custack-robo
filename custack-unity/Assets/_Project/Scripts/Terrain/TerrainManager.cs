@@ -6,7 +6,7 @@ namespace Custack.Terrain
 {
     /// <summary>
     /// フィールド上の全地形ゾーンを統括し、
-    /// ロボットの座標と脚ユニット種別に応じた移動値補正を計算するマネージャー。
+    /// ロボットの座標と脚ユニット種別に応じた移動値補正および地形ダメージを計算するマネージャー。
     /// </summary>
     public class TerrainManager : MonoBehaviour
     {
@@ -29,13 +29,13 @@ namespace Custack.Terrain
         public void RefreshZones()
         {
             registeredZones.Clear();
-            var zones = FindObjectsByType<TerrainZone>(FindObjectsSortMode.None);
+            var zones = FindObjectsByType<TerrainZone>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             registeredZones.AddRange(zones);
         }
 
         public void RegisterZone(TerrainZone zone)
         {
-            if (!registeredZones.Contains(zone)) registeredZones.Add(zone);
+            if (zone != null && !registeredZones.Contains(zone)) registeredZones.Add(zone);
         }
 
         public void UnregisterZone(TerrainZone zone)
@@ -48,10 +48,9 @@ namespace Custack.Terrain
         /// </summary>
         public TerrainType GetTerrainAt(Vector2 worldPos)
         {
-            // 登録ゾーンを優先度順または最後に見つかったもので判定
             for (int i = 0; i < registeredZones.Count; i++)
             {
-                if (registeredZones[i] != null && registeredZones[i].ContainsPoint(worldPos))
+                if (registeredZones[i] != null && registeredZones[i].gameObject.activeInHierarchy && registeredZones[i].ContainsPoint(worldPos))
                 {
                     return registeredZones[i].Type;
                 }
@@ -61,12 +60,23 @@ namespace Custack.Terrain
         }
 
         /// <summary>
+        /// 指定ワールド座標における地形データを取得
+        /// </summary>
+        public TerrainData GetTerrainDataAt(Vector2 worldPos)
+        {
+            for (int i = 0; i < registeredZones.Count; i++)
+            {
+                if (registeredZones[i] != null && registeredZones[i].gameObject.activeInHierarchy && registeredZones[i].ContainsPoint(worldPos))
+                {
+                    return registeredZones[i].Data;
+                }
+            }
+
+            return TerrainData.CreateDefault(TerrainType.Normal);
+        }
+
+        /// <summary>
         /// 生の移動・旋回コマンドに対し、現在地の地形と脚ユニット特性に応じた適用比率（0.0〜1.0）のみを計算
-        /// ※ キネマティクス制限（差動二輪の横移動無効化やステアリング動作など）は実機マイコン(robot_leg)側で実行されます。
-        /// rawMove.x: 左右入力 (Vy)
-        /// rawMove.y: 上下入力 (Vx: 前後)
-        /// rawOmega: 旋回入力 (Omega)
-        /// 戻り値: Vector3(finalVx: 前後, finalVy: 左右, finalOmega: 旋回)
         /// </summary>
         public Vector3 CalculateModifiedMovement(Vector2 worldPos, Vector2 rawMove, float rawOmega, LegMovementConfig legConfig)
         {

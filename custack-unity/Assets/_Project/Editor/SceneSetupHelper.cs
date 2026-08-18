@@ -125,7 +125,14 @@ namespace Custack.Editor
             // 2. Arena Floor
             CreateArenaFloor(12f, 8f);
 
-            // 3. Player Test Robot
+            // 3. Terrain Manager & 4 Maps (森 / 雪山 / 市街地 / 火山)
+            var terrainMgrObj = new GameObject("TerrainManager");
+            terrainMgrObj.AddComponent<TerrainManager>();
+
+            var terrainsRoot = new GameObject("--- TERRAINS ---");
+            CreateAllTerrainMaps(terrainsRoot.transform);
+
+            // 4. Player Test Robot
             var playerObj = new GameObject("PlayerRobot");
             playerObj.transform.position = new Vector3(-2.5f, 0, 0);
 
@@ -153,7 +160,7 @@ namespace Custack.Editor
 
             var playerHealth = playerObj.AddComponent<Health>();
 
-            // 4. Dummy Targets
+            // 5. Dummy Targets
             var targetsRoot = new GameObject("--- DUMMY TARGETS ---");
             var dummyList = new List<Health>();
 
@@ -169,19 +176,87 @@ namespace Custack.Editor
             var d3 = CreateDummyTarget("Dummy_Moving_Center", new Vector3(3.5f, 0f, 0), 1.8f, targetsRoot.transform);
             dummyList.Add(d3);
 
-            // 5. Sandbox Controller
+            // 6. Sandbox Controller
             var controllerObj = new GameObject("WeaponSandboxController");
             var controller = controllerObj.AddComponent<WeaponSandboxController>();
             controller.playerRobotTransform = playerObj.transform;
             controller.dummyTargets = dummyList;
 
-            // 6. シーン保存
+            // 7. シーン保存
             string scenePath = "Assets/_Project/Scenes/Sandbox/WeaponEffectSandbox.unity";
             EnsureDirectory("Assets/_Project/Scenes/Sandbox");
             EditorSceneManager.SaveScene(scene, scenePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> の武器エフェクトテストシーンが完成しました！");
+        }
+
+        [MenuItem("CuStack/4. Setup Terrain Effect Sandbox (地形効果・4マップ単体テストシーン構築)", priority = 4)]
+        public static void SetupTerrainEffectSandboxScene()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // 1. Camera
+            var camObj = new GameObject("MainCamera");
+            camObj.tag = "MainCamera";
+            var cam = camObj.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 5.0f;
+            cam.transform.position = new Vector3(0, 0, -10f);
+            cam.backgroundColor = new Color(0.03f, 0.04f, 0.06f, 1f);
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            camObj.AddComponent<AudioListener>();
+
+            // 2. Arena Floor
+            CreateArenaFloor(12f, 8f);
+
+            // 3. Terrain Manager & 4 Maps (森 / 雪山 / 市街地 / 火山)
+            var terrainMgrObj = new GameObject("TerrainManager");
+            terrainMgrObj.AddComponent<TerrainManager>();
+
+            var terrainsRoot = new GameObject("--- TERRAINS ---");
+            CreateAllTerrainMaps(terrainsRoot.transform);
+
+            // 4. Player Test Robot
+            var playerObj = new GameObject("PlayerRobot");
+            playerObj.transform.position = new Vector3(-2.5f, 0, 0);
+
+            var mf = playerObj.AddComponent<MeshFilter>();
+            mf.sharedMesh = RobotMeshHelper.GetOrCreateCircleMesh(0.45f);
+            var mr = playerObj.AddComponent<MeshRenderer>();
+            mr.material = EffectFactory.GetParticleAdditiveMaterial();
+            mr.material.color = new Color(0.2f, 0.8f, 1f); // シアン
+
+            // マズルポイント (前方)
+            var muzzleObj = new GameObject("MuzzlePoint");
+            muzzleObj.transform.SetParent(playerObj.transform);
+            muzzleObj.transform.localPosition = new Vector3(0, 0.5f, 0);
+
+            // 向きを示す矢印
+            var arrowObj = new GameObject("DirectionIndicator");
+            arrowObj.transform.SetParent(playerObj.transform);
+            arrowObj.transform.localPosition = new Vector3(0, 0.3f, -0.05f);
+            arrowObj.transform.localScale = new Vector3(0.12f, 0.3f, 1f);
+            var arrowMf = arrowObj.AddComponent<MeshFilter>();
+            arrowMf.sharedMesh = RobotMeshHelper.GetOrCreateQuadMesh();
+            var arrowMr = arrowObj.AddComponent<MeshRenderer>();
+            arrowMr.material = EffectFactory.GetParticleAdditiveMaterial();
+            arrowMr.material.color = Color.yellow;
+
+            var playerHealth = playerObj.AddComponent<Health>();
+
+            // 5. Terrain Sandbox Controller
+            var controllerObj = new GameObject("TerrainSandboxController");
+            var controller = controllerObj.AddComponent<TerrainSandboxController>();
+            controller.playerRobotTransform = playerObj.transform;
+
+            // 6. シーン保存
+            string scenePath = "Assets/_Project/Scenes/Sandbox/TerrainEffectSandbox.unity";
+            EnsureDirectory("Assets/_Project/Scenes/Sandbox");
+            EditorSceneManager.SaveScene(scene, scenePath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"<color=#00FF88><b>[CuStack]</b></color> ✅ <b>{scenePath}</b> の地形効果テストシーンが完成しました！");
         }
 
         private static Health CreateDummyTarget(string name, Vector3 pos, float moveDist, Transform parent)
@@ -251,12 +326,9 @@ namespace Custack.Editor
             gameMgrObj.transform.SetParent(managersRoot.transform);
             var gameMgr = gameMgrObj.AddComponent<GameManager>();
 
-            // 4. Terrains
+            // 4. Terrains (4つのマップ: 森 / 雪山 / 市街地 / 火山)
             var terrainsRoot = new GameObject("--- TERRAINS ---");
-            CreateTerrainZone("MudZone", new Vector3(-3.5f, -2.2f, 0), new Vector2(3f, 2.5f), TerrainType.Mud, terrainsRoot.transform);
-            CreateTerrainZone("IceZone", new Vector3(3.5f, 2.2f, 0), new Vector2(3f, 2.5f), TerrainType.Ice, terrainsRoot.transform);
-            CreateTerrainZone("LavaZone", new Vector3(0f, 0f, 0), new Vector2(2.5f, 2.5f), TerrainType.Lava, terrainsRoot.transform);
-            CreateTerrainZone("ForestZone", new Vector3(3.5f, -2.2f, 0), new Vector2(3f, 2.5f), TerrainType.Forest, terrainsRoot.transform);
+            var mapMgr = CreateAllTerrainMaps(terrainsRoot.transform);
 
             // 5. Robots (IDs 0 ~ 15)
             var robotsRoot = new GameObject("--- ROBOTS ---");
@@ -430,6 +502,134 @@ namespace Custack.Editor
             return robotObj;
         }
 
+        private static TerrainMapManager CreateAllTerrainMaps(Transform parent)
+        {
+            var mapMgrObj = new GameObject("TerrainMapManager");
+            mapMgrObj.transform.SetParent(parent);
+            var mapMgr = mapMgrObj.AddComponent<TerrainMapManager>();
+
+            // 1. 🌲 森マップ (Forest Arena) - 12m x 8m
+            var forestMap = new GameObject("Map_Forest");
+            forestMap.transform.SetParent(parent);
+            CreateMapBackgroundQuad("FloorBg_Forest", forestMap.transform, "Mat_Map_Forest", "Map_Tex_Forest_Simple.jpg");
+            // 森林エリア (Forest: 50% 減速 - 4隅の区画)
+            CreatePolygonTerrainZone("Forest_TopLeft", new Vector2[] { new Vector2(-6.0f, 4.0f), new Vector2(-3.02f, 4.0f), new Vector2(-3.02f, 2.3f), new Vector2(-4.3f, 1.02f), new Vector2(-6.0f, 1.02f) }, TerrainType.Forest, forestMap.transform);
+            CreatePolygonTerrainZone("Forest_TopRight", new Vector2[] { new Vector2(3.02f, 4.0f), new Vector2(6.0f, 4.0f), new Vector2(6.0f, 1.02f), new Vector2(4.3f, 1.02f), new Vector2(3.02f, 2.3f) }, TerrainType.Forest, forestMap.transform);
+            CreatePolygonTerrainZone("Forest_BottomLeft", new Vector2[] { new Vector2(-6.0f, -1.02f), new Vector2(-4.3f, -1.02f), new Vector2(-3.02f, -2.3f), new Vector2(-3.02f, -4.0f), new Vector2(-6.0f, -4.0f) }, TerrainType.Forest, forestMap.transform);
+            CreatePolygonTerrainZone("Forest_BottomRight", new Vector2[] { new Vector2(3.02f, -2.3f), new Vector2(4.3f, -1.02f), new Vector2(6.0f, -1.02f), new Vector2(6.0f, -4.0f), new Vector2(3.02f, -4.0f) }, TerrainType.Forest, forestMap.transform);
+            // 毒沼・泥沼エリア (Mud: 30% 大減速 - 中央2池 + 上下エッジ)
+            CreatePolygonTerrainZone("Mud_CenterLeft", new Vector2[] { new Vector2(-3.23f, 0.81f), new Vector2(-2.49f, 1.55f), new Vector2(-1.21f, 1.34f), new Vector2(-0.89f, 0.38f), new Vector2(-1.64f, -0.47f), new Vector2(-2.91f, -0.26f) }, TerrainType.Mud, forestMap.transform);
+            CreatePolygonTerrainZone("Mud_CenterRight", new Vector2[] { new Vector2(1.02f, -0.68f), new Vector2(1.77f, 0.17f), new Vector2(3.04f, -0.04f), new Vector2(3.36f, -1.0f), new Vector2(2.62f, -1.85f), new Vector2(1.34f, -1.64f) }, TerrainType.Mud, forestMap.transform);
+            CreatePolygonTerrainZone("Mud_TopEdge", new Vector2[] { new Vector2(0.06f, 4.0f), new Vector2(2.4f, 4.0f), new Vector2(2.19f, 2.83f), new Vector2(1.02f, 2.62f), new Vector2(0.28f, 3.04f) }, TerrainType.Mud, forestMap.transform);
+            CreatePolygonTerrainZone("Mud_BottomEdge", new Vector2[] { new Vector2(-1.53f, -4.0f), new Vector2(1.55f, -4.0f), new Vector2(1.34f, -2.81f), new Vector2(-0.04f, -2.6f), new Vector2(-1.32f, -3.02f) }, TerrainType.Mud, forestMap.transform);
+
+            // 2. ❄️ 雪山マップ (Snow Arena) - 12m x 8m
+            var snowMap = new GameObject("Map_Snow");
+            snowMap.transform.SetParent(parent);
+            CreateMapBackgroundQuad("FloorBg_Snow", snowMap.transform, "Mat_Map_Snow", "Map_Tex_Ice_Simple.jpg");
+            // 凍結湖 (Ice: スリップ・低摩擦 - 中央八角形クリスタル氷原)
+            CreatePolygonTerrainZone("Ice_Glacier_Center", new Vector2[] { new Vector2(-2.0f, 1.9f), new Vector2(2.0f, 1.9f), new Vector2(2.8f, 1.2f), new Vector2(2.8f, -1.2f), new Vector2(2.0f, -1.9f), new Vector2(-2.0f, -1.9f), new Vector2(-2.8f, -1.2f), new Vector2(-2.8f, 1.2f) }, TerrainType.Ice, snowMap.transform);
+            // 深雪ゾーン (Mud: 40% 減速 - 4箇所の雪だまり)
+            CreatePolygonTerrainZone("DeepSnow_TopLeft", new Vector2[] { new Vector2(-3.9f, 3.8f), new Vector2(-2.1f, 3.8f), new Vector2(-2.1f, 2.7f), new Vector2(-3.9f, 2.7f) }, TerrainType.Mud, snowMap.transform);
+            CreatePolygonTerrainZone("DeepSnow_TopRight", new Vector2[] { new Vector2(2.1f, 3.8f), new Vector2(3.9f, 3.8f), new Vector2(3.9f, 2.7f), new Vector2(2.1f, 2.7f) }, TerrainType.Mud, snowMap.transform);
+            CreatePolygonTerrainZone("DeepSnow_BottomLeft", new Vector2[] { new Vector2(-3.9f, -2.7f), new Vector2(-2.1f, -2.7f), new Vector2(-2.1f, -3.8f), new Vector2(-3.9f, -3.8f) }, TerrainType.Mud, snowMap.transform);
+            CreatePolygonTerrainZone("DeepSnow_BottomRight", new Vector2[] { new Vector2(2.1f, -2.7f), new Vector2(3.9f, -2.7f), new Vector2(3.9f, -3.8f), new Vector2(2.1f, -3.8f) }, TerrainType.Mud, snowMap.transform);
+
+            // 3. 🏙️ 市街地マップ (Cyber City) - 12m x 8m
+            var cityMap = new GameObject("Map_City");
+            cityMap.transform.SetParent(parent);
+            CreateMapBackgroundQuad("FloorBg_City", cityMap.transform, "Mat_Map_City", "Map_Tex_City_Simple.jpg");
+            // 崩壊瓦礫エリア (Forest: 40% 減速 - 左下 1箇所)
+            CreatePolygonTerrainZone("Rubble_BottomLeft", new Vector2[] { new Vector2(-5.6f, -0.8f), new Vector2(-0.9f, -0.8f), new Vector2(-0.9f, -3.6f), new Vector2(-5.6f, -3.6f) }, TerrainType.Forest, cityMap.transform);
+            // 高圧電線・パワーサージ電磁ハザード (Lava: 毎秒30ダメージ - 右上 1箇所)
+            CreatePolygonTerrainZone("Hazard_TopRight", new Vector2[] { new Vector2(1.4f, 3.7f), new Vector2(5.4f, 3.7f), new Vector2(5.4f, 0.7f), new Vector2(1.4f, 0.7f) }, TerrainType.Lava, cityMap.transform);
+
+            // 4. 🌋 火山マップ (Volcano Arena) - 12m x 8m
+            var volcanoMap = new GameObject("Map_Volcano");
+            volcanoMap.transform.SetParent(parent);
+            CreateMapBackgroundQuad("FloorBg_Volcano", volcanoMap.transform, "Mat_Map_Volcano", "Map_Tex_Volcano_Simple.jpg");
+            // 溶岩湖・マグマハザード (Lava: 毎秒25ダメージ - 2大マグマ湖)
+            CreatePolygonTerrainZone("Magma_Lake_Left", new Vector2[] { new Vector2(-4.82f, 2.63f), new Vector2(-2.27f, 2.63f), new Vector2(-1.88f, 1.65f), new Vector2(-2.76f, 0.76f), new Vector2(-2.47f, -0.31f), new Vector2(-3.55f, -1.2f), new Vector2(-4.73f, -0.31f), new Vector2(-5.02f, 1.45f) }, TerrainType.Lava, volcanoMap.transform);
+            CreatePolygonTerrainZone("Magma_Lake_Right", new Vector2[] { new Vector2(2.43f, 1.25f), new Vector2(4.59f, 1.25f), new Vector2(4.88f, -0.31f), new Vector2(4.49f, -2.08f), new Vector2(2.33f, -2.67f), new Vector2(1.75f, -1.59f), new Vector2(2.04f, -0.31f), new Vector2(2.63f, 0.57f) }, TerrainType.Lava, volcanoMap.transform);
+            // 火山灰・スラグ地帯 (Mud: 30% 減速 - 2箇所)
+            CreatePolygonTerrainZone("Ash_BottomLeft", new Vector2[] { new Vector2(-6.0f, -1.39f), new Vector2(-3.35f, -1.39f), new Vector2(-2.86f, -2.57f), new Vector2(-3.84f, -4.0f), new Vector2(-6.0f, -4.0f) }, TerrainType.Mud, volcanoMap.transform);
+            CreatePolygonTerrainZone("Ash_TopRight", new Vector2[] { new Vector2(2.63f, 4.0f), new Vector2(6.0f, 4.0f), new Vector2(6.0f, 1.55f), new Vector2(4.0f, 1.55f), new Vector2(3.31f, 2.82f) }, TerrainType.Mud, volcanoMap.transform);
+
+            mapMgr.forestMapObject = forestMap;
+            mapMgr.snowMapObject = snowMap;
+            mapMgr.cityMapObject = cityMap;
+            mapMgr.volcanoMapObject = volcanoMap;
+
+            mapMgr.SwitchMap(MapType.Forest);
+            return mapMgr;
+        }
+
+        private static void CreatePolygonTerrainZone(string name, Vector2[] points, TerrainType type, Transform parent)
+        {
+            var zoneObj = new GameObject(name);
+            zoneObj.transform.SetParent(parent, false);
+            zoneObj.transform.localPosition = Vector3.zero;
+
+            var poly = GetOrAddComponent<PolygonCollider2D>(zoneObj);
+            poly.points = points;
+            poly.isTrigger = true;
+
+            var zone = GetOrAddComponent<TerrainZone>(zoneObj);
+            zone.terrainType = type;
+        }
+
+        private static void CreateMapBackgroundQuad(string name, Transform parent, string matName, string texFileName)
+        {
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = name;
+            quad.transform.SetParent(parent, false);
+            quad.transform.localPosition = new Vector3(0, 0, 0.5f); // 床面(Z=1)より手前、ロボット(Z=-0.05)より奥
+            quad.transform.localScale = new Vector3(12.0f, 8.0f, 1f);
+
+            var col = quad.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+
+            var mat = GetOrCreateFullMapMaterial(matName, texFileName);
+            quad.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        }
+
+        private static Material GetOrCreateFullMapMaterial(string matName, string texFileName)
+        {
+            string matPath = $"Assets/_Project/Materials/Terrain/{matName}.mat";
+            EnsureDirectory("Assets/_Project/Materials/Terrain");
+
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            string texPath = $"Assets/_Project/Textures/Terrain/{texFileName}";
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+
+            if (mat == null)
+            {
+                var shader = Shader.Find("Universal Render Pipeline/Unlit")
+                          ?? Shader.Find("Unlit/Texture")
+                          ?? Shader.Find("Sprites/Default");
+                mat = new Material(shader);
+                mat.name = matName;
+
+                if (tex != null)
+                {
+                    mat.mainTexture = tex;
+                    if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
+                    if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
+                }
+
+                AssetDatabase.CreateAsset(mat, matPath);
+            }
+            else if (tex != null)
+            {
+                mat.mainTexture = tex;
+                if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
+                EditorUtility.SetDirty(mat);
+            }
+
+            return mat;
+        }
+
         private static void CreateTerrainZone(string name, Vector3 pos, Vector2 size, TerrainType type, Transform parent)
         {
             var zoneObj = new GameObject(name);
@@ -442,32 +642,6 @@ namespace Custack.Editor
 
             var zone = GetOrAddComponent<TerrainZone>(zoneObj);
             zone.terrainType = type;
-
-            Color zoneColor = type switch
-            {
-                TerrainType.Mud => new Color(0.45f, 0.25f, 0.08f, 1.0f),      // 泥沼: 落ち着いたダークオレンジ枠線
-                TerrainType.Ice => new Color(0.10f, 0.40f, 0.55f, 1.0f),      // 氷上: 落ち着いたシアン枠線
-                TerrainType.Lava => new Color(0.55f, 0.12f, 0.05f, 1.0f),     // 溶岩: 落ち着いたダークレッド枠線
-                TerrainType.Forest => new Color(0.08f, 0.45f, 0.15f, 1.0f),   // 森林: 落ち着いたダークグリーン枠線
-                _ => new Color(0.3f, 0.3f, 0.3f, 1.0f)
-            };
-
-            // スタイリッシュな細い外枠境界線 (Line Quads: 幅 2cm) を描画
-            var borderRoot = new GameObject("BorderLines");
-            borderRoot.transform.SetParent(zoneObj.transform, false);
-            borderRoot.transform.localPosition = new Vector3(0, 0, 0.5f);
-
-            float lineWidth = 0.02f; // 幅 2cm の極細枠線 (カメラ干渉を最小化)
-            var lineMat = GetOrCreateMaterial($"Mat_Terrain_Border_{type}", zoneColor, false);
-
-            // 上枠
-            CreateLineQuad("TopLine", borderRoot.transform, new Vector3(0, size.y / 2f, 0), new Vector3(size.x, lineWidth, 1f), lineMat);
-            // 下枠
-            CreateLineQuad("BottomLine", borderRoot.transform, new Vector3(0, -size.y / 2f, 0), new Vector3(size.x, lineWidth, 1f), lineMat);
-            // 左枠
-            CreateLineQuad("LeftLine", borderRoot.transform, new Vector3(-size.x / 2f, 0, 0), new Vector3(lineWidth, size.y, 1f), lineMat);
-            // 右枠
-            CreateLineQuad("RightLine", borderRoot.transform, new Vector3(size.x / 2f, 0, 0), new Vector3(lineWidth, size.y, 1f), lineMat);
         }
 
         private static void CreateLineQuad(string name, Transform parent, Vector3 localPos, Vector3 scale, Material mat)

@@ -4,6 +4,7 @@ using Custack.Robot;
 using Custack.Input;
 using Custack.Combat;
 using Custack.Core;
+using Custack.Terrain;
 
 namespace Custack.UI
 {
@@ -43,6 +44,15 @@ namespace Custack.UI
                 if (Keyboard.current.f1Key.wasPressedThisFrame)
                 {
                     showDashboard = !showDashboard;
+                }
+
+                // F5〜F8 キーで地形マップ切り替え
+                if (TerrainMapManager.Instance != null)
+                {
+                    if (Keyboard.current.f5Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Forest);
+                    if (Keyboard.current.f6Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Snow);
+                    if (Keyboard.current.f7Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.City);
+                    if (Keyboard.current.f8Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Volcano);
                 }
 
                 // [ / ] キーで視差スケールを微調整
@@ -353,6 +363,37 @@ namespace Custack.UI
                 GUILayout.EndHorizontal();
 
                 GUILayout.Label("<color=#888888>ショートカット: [ / ] キーでスケール微調整</color>");
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.Space(6);
+            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.Label("<b><color=#00FFFF>【🗺️ 地形マップ切替 (床面投影)】</color></b>");
+
+            var mapMgr = TerrainMapManager.Instance;
+            if (mapMgr != null)
+            {
+                GUILayout.Label($"現在: <b><color=#00FF88>{mapMgr.GetMapDisplayName(mapMgr.currentMapType)}</color></b>");
+                GUILayout.Label($"<color=#AAAAAA><size=10>{mapMgr.GetMapDescription(mapMgr.currentMapType)}</size></color>");
+
+                GUILayout.BeginHorizontal();
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Forest ? Color.green : Color.white;
+                if (GUILayout.Button("🌲 森 (F5)", GUILayout.Height(24))) mapMgr.SwitchMap(MapType.Forest);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Snow ? Color.cyan : Color.white;
+                if (GUILayout.Button("❄️ 雪山 (F6)", GUILayout.Height(24))) mapMgr.SwitchMap(MapType.Snow);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.City ? Color.yellow : Color.white;
+                if (GUILayout.Button("🏙️ 市街地 (F7)", GUILayout.Height(24))) mapMgr.SwitchMap(MapType.City);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Volcano ? new Color(1f, 0.4f, 0.2f) : Color.white;
+                if (GUILayout.Button("🌋 火山 (F8)", GUILayout.Height(24))) mapMgr.SwitchMap(MapType.Volcano);
+                GUI.backgroundColor = Color.white;
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                GUILayout.Label("<color=#888888>TerrainMapManager 未初期化</color>");
             }
             GUILayout.EndVertical();
 

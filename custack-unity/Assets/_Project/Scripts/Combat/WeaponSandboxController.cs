@@ -3,12 +3,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Custack.Equipment;
 using Custack.Robot;
+using Custack.Terrain;
 
 namespace Custack.Combat
 {
     /// <summary>
-    /// 実機・共有メモリ不要で、武器エフェクトおよびダメージ計算・スタン・無敵時間・移動停止を
-    /// 単体で視覚確認・テストするためのサンドボックスコントローラー。
+    /// 実機・共有メモリ不要で、武器エフェクトおよび4つの地形マップ（森・雪山・市街地・火山）の
+    /// 地形効果（減速・スリップ・溶岩ダメージ・スタン）を単体で視覚確認・テストするためのサンドボックスコントローラー。
     /// </summary>
     public class WeaponSandboxController : MonoBehaviour
     {
@@ -17,16 +18,19 @@ namespace Custack.Combat
         public float moveSpeed = 5.0f;
         public float rotateSpeed = 360f;
 
-        [Header("現在装備中の武器")]
+        [Header("現在装備中の武器 & 脚ユニット")]
         public ArmDeviceType currentWeaponType = ArmDeviceType.Gatling;
+        public LegDeviceType currentLegType = LegDeviceType.Omni;
         private WeaponBase activeWeapon;
         private ArmWeaponConfig currentConfig;
+        private LegMovementConfig currentLegConfig;
         private Health playerHealth;
 
         [Header("ダミーターゲット")]
         public List<Health> dummyTargets = new List<Health>();
 
         private Camera mainCam;
+        private GameObject playerWreckageSmokeObj;
 
         void Awake()
         {
@@ -42,6 +46,8 @@ namespace Custack.Combat
 
             playerHealth = playerRobotTransform.GetComponent<Health>();
             if (playerHealth == null) playerHealth = playerRobotTransform.gameObject.AddComponent<Health>();
+
+            currentLegConfig = LegMovementConfig.CreateDefault(currentLegType);
 
             SetupWeapon(currentWeaponType);
             SetupDummyTargets();
@@ -76,7 +82,11 @@ namespace Custack.Combat
             }
         }
 
-        private GameObject playerWreckageSmokeObj;
+        public void SetupLeg(LegDeviceType type)
+        {
+            currentLegType = type;
+            currentLegConfig = LegMovementConfig.CreateDefault(type);
+        }
 
         private void SetupDummyTargets()
         {
@@ -86,7 +96,6 @@ namespace Custack.Combat
                 {
                     dummy.OnDeath += () =>
                     {
-                        // 撃破時に大爆発エフェクトを再生し、2.0秒後にリスポーン
                         EffectFactory.PlayRobotDestructionExplosion(dummy.transform.position, Color.red);
                         Invoke(nameof(ResetAllDummies), 2.0f);
                     };
@@ -97,7 +106,6 @@ namespace Custack.Combat
             {
                 playerHealth.OnDeath += () =>
                 {
-                    // 自機撃破時: 大爆発 + 黒煙アタッチ
                     EffectFactory.PlayRobotDestructionExplosion(playerRobotTransform.position, new Color(0.2f, 0.8f, 1f));
                     if (playerWreckageSmokeObj == null)
                     {
@@ -137,6 +145,7 @@ namespace Custack.Combat
             HandlePlayerMovement();
             HandleWeaponInput();
             HandleKeyboardWeaponSwitch();
+            HandleTerrainDamage();
         }
 
         private void HandlePlayerMovement()
@@ -153,19 +162,28 @@ namespace Custack.Combat
             var mouse = Mouse.current;
 
             // 1. 移動 (WASD / 矢印キー) - Input System
-            Vector2 move = Vector2.zero;
+            Vector2 rawMove = Vector2.zero;
             if (kb != null)
             {
-                if (kb.wKey.isPressed || kb.upArrowKey.isPressed) move.y += 1f;
-                if (kb.sKey.isPressed || kb.downArrowKey.isPressed) move.y -= 1f;
-                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) move.x -= 1f;
-                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) move.x += 1f;
+                if (kb.wKey.isPressed || kb.upArrowKey.isPressed) rawMove.y += 1f;
+                if (kb.sKey.isPressed || kb.downArrowKey.isPressed) rawMove.y -= 1f;
+                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) rawMove.x -= 1f;
+                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) rawMove.x += 1f;
             }
 
-            if (move.sqrMagnitude > 0.001f)
+            if (rawMove.sqrMagnitude > 0.001f)
             {
-                move.Normalize();
-                playerRobotTransform.position += (Vector3)(move * (moveSpeed * Time.deltaTime));
+                rawMove.Normalize();
+
+                // 地形マネージャーによる移動補正 (森50%減速、泥30%減速等)
+                float speedMultiplier = 1.0f;
+                if (TerrainManager.Instance != null && currentLegConfig != null)
+                {
+                    TerrainType t = TerrainManager.Instance.GetTerrainAt(playerRobotTransform.position);
+                    speedMultiplier = currentLegConfig.GetSpeedMultiplier(t);
+                }
+
+                playerRobotTransform.position += (Vector3)(rawMove * (moveSpeed * speedMultiplier * Time.deltaTime));
             }
 
             // 2. マウスカーソル方向へ旋回 - Input System
@@ -179,6 +197,25 @@ namespace Custack.Combat
                 {
                     float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
                     playerRobotTransform.rotation = Quaternion.Euler(0, 0, angle);
+                }
+            }
+        }
+
+        private void HandleTerrainDamage()
+        {
+            if (playerRobotTransform == null || playerHealth == null || playerHealth.IsDead || playerHealth.IsInvincible) return;
+
+            if (TerrainManager.Instance != null)
+            {
+                TerrainType t = TerrainManager.Instance.GetTerrainAt(playerRobotTransform.position);
+                if (t == TerrainType.Lava)
+                {
+                    float dmg = 25f * Time.deltaTime; // 溶岩/ハザード: 毎秒25ダメージ
+                    if (currentLegConfig != null)
+                    {
+                        dmg *= (1.0f - currentLegConfig.lavaDamageReduction);
+                    }
+                    playerHealth.TakeDamage(dmg, playerRobotTransform.position);
                 }
             }
         }
@@ -224,6 +261,15 @@ namespace Custack.Combat
             var kb = Keyboard.current;
             if (kb == null) return;
 
+            // マップ切り替え (F5〜F8)
+            if (TerrainMapManager.Instance != null)
+            {
+                if (kb.f5Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Forest);
+                if (kb.f6Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Snow);
+                if (kb.f7Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.City);
+                if (kb.f8Key.wasPressedThisFrame) TerrainMapManager.Instance.SwitchMap(MapType.Volcano);
+            }
+
             // HP 0 (撃破) の場合は武器切り替えも不可 (Rキーでのリスポーンのみ許可)
             if (playerHealth != null && playerHealth.IsDead)
             {
@@ -240,72 +286,85 @@ namespace Custack.Combat
         void OnGUI()
         {
             // サンドボックス操作パネル
-            GUILayout.BeginArea(new Rect(20, 20, 380, 520), "【バトル・エフェクト テストツール】", GUI.skin.window);
+            GUILayout.BeginArea(new Rect(20, 20, 420, 600), "【バトル・地形マップ テストツール】", GUI.skin.window);
+            GUILayout.Space(6);
+
+            // 1. マップ切り替えセクション
+            GUILayout.Label("🗺️ <b>地形マップ切替 (F5〜F8)</b>");
+            var mapMgr = TerrainMapManager.Instance;
+            if (mapMgr != null)
+            {
+                GUILayout.Label($"現在: <b><color=#00FF88>{mapMgr.GetMapDisplayName(mapMgr.currentMapType)}</color></b>");
+                GUILayout.Label($"<color=#AAAAAA><size=10>{mapMgr.GetMapDescription(mapMgr.currentMapType)}</size></color>");
+
+                GUILayout.BeginHorizontal();
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Forest ? Color.green : Color.white;
+                if (GUILayout.Button("🌲 森 (F5)", GUILayout.Height(26))) mapMgr.SwitchMap(MapType.Forest);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Snow ? Color.cyan : Color.white;
+                if (GUILayout.Button("❄️ 雪山 (F6)", GUILayout.Height(26))) mapMgr.SwitchMap(MapType.Snow);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.City ? Color.yellow : Color.white;
+                if (GUILayout.Button("🏙️ 市街地 (F7)", GUILayout.Height(26))) mapMgr.SwitchMap(MapType.City);
+
+                GUI.backgroundColor = mapMgr.currentMapType == MapType.Volcano ? new Color(1f, 0.4f, 0.2f) : Color.white;
+                if (GUILayout.Button("🌋 火山 (F8)", GUILayout.Height(26))) mapMgr.SwitchMap(MapType.Volcano);
+                GUI.backgroundColor = Color.white;
+                GUILayout.EndHorizontal();
+            }
+
             GUILayout.Space(8);
 
-            GUILayout.Label("🎮 <b>操作方法</b>");
-            GUILayout.Label("・移動: <b>WASD / 矢印キー</b>");
-            GUILayout.Label("・照準: <b>マウスカーソル</b>");
-            GUILayout.Label("・発射: <b>左クリック / Space / J</b>");
-            GUILayout.Label("・切替: <b>[1] ガトリング / [2] ソード / [3] キャノン</b>");
-            GUILayout.Space(8);
-
-            GUILayout.Label($"<b>現在の武器:</b> <color=yellow>{currentConfig?.weaponName ?? "None"}</color>");
-            GUILayout.Label($"<b>基礎威力:</b> {currentConfig?.damage ?? 0} (ガトリング8/ソード40/キャノン30) | <b>弾速:</b> {currentConfig?.projectileSpeed ?? 0}");
-            GUILayout.Space(4);
+            // 2. 現在地の地形ステータス & 脚ユニット切替
+            TerrainType currentT = TerrainManager.Instance != null ? TerrainManager.Instance.GetTerrainAt(playerRobotTransform.position) : TerrainType.Normal;
+            string tColor = currentT switch
+            {
+                TerrainType.Forest => "#00FF88",
+                TerrainType.Mud => "#FFAA00",
+                TerrainType.Ice => "#00FFFF",
+                TerrainType.Lava => "#FF4444",
+                _ => "#FFFFFF"
+            };
+            GUILayout.Label($"📍 <b>現在地の地形:</b> <color={tColor}><b>{currentT}</b></color> (速度倍率: {currentLegConfig?.GetSpeedMultiplier(currentT):P0})");
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("1. ガトリング", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Gatling);
-            if (GUILayout.Button("2. ソード", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Sword);
-            if (GUILayout.Button("3. キャノン", GUILayout.Height(30))) SetupWeapon(ArmDeviceType.Cannon);
+            GUILayout.Label("脚切替:", GUILayout.Width(50));
+            if (GUILayout.Button("Omni (標準)", GUILayout.Height(22))) SetupLeg(LegDeviceType.Omni);
+            if (GUILayout.Button("Tire (最速)", GUILayout.Height(22))) SetupLeg(LegDeviceType.Tire);
+            if (GUILayout.Button("Crawler (悪路走破)", GUILayout.Height(22))) SetupLeg(LegDeviceType.Crawler);
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(10);
-            GUILayout.Label("⚡ <b>スタン & 無敵時間ステータス</b>");
+            GUILayout.Space(8);
+
+            // 3. 武器切り替え
+            GUILayout.Label($"⚔️ <b>武器:</b> <color=yellow>{currentConfig?.weaponName}</color> (威力:{currentConfig?.damage} 弾速:{currentConfig?.projectileSpeed})");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("1. ガトリング", GUILayout.Height(26))) SetupWeapon(ArmDeviceType.Gatling);
+            if (GUILayout.Button("2. ソード", GUILayout.Height(26))) SetupWeapon(ArmDeviceType.Sword);
+            if (GUILayout.Button("3. キャノン", GUILayout.Height(26))) SetupWeapon(ArmDeviceType.Cannon);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(8);
+
+            // 4. スタン & HP ステータス
             if (playerHealth != null)
             {
-                string stunStatus = playerHealth.IsStunned ? $"<color=red>STUNNED! (残 {playerHealth.StunRemaining:F1}s)</color>" : "<color=green>NORMAL</color>";
-                string invStatus = playerHealth.IsInvincible ? $"<color=cyan>INVINCIBLE (残 {playerHealth.InvincibleRemaining:F1}s)</color>" : "<color=gray>None</color>";
-                GUILayout.Label($"プレイヤーHP: <b>{playerHealth.currentHp:F0} / {playerHealth.maxHp:F0}</b>");
-                GUILayout.Label($"状態: {stunStatus} | {invStatus}");
+                string stunStatus = playerHealth.IsStunned ? $"<color=red>STUNNED! ({playerHealth.StunRemaining:F1}s)</color>" : "<color=green>NORMAL</color>";
+                string invStatus = playerHealth.IsInvincible ? $"<color=cyan>INVINCIBLE ({playerHealth.InvincibleRemaining:F1}s)</color>" : "<color=gray>None</color>";
+                GUILayout.Label($"❤️ <b>HP:</b> {playerHealth.currentHp:F0} / {playerHealth.maxHp:F0} | 状態: {stunStatus} | {invStatus}");
             }
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("⚡ 自機スタン検証 (1.5秒停止+無敵)"))
+            if (GUILayout.Button("⚡ 自機スタン検証")) playerHealth?.TriggerStun();
+            if (GUILayout.Button("💥 ダミー100ダメ"))
             {
-                playerHealth?.TriggerStun();
+                foreach (var dummy in dummyTargets) if (dummy != null) dummy.TakeDamage(100f, dummy.transform.position);
             }
-            if (GUILayout.Button("💥 ダミーへ100ダメ (スタン)"))
-            {
-                foreach (var dummy in dummyTargets)
-                {
-                    if (dummy != null) dummy.TakeDamage(100f, dummy.transform.position);
-                }
-            }
+            if (GUILayout.Button("💀 自機HP0撃破")) playerHealth?.TakeDamage(1000f);
             GUILayout.EndHorizontal();
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("💀 自機HP 0 撃破テスト (大破爆発+黒煙+操作不能)"))
-            {
-                playerHealth?.TakeDamage(1000f);
-            }
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(10);
-            GUILayout.Label("✨ <b>エフェクト直接プレビュー</b>");
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("火花スパーク")) EffectFactory.PlayHitSparks(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, Color.yellow);
-            if (GUILayout.Button("切断光")) EffectFactory.PlaySlashImpact(playerRobotTransform.position + playerRobotTransform.up * 1.5f, playerRobotTransform.up, new Color(0.2f, 1f, 0.4f));
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("大爆発 (青白)")) EffectFactory.PlayLaserImpact(playerRobotTransform.position + playerRobotTransform.up * 2f, new Color(0.3f, 0.7f, 1f));
-            if (GUILayout.Button("衝撃波リング")) EffectFactory.CreateShockwave(playerRobotTransform.position, Color.cyan, 0.2f, 2.0f, 0.35f);
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(10);
-            if (GUILayout.Button("🔄 ダミーターゲット全リセット (Rキー)", GUILayout.Height(28)))
+            GUILayout.Space(8);
+            if (GUILayout.Button("🔄 全機体リスポーン & HP全回復 (Rキー)", GUILayout.Height(26)))
             {
                 ResetAllDummies();
             }

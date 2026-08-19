@@ -269,7 +269,7 @@ namespace Custack.Combat
 
             if (isFire)
             {
-                activeWeapon.TryFire(playerRobotTransform.up, null);
+                activeWeapon.TryFire(playerRobotTransform.right, null); // 画面から見て時計回りに90度回転
             }
         }
 

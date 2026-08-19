@@ -142,9 +142,9 @@ namespace Custack.Robot
                 );
             }
 
-            // 4. 武器発射判定
+            // 4. 武器発射判定 (画面から見て時計回りに90度ずらした正面方向: transform.right)
             Transform targetTransform = GetCurrentTargetTransform();
-            Vector2 forwardDir = transform.up; // 2D 前方 (上方向)
+            Vector2 forwardDir = transform.right; // 2D 前方 (時計回りに90度回転)
 
             // 右武器 (単発 or フルオート連射)
             if (rightWeapon != null)

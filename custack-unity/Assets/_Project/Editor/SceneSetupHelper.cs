@@ -142,16 +142,16 @@ namespace Custack.Editor
             mr.material = EffectFactory.GetParticleAdditiveMaterial();
             mr.material.color = new Color(0.2f, 0.8f, 1f); // シアン
 
-            // マズルポイント (前方)
+            // マズルポイント (前方: +X)
             var muzzleObj = new GameObject("MuzzlePoint");
             muzzleObj.transform.SetParent(playerObj.transform);
-            muzzleObj.transform.localPosition = new Vector3(0, 0.5f, 0);
+            muzzleObj.transform.localPosition = new Vector3(0.5f, 0, 0);
 
-            // 向きを示す矢印
+            // 向きを示す矢印 (+X方向)
             var arrowObj = new GameObject("DirectionIndicator");
             arrowObj.transform.SetParent(playerObj.transform);
-            arrowObj.transform.localPosition = new Vector3(0, 0.3f, -0.05f);
-            arrowObj.transform.localScale = new Vector3(0.12f, 0.3f, 1f);
+            arrowObj.transform.localPosition = new Vector3(0.3f, 0, -0.05f);
+            arrowObj.transform.localScale = new Vector3(0.3f, 0.12f, 1f);
             var arrowMf = arrowObj.AddComponent<MeshFilter>();
             arrowMf.sharedMesh = RobotMeshHelper.GetOrCreateQuadMesh();
             var arrowMr = arrowObj.AddComponent<MeshRenderer>();
@@ -227,16 +227,16 @@ namespace Custack.Editor
             mr.material = EffectFactory.GetParticleAdditiveMaterial();
             mr.material.color = new Color(0.2f, 0.8f, 1f); // シアン
 
-            // マズルポイント (前方)
+            // マズルポイント (前方: +X)
             var muzzleObj = new GameObject("MuzzlePoint");
             muzzleObj.transform.SetParent(playerObj.transform);
-            muzzleObj.transform.localPosition = new Vector3(0, 0.5f, 0);
+            muzzleObj.transform.localPosition = new Vector3(0.5f, 0, 0);
 
-            // 向きを示す矢印
+            // 向きを示す矢印 (+X方向)
             var arrowObj = new GameObject("DirectionIndicator");
             arrowObj.transform.SetParent(playerObj.transform);
-            arrowObj.transform.localPosition = new Vector3(0, 0.3f, -0.05f);
-            arrowObj.transform.localScale = new Vector3(0.12f, 0.3f, 1f);
+            arrowObj.transform.localPosition = new Vector3(0.3f, 0, -0.05f);
+            arrowObj.transform.localScale = new Vector3(0.3f, 0.12f, 1f);
             var arrowMf = arrowObj.AddComponent<MeshFilter>();
             arrowMf.sharedMesh = RobotMeshHelper.GetOrCreateQuadMesh();
             var arrowMr = arrowObj.AddComponent<MeshRenderer>();
@@ -480,15 +480,15 @@ namespace Custack.Editor
             // 3. ビジュアル初期化
             visual.Initialize(id, color);
 
-            // 3. 左右マズルポイント
+            // 3. 左右マズルポイント (時計回り90度回転: 前方=+X, 右腕=-Y, 左腕=+Y)
             var muzzleRObj = new GameObject("Muzzle_R");
             muzzleRObj.transform.SetParent(robotObj.transform);
-            muzzleRObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0);
+            muzzleRObj.transform.localPosition = new Vector3(0.5f, -0.5f, 0);
             entity.rightMuzzlePoint = muzzleRObj.transform;
 
             var muzzleLObj = new GameObject("Muzzle_L");
             muzzleLObj.transform.SetParent(robotObj.transform);
-            muzzleLObj.transform.localPosition = new Vector3(-0.5f, 0.5f, 0);
+            muzzleLObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0);
             entity.leftMuzzlePoint = muzzleLObj.transform;
 
             // 4. 衝突判定

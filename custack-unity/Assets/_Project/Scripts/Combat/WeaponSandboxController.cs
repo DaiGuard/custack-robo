@@ -251,7 +251,7 @@ namespace Custack.Combat
 
             if (isFireInput)
             {
-                Vector2 forwardDir = playerRobotTransform.up;
+                Vector2 forwardDir = playerRobotTransform.right; // 画面から見て時計回りに90度回転
                 activeWeapon.TryFire(forwardDir, null);
             }
         }

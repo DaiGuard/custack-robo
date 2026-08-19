@@ -263,15 +263,15 @@ namespace Custack.Robot
             // 3. ビジュアル初期化
             visual.Initialize(id, robotColor);
 
-            // 4. マズルポイント
+            // 4. マズルポイント (時計回り90度回転: 前方=+X, 右腕=-Y, 左腕=+Y)
             var muzzleRObj = new GameObject("Muzzle_R");
             muzzleRObj.transform.SetParent(robotObj.transform);
-            muzzleRObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0);
+            muzzleRObj.transform.localPosition = new Vector3(0.5f, -0.5f, 0);
             entity.rightMuzzlePoint = muzzleRObj.transform;
 
             var muzzleLObj = new GameObject("Muzzle_L");
             muzzleLObj.transform.SetParent(robotObj.transform);
-            muzzleLObj.transform.localPosition = new Vector3(-0.5f, 0.5f, 0);
+            muzzleLObj.transform.localPosition = new Vector3(0.5f, 0.5f, 0);
             entity.leftMuzzlePoint = muzzleLObj.transform;
 
             // 5. 衝突判定

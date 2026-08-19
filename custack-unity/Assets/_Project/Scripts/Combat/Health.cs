@@ -67,9 +67,16 @@ namespace Custack.Combat
         /// </summary>
         public void TakeDamage(float damage, Vector2 hitPoint = default)
         {
-            if (IsDead || IsInvincible) return;
+            if (IsDead) return;
+
+            if (IsInvincible)
+            {
+                Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitShield, 0.75f);
+                return;
+            }
 
             currentHp = Mathf.Max(0f, currentHp - damage);
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitDamage, 0.85f);
 
             // 短時間内の被ダメージを蓄積
             if (Time.time > recentDamageResetTime)
@@ -95,6 +102,7 @@ namespace Custack.Combat
 
             if (IsDead)
             {
+                Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.Defeat, 1.0f);
                 OnDeath?.Invoke();
             }
         }
@@ -114,6 +122,7 @@ namespace Custack.Combat
             accumulatedDamage = 0f;
             wasStunned = true;
 
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.Stun, 0.9f);
             OnStunned?.Invoke();
         }
 

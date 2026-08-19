@@ -231,6 +231,22 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
 * **`BattleHUD.cs`**: P1/P2 HPゲージ（1000）、装備構成、勝利アナウンス表示。
 * **`GameManager.cs`**: 勝敗判定、ラウンド管理、「R」キーおよびコントローラー「△」ボタンでの即時再戦リセット。
 
+### 3.8 オーディオシステム & 音源プロシージャル生成 (`Custack.Audio`, `Tools/`)
+* **`AudioManager.cs`**:
+  - `[RuntimeInitializeOnLoadMethod]` によるシーン配置不要の自動常駐シングルトン（`DontDestroyOnLoad`）。
+  - 16チャンネル SE 音声プール、ピッチ微小ランダム揺らぎ（連射SEの機械感を軽減）、同一SE短時間間引きリミッター。
+  - マスター / SE / BGM の独立音量制御およびサイバーパンク BGM のシームレスループ再生。
+  - **プロシージャル波形自動合成フォールバック**: 万が一オーディオファイルが見つからない環境でも `AudioClip.Create` によりリアルタイムで波形を合成して発音。
+* **`Tools/generate_sound_effects.py`**:
+  - Python 標準ライブラリ（`wave`, `struct`, `math`）のみで自立動作するプロシージャル音源生成ツール。
+  - `Assets/_Project/Audio/` および `Assets/_Project/Resources/Audio/` へ全15種（SE 14種 + 4小節BGM 1種）を即座に生成・配置。
+  - **収録サウンド一覧**:
+    - `se_shot_gatling` (ガトリング連射), `se_shot_laser` (高出力レーザー), `se_sword_slash` (光刃スイング)
+    - `se_hit_damage` (装甲被弾), `se_hit_shield` (無敵/バリア跳弾), `se_explosion` (重低音爆発), `se_stun` (電磁サージ放電), `se_defeat` (大破撃破)
+    - `se_terrain_mud` (泥沼減速), `se_terrain_ice` (氷上スキッド), `se_terrain_lava` (溶岩スパーク)
+    - `se_game_start` (ラウンド開始), `se_victory` (勝利ファンファーレ), `se_lockon` (ターゲット切替)
+    - `bgm_battle_loop` (130BPM サイバーパンク メカバトル 4小節ループ)
+
 ---
 
 ## 4. 🎮 デバイスID & ゲームメカニクス対応表

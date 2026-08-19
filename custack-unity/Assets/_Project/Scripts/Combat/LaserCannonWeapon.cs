@@ -14,8 +14,9 @@ namespace Custack.Combat
             Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
             Color colVal = config != null ? config.weaponColor : new Color(0.3f, 0.7f, 1f);
 
-            // 1. 強烈なビーム発射マズルフラッシュ
+            // 1. 強烈なビーム発射マズルフラッシュ & SE再生
             EffectFactory.PlayMuzzleFlash(spawnPos, forwardDir, colVal, 0.8f);
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.ShotLaser, 1.0f, 0.04f);
 
             // 2. レーザービームオブジェクトの生成 (2Dに完全特化した構成)
             GameObject beamObj;

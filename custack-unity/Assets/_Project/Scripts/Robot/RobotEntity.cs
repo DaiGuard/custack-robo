@@ -192,8 +192,9 @@ namespace Custack.Robot
                 currentTargetIndex = -1; // ロック解除
             }
 
-            // ターゲットマーカー表示の更新
+            // ターゲットマーカー表示の更新 & SE再生
             UpdateTargetMarkers();
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.LockOn, 0.75f, 0.05f);
         }
 
         private void UpdateTargetMarkers()

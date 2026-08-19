@@ -86,7 +86,7 @@ flowchart TD
 | **`custack-hardware/`** | `agent-hardware` | KiCad v10, 回路・CAD | メイン基板、電源基板、アーム/脚基板、ポゴピン配置、回路設計 | [`custack-hardware/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-hardware/GEMINI.md) |
 | **`custack-robot/`** | `agent-robot` | PlatformIO, C++, ATtiny | M5Stack Core2 メイン、M5Atom ブリッジ、ATtiny1614 脚・腕制御、デバイスIDテレメトリ | [`custack-robot/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-robot/GEMINI.md) |
 | **`custack_ws/`** | `agent-ros` | ROS 2 Humble, C++, Python | VPI 画像処理・位置推定、共有メモリルーター、シリアルテレメトリパース、キャリブレーション Web | [`custack_ws/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack_ws/GEMINI.md) |
-| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション演出、共有メモリ連携、対戦バトルシステム、デバイスID自動認識×地形効果 | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
+| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション演出、共有メモリ連携、対戦バトルシステム、デバイスID自動認識×地形効果、**音源プロシージャル生成 & オーディオ統括** | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
 | **`mcp/`** | `agent-promoter` | Google Veo 3.1, Python, FastMCP | プロモーション戦略、CM絵コンテ・キービジュアル、Google Veo動画クリップ自動生成 | [`.agents/agent-promoter/agent.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/.agents/agent-promoter/agent.md) |
 
 ---

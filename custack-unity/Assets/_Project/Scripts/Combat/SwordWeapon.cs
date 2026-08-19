@@ -13,10 +13,11 @@ namespace Custack.Combat
             Color colVal = config != null ? config.weaponColor : new Color(0.2f, 1f, 0.4f);
             float dmg = config != null ? config.damage : 40f; // ユーザー指示: 基礎威力40
 
-            // ロボットの原点を中心とした三日月型近接スイングを生成
+            // ロボットの原点を中心とした三日月型近接スイングを生成 & SE再生
             GameObject slashObj = new GameObject("MeleeSwordSlash");
             var meleeSlash = slashObj.AddComponent<MeleeSwordSlash>();
             meleeSlash.Initialize(OwnerRobotId, transform, forwardDir, IsRightArm, dmg, colVal);
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.SwordSlash, 0.9f, 0.05f);
         }
     }
 }

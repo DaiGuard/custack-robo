@@ -14,8 +14,9 @@ namespace Custack.Combat
             Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
             Color colVal = config != null ? config.weaponColor : new Color(1f, 0.85f, 0.2f);
 
-            // 1. 発射マズルフラッシュエフェクト
+            // 1. 発射マズルフラッシュエフェクト & SE再生
             EffectFactory.PlayMuzzleFlash(spawnPos, forwardDir, colVal, 0.35f);
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.ShotGatling, 0.75f, 0.08f);
 
             // 2. 拡散角の計算
             float spread = config != null ? config.spreadAngle : 7.5f;

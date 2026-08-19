@@ -240,8 +240,9 @@ namespace Custack.Combat
 
             ps.Play();
 
-            // 衝撃波リングを併せて展開
+            // 衝撃波リングを併せて展開 & SE再生
             CreateShockwave(position, color, 0.15f, radius * 1.5f, 0.3f);
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.Explosion, Mathf.Clamp(radius, 0.7f, 1.2f), 0.05f);
 
             Object.Destroy(obj, 0.8f);
         }

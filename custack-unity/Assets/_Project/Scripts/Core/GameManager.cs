@@ -70,6 +70,7 @@ namespace Custack.Core
             isGameOver = true;
             Debug.Log("[GameManager] Player 2 Wins!");
             BattleHUD.Instance?.ShowWinner("Player 2");
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.Victory, 1.0f);
         }
 
         private void OnPlayer2Death()
@@ -78,6 +79,7 @@ namespace Custack.Core
             isGameOver = true;
             Debug.Log("[GameManager] Player 1 Wins!");
             BattleHUD.Instance?.ShowWinner("Player 1");
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.Victory, 1.0f);
         }
 
         /// <summary>
@@ -87,6 +89,7 @@ namespace Custack.Core
         {
             isGameOver = false;
             BattleHUD.Instance?.HideWinner();
+            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.GameStart, 0.9f);
 
             if (player1 != null && player1.HealthComponent != null) player1.HealthComponent.Respawn();
             if (player2 != null && player2.HealthComponent != null) player2.HealthComponent.Respawn();

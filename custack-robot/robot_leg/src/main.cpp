@@ -362,11 +362,11 @@ void loop() {
         if (omega > 0) {
             // 右旋回: 左輪(外輪)全速, 右輪(内輪)減速
             speed_l = vx;
-            speed_r = ((int32_t)vx * (1000 - omega)) / 1000;
+            speed_r = ((int32_t)vx * (1000 - omega * 0.8)) / 1000;
         } else if (omega < 0) {
             // 左旋回: 右輪(外輪)全速, 左輪(内輪)減速
             speed_r = vx;
-            speed_l = ((int32_t)vx * (1000 - (-omega))) / 1000;
+            speed_l = ((int32_t)vx * (1000 - (-omega * 0.8)) * 0.8) / 1000;
         } else {
             // 直進
             speed_r = vx;
@@ -376,11 +376,11 @@ void loop() {
         if (omega > 0) {
             // 後退右旋回
             speed_l = vx;
-            speed_r = ((int32_t)vx * (1000 - omega)) / 1000;
+            speed_r = ((int32_t)vx * (1000 - omega * 0.8)) / 1000;
         } else if (omega < 0) {
             // 後退左旋回
             speed_r = vx;
-            speed_l = ((int32_t)vx * (1000 - (-omega))) / 1000;
+            speed_l = ((int32_t)vx * (1000 - (-omega * 0.8))) / 1000;
         } else {
             // 直進後退
             speed_r = vx;

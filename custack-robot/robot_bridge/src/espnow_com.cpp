@@ -124,7 +124,15 @@ bool ESPNowCom::registerPeer(const String& mac) {
 
 bool ESPNowCom::update(uint32_t now) {
     static uint32_t last_send_time = 0;
-    if (now - last_send_time < 10) {
+    uint32_t update_span = 10u;
+
+    if (is_connected) {
+        update_span = 10u;
+    } else {
+        update_span = 100u;
+    }
+
+    if (now - last_send_time < update_span) {
         return true;
     }
     last_send_time = now;

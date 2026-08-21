@@ -180,13 +180,16 @@ pio run -d custack-robot/robot_leg -e tire -t upload --upload-port /dev/ttyUSB0
 pio run -d custack-robot/robot_leg -e crawler -t fuses --upload-port /dev/ttyUSB0
 pio run -d custack-robot/robot_leg -e crawler -t upload --upload-port /dev/ttyUSB0
 
-# --- EEPROM (初期オフセット・スケール) 書き込み ---
-# 1. オムニホイール用 (OFFSET: 0, SCALE: 100)
-avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/omni_eeprom.hex:i
+# --- EEPROM (初期オフセット・スケール) 設定・書き込み支援ツール ---
+# 1. 既存の EEPROM パラメータ確認 (モニタ)
+python tools/eeprom_tool.py monitor robot_leg/data/omni_eeprom.hex
 
-# 2. 二輪差動用 (OFFSET: 120, SCALE: 100)
-avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/tire_eeprom.hex:i
+# 2. EEPROM 書き込み (avrdude 連携)
+python tools/eeprom_tool.py upload robot_leg/data/omni_eeprom.hex -p /dev/ttyUSB0
 
-# 3. キャタピラ用 (OFFSET: 120, SCALE: 60)
-avrdude -c serialupdi -p t1614 -P /dev/ttyUSB0 -b 115200 -U eeprom:w:custack-robot/robot_leg/data/crawler_eeprom.hex:i
+# 3. オフセット・スケールを直接指定して更新 & 実機書き込み
+python tools/eeprom_tool.py set robot_leg/data/tire_eeprom.hex -o1 130 -s1 100 -u /dev/ttyUSB0
+
+# 4. 実機 EEPROM からの読み出し確認
+python tools/eeprom_tool.py monitor -p /dev/ttyUSB0
 ```

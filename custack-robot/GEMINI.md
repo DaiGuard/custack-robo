@@ -189,7 +189,46 @@ python tools/test_bridge.py -c "ALL" -p /dev/ttyUSB0
 
 ---
 
-## 5. 🔌 USBシリアルポート固定化 (udev rules)
+## 5. 💾 EEPROM 設定・書き換え支援ツール (`eeprom_tool.py`)
+
+`robot_leg` (ATtiny1614) のサーボキャリブレーション値（オフセット・スケール）を保持する Intel HEX ファイルのパース・モニタ・生成・チェックサム自動計算・実機アップロードを行う CLI ツールです。
+
+### 主なサブコマンド
+- `monitor`: `.hex` ファイルまたは実機マイコンから読み出した EEPROM のパラメータを解析して一覧表示
+- `set`: 既存の `.hex` ファイルを読み込み、指定パラメータのみを更新して保存（`-u` で実機書き込み可）
+- `create`: 指定パラメータまたはプリセット (`omni` / `tire` / `crawler`) から新規 `.hex` ファイルを生成
+- `upload`: 指定した `.hex` ファイルを `avrdude` 経由で実機 ATtiny1614 マイコンに書き込み
+- `read`: 実機マイコンから EEPROM を読み出して `.hex` ファイルに保存
+
+### コマンド実行例
+```bash
+cd custack-robot
+
+# 1. 既存の .hex ファイル内容をモニタ表示
+python tools/eeprom_tool.py monitor robot_leg/data/omni_eeprom.hex
+
+# 2. 実機 ATtiny1614 から現在の EEPROM を読み出してモニタ
+python tools/eeprom_tool.py monitor -p /dev/ttyUSB0
+
+# 3. 既存 hex の特定チャンネルのオフセット/スケールを変更して保存
+python tools/eeprom_tool.py set robot_leg/data/tire_eeprom.hex -o1 130 -s1 90
+
+# 4. パラメータを変更して保存し、同時に実機マイコンへアップロード
+python tools/eeprom_tool.py set robot_leg/data/omni_eeprom.hex --offsets 10,20,-10,0 -u /dev/ttyUSB0
+
+# 5. プリセットから新規 hex を生成
+python tools/eeprom_tool.py create robot_leg/data/new_crawler.hex --preset crawler
+
+# 6. hex ファイルを実機マイコンへアップロード
+python tools/eeprom_tool.py upload robot_leg/data/omni_eeprom.hex -p /dev/ttyUSB0
+
+# 7. 実機から EEPROM をバックアップ保存
+python tools/eeprom_tool.py read backup_eeprom.hex -p /dev/ttyUSB0
+```
+
+---
+
+## 6. 🔌 USBシリアルポート固定化 (udev rules)
 
 PC 接続時に 3台の M5Atom Matrix のポート番号が入れ替わらないよう、固定シンボリックリンクを作成します。
 
@@ -204,3 +243,4 @@ sudo cp tools/99-custack-bridge.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
+

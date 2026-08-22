@@ -52,9 +52,9 @@ namespace Custack.Equipment
                     {
                         type = ArmDeviceType.Sword,
                         weaponName = "Beam Sword",
-                        damage = 40f,                // 近接高威力 (基本威力 40)
+                        damage = 80f,                // 近接高威力 (基本威力 80: 40 * 2)
                         projectileSpeed = 18f,       // 高速スイング
-                        projectileLifeTime = 0.35f,  // 短射程・近接スラッシュ
+                        projectileLifeTime = 0.525f, // 短射程・近接スラッシュ (0.35s * 1.5)
                         cooldown = 0.45f,            // セミオート
                         isAutomatic = false,
                         spreadAngle = 0f,
@@ -66,7 +66,7 @@ namespace Custack.Equipment
                     {
                         type = ArmDeviceType.Cannon,
                         weaponName = "Heavy Laser Cannon",
-                        damage = 30f,                // レーザーキャノン (基本威力 30)
+                        damage = 60f,                // レーザーキャノン (基本威力 60: 30 * 2)
                         projectileSpeed = 7.5f,      // 弾速 (重厚な巨大エネルギー弾速)
                         projectileLifeTime = 3.5f,   // 画面端まで届く長射程
                         cooldown = 1.8f,             // ロングCD

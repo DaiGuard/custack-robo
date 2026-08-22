@@ -203,13 +203,13 @@ namespace Custack.Combat
             if (slipFactor > 0.01f)
             {
                 // 氷上: 慣性で滑る (Lerpの追従率を下げる)
-                float gripRate = Mathf.Lerp(15f, 1.2f, slipFactor);
+                float gripRate = Mathf.Lerp(20f, 1.2f, slipFactor);
                 currentVelocity = Vector2.Lerp(currentVelocity, targetVelocity, Time.deltaTime * gripRate);
             }
             else
             {
                 // 通常: 即座に追従
-                currentVelocity = Vector2.Lerp(currentVelocity, targetVelocity, Time.deltaTime * 20f);
+                currentVelocity = Vector2.Lerp(currentVelocity, targetVelocity, Time.deltaTime * 25f);
             }
 
             // 5. 座標更新

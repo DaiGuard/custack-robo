@@ -11,7 +11,7 @@ namespace Custack.Combat
         protected override void ExecuteFire(Vector2 forwardDir, Transform targetTransform)
         {
             Color colVal = config != null ? config.weaponColor : new Color(0.2f, 1f, 0.4f);
-            float dmg = config != null ? config.damage : 40f; // ユーザー指示: 基礎威力40
+            float dmg = config != null ? config.damage : 80f; // ユーザー指示: 基礎威力80 (40 * 2)
 
             // ロボットの原点を中心とした三日月型近接スイングを生成 & SE再生
             GameObject slashObj = new GameObject("MeleeSwordSlash");

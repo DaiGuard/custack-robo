@@ -53,7 +53,7 @@ namespace Custack.Combat
         /// <summary>
         /// 三日月・円弧状の斬撃メッシュを生成
         /// </summary>
-        public static Mesh GetOrCreateArcMesh(float radius = 0.5f, float arcAngleDeg = 90f, int segments = 16)
+        public static Mesh GetOrCreateArcMesh(float radius = 0.75f, float arcAngleDeg = 90f, int segments = 16)
         {
             if (cachedArcMesh != null) return cachedArcMesh;
 

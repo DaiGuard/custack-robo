@@ -14,8 +14,8 @@ namespace Custack.Combat
         public float currentHp = 1000f;
 
         [Header("スタン (Stun) 設定")]
-        [Tooltip("スタンが発動する累計被ダメージ閾値 (default: 100)")]
-        public float stunDamageThreshold = 100f;
+        [Tooltip("スタンが発動する累計被ダメージ閾値 (default: 200)")]
+        public float stunDamageThreshold = 200f;
         [Tooltip("被ダメージ蓄積がリセットされる時間 (秒)")]
         public float stunThresholdWindow = 1.2f;
         [Tooltip("スタン継続時間 (秒: この間は移動速度0)")]
@@ -62,21 +62,42 @@ namespace Custack.Combat
             }
         }
 
+        private float lastTerrainSeTime = 0f;
+
         /// <summary>
-        /// ダメージ適用処理
+        /// ダメージ適用処理 (弾丸・斬撃および地形環境ダメージ)
         /// </summary>
-        public void TakeDamage(float damage, Vector2 hitPoint = default)
+        public void TakeDamage(float damage, Vector2 hitPoint = default, bool isEnvironmental = false)
         {
             if (IsDead) return;
 
+            // スタン後などの無敵時間中は無効
             if (IsInvincible)
             {
-                Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitShield, 0.75f);
+                if (!isEnvironmental)
+                {
+                    Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitShield, 0.75f);
+                }
                 return;
             }
 
             currentHp = Mathf.Max(0f, currentHp - damage);
-            Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitDamage, 0.85f);
+
+            if (!isEnvironmental)
+            {
+                Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitDamage, 0.85f);
+                // 通常被弾時の短い無敵時間 (連続被弾の多重判定防止)
+                invincibilityEndTime = Mathf.Max(invincibilityEndTime, Time.time + hitInvincibilityDuration);
+            }
+            else
+            {
+                // 地形スリップダメージ時の微小被弾SE (0.35s間引き)
+                if (Time.time > lastTerrainSeTime + 0.35f)
+                {
+                    lastTerrainSeTime = Time.time;
+                    Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.HitDamage, 0.4f, 0.08f);
+                }
+            }
 
             // 短時間内の被ダメージを蓄積
             if (Time.time > recentDamageResetTime)
@@ -90,11 +111,6 @@ namespace Custack.Combat
             if (accumulatedDamage >= stunDamageThreshold && !IsStunned)
             {
                 TriggerStun();
-            }
-            else
-            {
-                // 通常の短い無敵時間 (連続被弾の多重判定防止)
-                invincibilityEndTime = Mathf.Max(invincibilityEndTime, Time.time + hitInvincibilityDuration);
             }
 
             OnDamaged?.Invoke(damage, hitPoint);

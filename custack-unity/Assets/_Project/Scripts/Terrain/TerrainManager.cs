@@ -102,5 +102,22 @@ namespace Custack.Terrain
 
             return new Vector3(finalVx, finalVy, finalOmega);
         }
+
+        /// <summary>
+        /// 現在地の地形による秒間スリップダメージ (DPS) を脚ユニットの耐性を考慮して計算
+        /// </summary>
+        public float CalculateTerrainDamage(Vector2 worldPos, LegMovementConfig legConfig)
+        {
+            TerrainType currentTerrain = GetTerrainAt(worldPos);
+            TerrainData data = GetTerrainDataAt(worldPos);
+
+            if (data == null || data.damagePerSecond <= 0f)
+            {
+                return 0f;
+            }
+
+            float damageMul = legConfig != null ? legConfig.GetDamageMultiplier(currentTerrain) : 1.0f;
+            return data.damagePerSecond * damageMul;
+        }
     }
 }

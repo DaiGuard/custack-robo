@@ -45,7 +45,7 @@ namespace Custack.Combat
             if (proj == null) proj = beamObj.AddComponent<LaserBeamProjectile>();
 
             float speed = config != null ? config.projectileSpeed : 7.5f;
-            float dmg = config != null ? config.damage : 30f; // ユーザー指示: 基礎威力30
+            float dmg = config != null ? config.damage : 60f; // ユーザー指示: 基礎威力60 (30 * 2)
             float life = config != null ? config.projectileLifeTime : 3.5f;
 
             proj.Initialize(OwnerRobotId, forwardDir, speed, dmg, life, colVal);

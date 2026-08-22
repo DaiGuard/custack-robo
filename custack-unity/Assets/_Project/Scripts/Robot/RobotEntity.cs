@@ -44,6 +44,9 @@ namespace Custack.Robot
 
         private WeaponBase rightWeapon;
         private WeaponBase leftWeapon;
+        private Vector2 currentSlipMove = Vector2.zero;
+        private float currentSlipOmega = 0f;
+        private float lastIceSeTime = 0f;
 
         void Awake()
         {
@@ -130,7 +133,7 @@ namespace Custack.Robot
                 CycleTarget();
             }
 
-            // 3. 地形特性 × 脚ユニットによる移動値補正
+            // 3. 地形特性 × 脚ユニットによる移動値補正 & スリップダメージ適用
             Vector2 rawMove = input.Move;
             float rawOmega = input.Omega;
 
@@ -140,6 +143,13 @@ namespace Custack.Robot
                 modifiedMove = terrainMgr.CalculateModifiedMovement(
                     transform.position, rawMove, rawOmega, EquipmentComponent.CurrentLegConfig
                 );
+
+                // 毒沼・溶岩等によるスリップダメージ判定 (毎秒ダメージ × deltaTime)
+                float terrainDps = terrainMgr.CalculateTerrainDamage(transform.position, EquipmentComponent.CurrentLegConfig);
+                if (terrainDps > 0f && HealthComponent != null && !HealthComponent.IsDead)
+                {
+                    HealthComponent.TakeDamage(terrainDps * Time.deltaTime, transform.position, isEnvironmental: true);
+                }
             }
 
             // 4. 武器発射判定 (画面から見て時計回りに90度ずらした正面方向: transform.right)
@@ -166,11 +176,38 @@ namespace Custack.Robot
                 }
             }
 
-            // 5. 実機向け最終コマンド構造体の構築 (-1000 〜 1000)
-            // modifiedMove.x: 前後移動 (Vx: スティック上下), modifiedMove.y: 左右移動 (Vy: スティック左右), modifiedMove.z: 旋回 (Omega)
-            currentCommand.vx = (short)Mathf.Clamp(Mathf.RoundToInt(modifiedMove.x * maxSpeed), -1000, 1000);
-            currentCommand.vy = (short)Mathf.Clamp(Mathf.RoundToInt(modifiedMove.y * maxSpeed), -1000, 1000);
-            currentCommand.omega = (short)Mathf.Clamp(Mathf.RoundToInt(modifiedMove.z * maxOmega), -1000, 1000);
+            // 5. 氷地形（Ice）での慣性スリップ物理シミュレーション (実機指令への反映)
+            TerrainType curTerrain = terrainMgr != null ? terrainMgr.GetTerrainAt(transform.position) : TerrainType.Normal;
+            float slipFactor = (curTerrain == TerrainType.Ice && EquipmentComponent?.CurrentLegConfig != null)
+                ? EquipmentComponent.CurrentLegConfig.iceSlipFactor : 0.0f;
+
+            if (slipFactor > 0.01f)
+            {
+                // 氷上: グリップ力を大幅に落とし、スティック操作後も慣性で滑走・ドリフト
+                float gripRate = Mathf.Lerp(20f, 1.2f, slipFactor);
+                currentSlipMove = Vector2.Lerp(currentSlipMove, new Vector2(modifiedMove.x, modifiedMove.y), Time.deltaTime * gripRate);
+                currentSlipOmega = Mathf.Lerp(currentSlipOmega, modifiedMove.z, Time.deltaTime * (gripRate * 1.2f));
+
+                // スリップ滑走SEの再生 (速度変化が大きい時に0.4s間引きで発火)
+                float slipDelta = (new Vector2(modifiedMove.x, modifiedMove.y) - currentSlipMove).magnitude;
+                if (slipDelta > 0.25f && Time.time > lastIceSeTime + 0.4f)
+                {
+                    lastIceSeTime = Time.time;
+                    Custack.Audio.AudioManager.Instance?.PlaySE(Custack.Audio.SoundEffectType.TerrainIce, 0.6f, 0.05f);
+                }
+            }
+            else
+            {
+                // 通常地形・Crawler: 即座に追従
+                currentSlipMove = Vector2.Lerp(currentSlipMove, new Vector2(modifiedMove.x, modifiedMove.y), Time.deltaTime * 25f);
+                currentSlipOmega = Mathf.Lerp(currentSlipOmega, modifiedMove.z, Time.deltaTime * 25f);
+            }
+
+            // 6. 実機向け最終コマンド構造体の構築 (-1000 〜 1000)
+            // currentSlipMove.x: 前後移動 (Vx: スティック上下), currentSlipMove.y: 左右移動 (Vy: スティック左右), currentSlipOmega: 旋回 (Omega)
+            currentCommand.vx = (short)Mathf.Clamp(Mathf.RoundToInt(currentSlipMove.x * maxSpeed), -1000, 1000);
+            currentCommand.vy = (short)Mathf.Clamp(Mathf.RoundToInt(currentSlipMove.y * maxSpeed), -1000, 1000);
+            currentCommand.omega = (short)Mathf.Clamp(Mathf.RoundToInt(currentSlipOmega * maxOmega), -1000, 1000);
 
             currentCommand.armRight = rightWeapon != null ? rightWeapon.HardwareArmFlag : (byte)0;
             currentCommand.armLeft = leftWeapon != null ? leftWeapon.HardwareArmFlag : (byte)0;

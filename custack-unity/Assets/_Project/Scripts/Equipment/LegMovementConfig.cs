@@ -36,8 +36,22 @@ namespace Custack.Equipment
         [Header("氷地形でのスリップ慣性係数 (0:スリップなし, 1:最大スリップ)")]
         public float iceSlipFactor = 0.8f;
 
-        [Header("溶岩でのダメージ軽減率 (0.0:軽減なし, 1.0:完全無効)")]
+        [Header("溶岩・毒沼でのダメージ軽減率 (0.0:軽減なし, 1.0:完全無効)")]
         public float lavaDamageReduction = 0.0f;
+        public float mudDamageReduction = 0.0f;
+
+        public float GetDamageMultiplier(TerrainType terrain)
+        {
+            switch (terrain)
+            {
+                case TerrainType.Lava:
+                    return Mathf.Clamp01(1.0f - lavaDamageReduction);
+                case TerrainType.Mud:
+                    return Mathf.Clamp01(1.0f - mudDamageReduction);
+                default:
+                    return 1.0f;
+            }
+        }
 
         public float GetSpeedMultiplier(TerrainType terrain)
         {
@@ -79,8 +93,9 @@ namespace Custack.Equipment
                         mudSpeedMul = 0.3f,     // 泥で30%大減速
                         iceSpeedMul = 1.0f,
                         lavaSpeedMul = 0.7f,
-                        iceSlipFactor = 0.85f,  // 氷で大スリップ
-                        lavaDamageReduction = 0.0f
+                        iceSlipFactor = 0.92f,  // 氷で大スリップ・低摩擦ロングスキッド
+                        lavaDamageReduction = 0.0f,
+                        mudDamageReduction = 0.0f
                     };
 
                 case LegDeviceType.Tire:
@@ -95,8 +110,9 @@ namespace Custack.Equipment
                         mudSpeedMul = 0.2f,     // 泥で空転・スタック (20%)
                         iceSpeedMul = 1.0f,
                         lavaSpeedMul = 0.7f,
-                        iceSlipFactor = 0.6f,   // ドリフト
-                        lavaDamageReduction = 0.0f
+                        iceSlipFactor = 0.85f,  // 氷上で鋭いドリフト・スピン
+                        lavaDamageReduction = 0.0f,
+                        mudDamageReduction = 0.0f
                     };
 
                 case LegDeviceType.Crawler:
@@ -117,7 +133,8 @@ namespace Custack.Equipment
                         lavaSpeedMul = 1.0f,   // 溶岩でも100%走行
                         lavaTurnMul = 1.0f,
                         iceSlipFactor = 0.0f,  // スパイク履帯でスリップ完全ゼロ
-                        lavaDamageReduction = 0.8f // 耐熱キャタピラで溶岩ダメージ80%カット
+                        lavaDamageReduction = 0.8f, // 耐熱キャタピラで溶岩ダメージ80%カット
+                        mudDamageReduction = 0.8f  // 耐性キャタピラで毒沼ダメージ80%カット
                     };
 
                 default:

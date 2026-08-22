@@ -13,11 +13,11 @@ namespace Custack.Combat
         public float swingDuration = 0.18f;     // スイング時間 (秒)
         public float startAngleOffset = -65f;   // スイング開始角度 (正面基準)
         public float endAngleOffset = 65f;      // スイング終了角度 (正面基準)
-        public float swordRadius = 1.25f;       // 斬撃の届く半径 (m)
-        public float swordThickness = 0.45f;    // 三日月の最大太さ (m)
+        public float swordRadius = 1.875f;      // 斬撃の届く半径 (m) (1.25m * 1.5)
+        public float swordThickness = 0.675f;   // 三日月の最大太さ (m) (0.45m * 1.5)
 
         private int ownerRobotId = 0;
-        private float damage = 40f;
+        private float damage = 80f;
         private Color slashColor = new Color(0.2f, 1f, 0.4f);
         private Transform followTransform;
         private Vector2 baseForwardDir;
@@ -199,7 +199,7 @@ namespace Custack.Combat
         /// <summary>
         /// 中央が太く両端が鋭く尖った美しい三日月型メッシュ（Crescent Arc）を生成
         /// </summary>
-        public static Mesh GetOrCreateCrescentMesh(float radius = 1.25f, float thickness = 0.45f, float arcDeg = 100f, int segments = 24)
+        public static Mesh GetOrCreateCrescentMesh(float radius = 1.875f, float thickness = 0.675f, float arcDeg = 100f, int segments = 24)
         {
             if (cachedCrescentMesh != null) return cachedCrescentMesh;
 

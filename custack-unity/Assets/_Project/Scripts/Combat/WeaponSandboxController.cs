@@ -356,9 +356,9 @@ namespace Custack.Combat
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("⚡ 自機スタン検証")) playerHealth?.TriggerStun();
-            if (GUILayout.Button("💥 ダミー100ダメ"))
+            if (GUILayout.Button("💥 ダミー200ダメ"))
             {
-                foreach (var dummy in dummyTargets) if (dummy != null) dummy.TakeDamage(100f, dummy.transform.position);
+                foreach (var dummy in dummyTargets) if (dummy != null) dummy.TakeDamage(200f, dummy.transform.position);
             }
             if (GUILayout.Button("💀 自機HP0撃破")) playerHealth?.TakeDamage(1000f);
             GUILayout.EndHorizontal();

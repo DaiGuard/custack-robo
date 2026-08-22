@@ -42,7 +42,7 @@ namespace Custack.Terrain
                         displayName = "Mud Swamp",
                         baseSpeedMultiplier = 0.3f,
                         baseTurnMultiplier = 0.4f,
-                        damagePerSecond = 0f,
+                        damagePerSecond = 15f, // 毒沼・泥沼: 毎秒15スリップダメージ
                         zoneColor = new Color(0.55f, 0.35f, 0.15f, 0.4f)
                     };
                 case TerrainType.Ice:
@@ -62,7 +62,7 @@ namespace Custack.Terrain
                         displayName = "Lava Zone",
                         baseSpeedMultiplier = 0.7f,
                         baseTurnMultiplier = 0.7f,
-                        damagePerSecond = 8f,
+                        damagePerSecond = 30f, // 溶岩・電磁ハザード: 毎秒30スリップダメージ
                         zoneColor = new Color(0.9f, 0.2f, 0.1f, 0.45f)
                     };
                 default:

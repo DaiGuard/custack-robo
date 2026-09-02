@@ -10,7 +10,7 @@
 
 - **カメラ認識・位置推定 (Jetson / ROS 2 Humble)**: 天頂カメラ映像から NVIDIA VPI を用いて歪み補正・透視変換を行い、AprilTag (16H5, ID 0〜15 / 最大32台) により最大60Hzで複数台ロボットの絶対位置姿勢を高精度推定。1秒ごとのリアルタイム速度・レイテンシ統計を出力。
 - **共有メモリ・通信中継 (Host PC / C++)**: POSIX 共有メモリ（Seqlock 方式）を介して Unity と超低遅延（>200Hz）で座標共有。Unity からの操作指令を 3ch シリアル通信（115200bps）で M5Atom ブリッジへ転送。実機から返信されるテレメトリ（デバイスID・バッテリー電圧）を共有メモリへ同期。
-- **演出・バトルゲーム制御 (Host PC / Unity 6 URP)**: 2画面出力（PC管理画面 / プロジェクター床面投影）。リアルタイム位置追従、**実機装着ユニットのデバイスID自動認識**、装備（アーム武器・脚特性）×地形効果（泥・氷・溶岩等）による挙動変化、誘導ミサイルや弾幕を含むバトルゲームシステムとHUD。
+- **演出・バトルゲーム制御 (Host PC / Unity 6 URP)**: 2画面出力（PC管理画面 / プロジェクター床面投影）。リアルタイム位置追従、**実機装着ユニットのデバイスID自動認識**、装備（アーム武器・脚特性）×地形効果（泥・氷・溶岩等）による挙動変化、**自律対戦・自動運転 AI コントローラ**、誘導ミサイルや弾幕を含むバトルゲームシステムとHUD。
 - **実機ロボット制御 (M5Stack Core2 + ATtiny1614 x3)**: ESP-NOW（100Hz指令 / 500msテレメトリ）双方向無線通信。内部 I2C バス経由で 4 輪オムニホイール（`robot_leg`）および左右アーム（`robot_arm`）のデバイスID取得および高精度分散制御。攻撃時には実機ソレノイド/モーターが同期作動。
 - **専用ハードウェア基板 (KiCad v10)**: 2S Li-ion 電源回路、6A 大電流 DCDC、M5Stack スタック用メイン基板、ポゴピン接続可能な 3 種の子局基板（パネライゼーション設計）。
 
@@ -86,7 +86,7 @@ flowchart TD
 | **`custack-hardware/`** | `agent-hardware` | KiCad v10, 回路・CAD | メイン基板、電源基板、アーム/脚基板、ポゴピン配置、回路設計 | [`custack-hardware/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-hardware/GEMINI.md) |
 | **`custack-robot/`** | `agent-robot` | PlatformIO, C++, ATtiny | M5Stack Core2 メイン、M5Atom ブリッジ、ATtiny1614 脚・腕制御、デバイスIDテレメトリ | [`custack-robot/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-robot/GEMINI.md) |
 | **`custack_ws/`** | `agent-ros` | ROS 2 Humble, C++, Python | VPI 画像処理・位置推定、共有メモリルーター、シリアルテレメトリパース、キャリブレーション Web | [`custack_ws/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack_ws/GEMINI.md) |
-| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション演出、共有メモリ連携、対戦バトルシステム、デバイスID自動認識×地形効果、**音源プロシージャル生成 & オーディオ統括** | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
+| **`custack-unity/`** | `agent-unity` | Unity 6, URP, C#, Input System | プロジェクション演出、共有メモリ連携、対戦バトルシステム、デバイスID自動認識×地形効果、**自律対戦・自動運転 AI コントローラ**、**音源プロシージャル生成 & オーディオ統括** | [`custack-unity/GEMINI.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/custack-unity/GEMINI.md) |
 | **`mcp/`** | `agent-promoter` | Google Veo 3.1, Python, FastMCP | プロモーション戦略、CM絵コンテ・キービジュアル、Google Veo動画クリップ自動生成 | [`.agents/agent-promoter/agent.md`](file:///home/dai_guard/Workspaces/custack-robo/agent/.agents/agent-promoter/agent.md) |
 
 ---

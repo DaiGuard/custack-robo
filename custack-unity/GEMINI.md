@@ -107,6 +107,8 @@ custack-unity/
     │   │   └── Sandbox/
     │   │       └── SharedMemorySandbox.unity # 共有メモリ・装備単体テストシーン
     │   ├── Scripts/
+    │   │   ├── AI/                         # 自律対戦・自動運転AIエージェント
+    │   │   │   └── RobotAIAgent.cs
     │   │   ├── Combat/                     # 戦闘・武器・飛翔体・HP
     │   │   │   ├── Health.cs
     │   │   │   ├── WeaponBase.cs
@@ -181,16 +183,23 @@ C++ 側（`custack_ws/src/custack_router/include/custack_router/posix_shm.hpp`�
   - `SetFromHardware`: 実機デバイスID受信時の動的切り替え。
   - `OnEquipmentChanged`: 変更時に武器コンポーネントを即時再構築。
 
-### 3.3 入力管理 (`Custack.Input`)
+### 3.3 入力管理 & 自律AIコントローラ (`Custack.Input`, `Custack.AI`)
 * **`ControllerInputManager.cs`**:
-  - **任意のロボット ID (AprilTag ID: 0〜15+) に対する入力ソース（Gamepad 0〜3, Keyboard P1/P2, None）の自由なマッピング・割り当て**に対応。
-  - インスペクターおよび画面上 GUI（`F2` キーでトグル表示）から直感的に各ロボットの操作コントローラーを切り替え可能。
+  - **任意のロボット ID (AprilTag ID: 0〜15+) に対する入力ソース（Gamepad 0〜2, Keyboard P1〜P3, AI, None）の自由なマッピング・割り当て**に対応。
+  - インスペクターおよび画面上 GUI（`F2` キーでトグル表示）からワンクリックで各ロボットの操作コントローラーを切り替え可能。
   - スティックのデッドゾーン補正（`0.15`）、L2/R2 によるアナログ旋回補助。
   - キーボードフォールバック:
     - **Keyboard P1**: 移動 `WASD`, 旋回 `Q/E`, 右武器 `J`, 左武器 `K`, ロックオン切替 `U`
     - **Keyboard P2**: 移動 `↑↓←→`, 旋回 `, .`, 右武器 `Numpad1`/`L`, 左武器 `Numpad2`/`;`, ロックオン切替 `Numpad5`/`P`
+    - **Keyboard P3**: 移動 `IJKL`, 旋回 `U/O`, 右武器 `7`, 左武器 `8`, ロックオン切替 `9`
+* **`RobotAIAgent.cs` (`Custack.AI`)**:
+  - **完全自律型バトルAIエージェント**。自機/敵機の座標・HP・装備、危険地形（泥・溶岩・氷）、接近する弾丸/ミサイルを認識。
+  - **間合い管理 (Steering)**: 装備武器に応じた最適交戦距離（ガトリング: 3.5m 中距離旋回、ソード: 1.0m 近接突進、キャノン: 5.5m 遠距離狙撃）を維持。
+  - **ポテンシャル法による回避**: アリーナ外周壁や危険地形（溶岩など）からの斥力、迫る弾丸の直角ステップ緊急回避。
+  - **精密エイム & 攻撃判断**: 敵機へのPD旋回制御（`Omega`）と、射角軸（$\pm \theta$）および射程に入った瞬間の左右武器自動トリガー。
+  - **作戦方針プリセット (`AIPersonality`)**: `Balanced` (標準), `Aggressive` (強襲・突進), `Defensive` (防衛・引き撃ち)。
 * **`PlayerInputCommand.cs`**:
-  - 移動ベクトル（x: 左右, y: 上下）、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。
+  - 移動ベクトル（x: 左右, y: 上下）、旋回値、左右武器（単発/ホールド）、ターゲット切替フラグを保持。人間入力とAI入力の共通データインターフェース。
 
 ### 3.4 地形効果 & 4大アリーナマップ (`Custack.Terrain`)
 * **`TerrainType.cs`**: `Normal` (平地), `Forest` (森林/瓦礫 減速), `Mud` (泥沼/深雪/火山灰 大減速・足取られ), `Ice` (氷原 スリップ・低摩擦), `Lava` (溶岩/高圧電磁サージ スリップダメージ)

@@ -5,6 +5,7 @@ using Custack.Input;
 using Custack.Combat;
 using Custack.Core;
 using Custack.Terrain;
+using Custack.AI;
 
 namespace Custack.UI
 {
@@ -179,7 +180,7 @@ namespace Custack.UI
 
             GUILayout.Label("<b><color=#00FFFF>【🎮 コントローラー & シリアルブリッジ】</color></b>");
             var allPads = Gamepad.all;
-            GUILayout.Label($"認識中ゲームパッド: <color={(allPads.Count > 0 ? "#00FF88" : "#FF6666")}><b>{allPads.Count} 台</b></color> (最大 3 台専用バインド)");
+            GUILayout.Label($"認識中ゲームパッド: <color={(allPads.Count > 0 ? "#00FF88" : "#FF6666")}><b>{allPads.Count} 台</b></color> (Bridge 1~3 専用バインド)");
 
             var inputMgr = ControllerInputManager.Instance;
 
@@ -187,35 +188,90 @@ namespace Custack.UI
             {
                 string portName = $"/dev/custack_bridge_{p + 1}";
                 int targetTagId = p + 1;
+                InputSourceType src = (inputMgr != null) ? inputMgr.GetRobotMapping(targetTagId) : (InputSourceType)(p + 1);
+                PlayerInputCommand currentCmd = (inputMgr != null) ? inputMgr.GetInputForRobot(targetTagId) : default;
 
                 GUILayout.BeginVertical(GUI.skin.box);
-                if (p < allPads.Count && allPads[p] != null)
-                {
-                    var pad = allPads[p];
-                    Vector2 stick = pad.leftStick.ReadValue();
-                    float omega = pad.rightStick.ReadValue().x;
-                    bool btnR = pad.rightShoulder.isPressed || pad.buttonEast.isPressed;
-                    bool btnL = pad.leftShoulder.isPressed || pad.buttonWest.isPressed;
 
-                    GUILayout.Label($"<b>🎮 Gamepad [{p}]</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
-                    GUILayout.Label($"   名前: <color=#00FF88>{pad.displayName}</color>");
-                    GUILayout.Label($"   移動: <color=#FFFFFF>Vx: {stick.y:+0.00;-0.00; 0.00}  Vy: {stick.x:+0.00;-0.00; 0.00}</color> | 旋回: <color=#FFFFFF>{omega:+0.00;-0.00; 0.00}</color>");
-                    GUILayout.Label($"   武装: 右 [R1/〇]: {(btnR ? "<color=#00FF88>ON</color>" : "OFF")} | 左 [L1/□]: {(btnL ? "<color=#00FF88>ON</color>" : "OFF")}");
+                if (src == InputSourceType.AI)
+                {
+                    var ai = inputMgr != null ? inputMgr.GetAIAgent(targetTagId) : null;
+                    string aiStatus = ai != null ? ai.GetStatusString() : "稼働中";
+                    AIPersonality personality = ai != null ? ai.Personality : AIPersonality.Balanced;
+
+                    GUILayout.Label($"<b>🤖 AI 自動運転</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
+                    GUILayout.Label($"   状態: <color=#00FFFF><b>{aiStatus}</b></color>");
+                    GUILayout.Label($"   指令: <color=#FFFFFF>Vx: {currentCmd.Move.y:+0.00;-0.00; 0.00}  Vy: {currentCmd.Move.x:+0.00;-0.00; 0.00}</color> | 旋回: <color=#FFFFFF>{currentCmd.Omega:+0.00;-0.00; 0.00}</color>");
+                    GUILayout.Label($"   武装: 右: {(currentCmd.ArmRightHeld ? "<color=#00FF88>FIRE</color>" : "OFF")} | 左: {(currentCmd.ArmLeftHeld ? "<color=#00FF88>FIRE</color>" : "OFF")}");
+
+                    // 性格切り替えボタン
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("   作戦: ", GUILayout.Width(45));
+                    if (GUILayout.Button(personality == AIPersonality.Balanced ? "<b>[標準]</b>" : "標準", GUILayout.Height(18))) { if (ai != null) ai.Personality = AIPersonality.Balanced; }
+                    if (GUILayout.Button(personality == AIPersonality.Aggressive ? "<b>[強襲]</b>" : "強襲", GUILayout.Height(18))) { if (ai != null) ai.Personality = AIPersonality.Aggressive; }
+                    if (GUILayout.Button(personality == AIPersonality.Defensive ? "<b>[防衛]</b>" : "防衛", GUILayout.Height(18))) { if (ai != null) ai.Personality = AIPersonality.Defensive; }
+                    GUILayout.EndHorizontal();
+                }
+                else if (src >= InputSourceType.Gamepad0 && src <= InputSourceType.Gamepad2)
+                {
+                    int padIdx = (int)src - 1;
+                    if (padIdx < allPads.Count && allPads[padIdx] != null)
+                    {
+                        var pad = allPads[padIdx];
+                        Vector2 stick = pad.leftStick.ReadValue();
+                        float omega = pad.rightStick.ReadValue().x;
+                        bool btnR = pad.rightShoulder.isPressed || pad.buttonEast.isPressed;
+                        bool btnL = pad.leftShoulder.isPressed || pad.buttonWest.isPressed;
+
+                        GUILayout.Label($"<b>🎮 Gamepad [{padIdx}]</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
+                        GUILayout.Label($"   名前: <color=#00FF88>{pad.displayName}</color>");
+                        GUILayout.Label($"   移動: <color=#FFFFFF>Vx: {stick.y:+0.00;-0.00; 0.00}  Vy: {stick.x:+0.00;-0.00; 0.00}</color> | 旋回: <color=#FFFFFF>{omega:+0.00;-0.00; 0.00}</color>");
+                        GUILayout.Label($"   武装: 右 [R1/〇]: {(btnR ? "<color=#00FF88>ON</color>" : "OFF")} | 左 [L1/□]: {(btnL ? "<color=#00FF88>ON</color>" : "OFF")}");
+                    }
+                    else
+                    {
+                        string fbName = (padIdx == 0) ? "WASD + J/K/U" : (padIdx == 1 ? "矢印 + Numpad / L/;" : "IJKL + 7/8/9");
+                        GUILayout.Label($"<b>🎮 Gamepad [{padIdx}]</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
+                        GUILayout.Label($"   <color=#888888>未接続 (KB代替: <color=#00FF88>{fbName}</color>)</color>");
+                    }
+                }
+                else if (src >= InputSourceType.KeyboardP1 && src <= InputSourceType.KeyboardP3)
+                {
+                    string kbName = src switch
+                    {
+                        InputSourceType.KeyboardP1 => "Keyboard P1 (WASD + J/K/U)",
+                        InputSourceType.KeyboardP2 => "Keyboard P2 (矢印 + Numpad / L/;/P)",
+                        _ => "Keyboard P3 (IJKL + 7/8/9)"
+                    };
+                    GUILayout.Label($"<b>⌨️ {kbName}</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
+                    GUILayout.Label($"   移動: <color=#FFFFFF>Vx: {currentCmd.Move.y:+0.00;-0.00; 0.00}  Vy: {currentCmd.Move.x:+0.00;-0.00; 0.00}</color> | 旋回: <color=#FFFFFF>{currentCmd.Omega:+0.00;-0.00; 0.00}</color>");
+                    GUILayout.Label($"   武装: 右: {(currentCmd.ArmRightHeld ? "<color=#00FF88>ON</color>" : "OFF")} | 左: {(currentCmd.ArmLeftHeld ? "<color=#00FF88>ON</color>" : "OFF")}");
                 }
                 else
                 {
-                    string fbName = (p == 0) ? "WASD + J/K/U" : (p == 1 ? "矢印 + Numpad / L/;" : "IJKL + 7/8/9");
-                    GUILayout.Label($"<b>🎮 Gamepad [{p}]</b> ➔ <color=#FFFF00>Tag #{targetTagId} ({portName})</color>");
-                    GUILayout.Label($"   <color=#888888>未接続 (KB代替: <color=#00FF88>{fbName}</color>)</color>");
+                    GUILayout.Label($"<b>➖ 未割り当て</b> ➔ <color=#888888>Tag #{targetTagId} ({portName})</color>");
+                    GUILayout.Label("   <color=#666666>(入力停止中)</color>");
                 }
+
                 GUILayout.EndVertical();
             }
 
             GUILayout.Space(4);
-            if (GUILayout.Button("🔄 コントローラー割り当てを初期化", GUILayout.Height(24)))
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("🔄 デフォルト初期化", GUILayout.Height(24)))
             {
                 inputMgr?.ResetToDefaultMappings();
             }
+            if (GUILayout.Button("🤖 全機体をAI操作に", GUILayout.Height(24)))
+            {
+                if (inputMgr != null)
+                {
+                    inputMgr.SetRobotMapping(1, InputSourceType.AI);
+                    inputMgr.SetRobotMapping(2, InputSourceType.AI);
+                    inputMgr.SetRobotMapping(3, InputSourceType.AI);
+                }
+            }
+            GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
         }

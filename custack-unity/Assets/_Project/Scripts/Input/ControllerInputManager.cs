@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Custack.AI;
 
 namespace Custack.Input
 {
@@ -17,6 +18,7 @@ namespace Custack.Input
         KeyboardP1 = 10,  // WASD + J/K/U
         KeyboardP2 = 11,  // 矢印キー + Numpad1/2/5 / L/;/P
         KeyboardP3 = 12,  // IJKL + 7/8/9
+        AI = 20,          // 🤖 AI 自動運転 (自律対戦エージェント)
     }
 
     /// <summary>
@@ -66,7 +68,21 @@ namespace Custack.Input
         private PlayerInputCommand keyboardP1Input;
         private PlayerInputCommand keyboardP2Input;
         private PlayerInputCommand keyboardP3Input;
+        private Dictionary<int, RobotAIAgent> aiAgents = new Dictionary<int, RobotAIAgent>();
         private Vector2 scrollPos;
+
+        /// <summary>
+        /// 指定したロボットIDに対応する AI エージェントインスタンスを取得（なければ生成）
+        /// </summary>
+        public RobotAIAgent GetAIAgent(int robotId)
+        {
+            if (!aiAgents.TryGetValue(robotId, out var agent) || agent == null)
+            {
+                agent = new RobotAIAgent(robotId);
+                aiAgents[robotId] = agent;
+            }
+            return agent;
+        }
 
         void Awake()
         {
@@ -282,6 +298,9 @@ namespace Custack.Input
                 case InputSourceType.KeyboardP3:
                     return keyboardP3Input;
 
+                case InputSourceType.AI:
+                    return GetAIAgent(robotId).GenerateCommand();
+
                 case InputSourceType.None:
                 default:
                     return default;
@@ -422,12 +441,13 @@ namespace Custack.Input
                     InputSourceType.KeyboardP1 => "⌨️ KB (WASD)",
                     InputSourceType.KeyboardP2 => "⌨️ KB (矢印)",
                     InputSourceType.KeyboardP3 => "⌨️ KB (IJKL)",
+                    InputSourceType.AI => "🤖 AI (自動運転)",
                     _ => "➖ なし"
                 };
 
-                if (GUILayout.Button(srcLabel, GUILayout.Width(105), GUILayout.Height(22)))
+                if (GUILayout.Button(srcLabel, GUILayout.Width(110), GUILayout.Height(22)))
                 {
-                    // クリックで次の入力ソースに切り替え
+                    // クリックで次の入力ソースに切り替え (Pad0->Pad1->Pad2->KB1->KB2->KB3->AI->None)
                     InputSourceType nextSrc = currentSrc switch
                     {
                         InputSourceType.None => InputSourceType.Gamepad0,
@@ -436,7 +456,8 @@ namespace Custack.Input
                         InputSourceType.Gamepad2 => InputSourceType.KeyboardP1,
                         InputSourceType.KeyboardP1 => InputSourceType.KeyboardP2,
                         InputSourceType.KeyboardP2 => InputSourceType.KeyboardP3,
-                        InputSourceType.KeyboardP3 => InputSourceType.None,
+                        InputSourceType.KeyboardP3 => InputSourceType.AI,
+                        InputSourceType.AI => InputSourceType.None,
                         _ => InputSourceType.None
                     };
                     SetRobotMapping(robotId, nextSrc);
@@ -444,10 +465,21 @@ namespace Custack.Input
 
                 // リアルタイム入力状況
                 string activeStatus = currentInput.IsConnected ? "<color=#00FF88>●</color>" : "<color=#666666>○</color>";
-                string moveInfo = isRenderOn
-                    ? $"Vx:{currentInput.Move.y:+0.00;-0.00; 0.00} Vy:{currentInput.Move.x:+0.00;-0.00; 0.00} Ω:{currentInput.Omega:+0.00;-0.00; 0.00}"
-                    : "<color=#777777>(非表示・同期停止中)</color>";
-                GUILayout.Label($"{activeStatus} {moveInfo}", GUILayout.Width(200));
+                string moveInfo;
+                if (!isRenderOn)
+                {
+                    moveInfo = "<color=#777777>(非表示・同期停止中)</color>";
+                }
+                else if (currentSrc == InputSourceType.AI)
+                {
+                    var ai = GetAIAgent(robotId);
+                    moveInfo = $"<color=#00FFFF>{ai.GetStatusString()}</color> (Vx:{currentInput.Move.y:+0.0;-0.0;0.0} Vy:{currentInput.Move.x:+0.0;-0.0;0.0})";
+                }
+                else
+                {
+                    moveInfo = $"Vx:{currentInput.Move.y:+0.00;-0.00; 0.00} Vy:{currentInput.Move.x:+0.00;-0.00; 0.00} Ω:{currentInput.Omega:+0.00;-0.00; 0.00}";
+                }
+                GUILayout.Label($"{activeStatus} {moveInfo}", GUILayout.Width(195));
 
                 GUILayout.EndHorizontal();
             }
